@@ -1,0 +1,3 @@
+/home/mgrund/Development/impala-deps/build/lz4-svn/include/lz4.h
+/home/mgrund/Development/impala-deps/build/lz4-svn/include/lz4hc.h
+/home/mgrund/Development/impala-deps/build/lz4-svn/lib/liblz4.a
