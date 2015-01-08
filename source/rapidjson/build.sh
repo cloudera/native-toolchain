@@ -25,11 +25,11 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
+if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   mkdir -p $LOCAL_INSTALL/include
-  cp -R include/rapidjson $LOCAL_INSTALL/include
+  cp -R include/rapidjson $LOCAL_INSTALL/include >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

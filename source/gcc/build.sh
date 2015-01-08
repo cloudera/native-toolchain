@@ -15,19 +15,22 @@
 
 set -eu
 
-if [ ! -f $SOURCE_DIR/check/gcc-$GCC_VERSION ]; then
-  cd $SOURCE_DIR/source/gcc
-  tar zxf gcc-$GCC_VERSION.tar.gz
-  cd gcc-$GCC_VERSION
+source $SOURCE_DIR/functions.sh
+THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
+prepare $THIS_DIR
+
+
+if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
+  header $PACKAGE $PACKAGE_VERSION
+
   ./contrib/download_prerequisites
 
   cd ..
   mkdir build
   cd build
 
-  LOCAL_INSTALL=$BUILD_DIR/gcc-$GCC_VERSION
-  ../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL --enable-languages=c,c++ --disable-multilib
-  make -j${IMPALA_BUILD_THREADS:-4}
-  make install
-  touch $SOURCE_DIR/check/gcc-$GCC_VERSION
+  ../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL --enable-languages=c,c++ --disable-multilib >> $BUILD_LOG 2>&1
+  make -j${IMPALA_BUILD_THREADS:-4}  >> $BUILD_LOG 2>&1
+  make install >> $BUILD_LOG 2>&1
+  footer $PACKAGE $PACKAGE_VERSION
 fi

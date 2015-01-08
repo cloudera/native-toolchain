@@ -25,7 +25,7 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
+if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   ./configure --with-pic --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1

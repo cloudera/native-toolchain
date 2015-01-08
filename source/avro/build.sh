@@ -25,13 +25,17 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
+if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   cd lang/c
 
-  cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL . >> $BUILD_LOG 2>&1
-  make -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  mkdir build
+  cd build
+  cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL .. >> $BUILD_LOG 2>&1
+  make -C . -j${IMPALA_BUILD_THREADS:-4} >> $BUILD_LOG 2>&1
+  cp avro-c.pc src >> $BUILD_LOG 2>&1
+  make -C . -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

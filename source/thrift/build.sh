@@ -25,7 +25,7 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
+if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   BOOST_ROOT=$BUILD_DIR/boost-$BOOST_VERSION
@@ -41,7 +41,7 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
     --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} >> $BUILD_LOG 2>&1
   make >> $BUILD_LOG 2>&1
   make install >> $BUILD_LOG 2>&1
-  cd ${THRIFT_SRC_DIR}/contrib/fb303
+  cd contrib/fb303
   rm -f config.cache
   chmod 755 ./bootstrap.sh
   ./bootstrap.sh >> $BUILD_LOG 2>&1

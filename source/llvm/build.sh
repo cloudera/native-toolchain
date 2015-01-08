@@ -14,37 +14,50 @@
 # limitations under the License.
 set -eu
 
-if [ ! -f $SOURCE_DIR/check/llvm-$LLVM_VERSION ]; then
-  LLVM=llvm-$LLVM_VERSION
-  cd $SOURCE_DIR/source/llvm
+source $SOURCE_DIR/functions.sh
+THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
+prepare $THIS_DIR
+
+if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
+  header $PACKAGE $PACKAGE_VERSION
 
   # Cleanup possible leftovers
   rm -Rf build
-  rm -Rf $LLVM.src
 
-  # LLVM
-  tar zxf $LLVM.src.tar.gz
-  cd $LLVM.src/tools
+  LLVM=llvm-$LLVM_VERSION
 
-  # CLANG
-  tar zxf ../../cfe-$LLVM_VERSION.src.tar.gz
-  mv cfe-$LLVM_VERSION.src clang
+  # Crappy CentOS 5.6 doesnt like us to build Clang, so skip it
+  RELEASE_NAME=`lsb_release -r -i`
+  if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
+    cd tools
+    # CLANG
+    tar zxf ../../cfe-$LLVM_VERSION.src.tar.gz
+    mv cfe-$LLVM_VERSION.src clang
+    # COMPILER RT
+    cd ../projects
+    tar zxf ../../compiler-rt-$LLVM_VERSION.src.tar.gz
+    mv compiler-rt-$LLVM_VERSION.src compiler-rt-3.5.0.src.tar.gz
+    cd ../../
+  else
+    cd ..
+  fi
 
-  # COMPILER RT
-  cd ../projects
-  tar zxf ../../compiler-rt-$LLVM_VERSION.src.tar.gz
-  mv compiler-rt-$LLVM_VERSION.src compiler-rt
-
-  cd ../../
-  mkdir build
+  mkdir -p build
   cd build
 
-  LOCAL_INSTALL=$BUILD_DIR/$LLVM
-  BUILD_LOG=$SOURCE_DIR/check/llvm-$LLVM_VERSION.log
+  # Some ancient systems have another python installed
+  PY_VERSION=`python -V 2>&1`
+  EXTRA_CONFIG_ARG=
+  if [[ "$PY_VERSION" =~ "Python 2\.4\.." ]]; then
+      # Typically on the systems having Python 2.4, they have a separate install
+      # of Python 2.6 wiht a python26 executable. However, this is not generally
+      # true for all platforms.
+      EXTRA_CONFIG_ARG=--with-python=`which python26`
+  fi
 
-  ../$LLVM.src/configure --prefix=$LOCAL_INSTALL --with-pic --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION --with-extra-ld-options="$LDFLAGS" > $BUILD_LOG 2>&1
+  ../$LLVM.src/configure $EXTRA_CONFIG_ARG --prefix=$LOCAL_INSTALL --with-pic --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION --with-extra-ld-options="$LDFLAGS" > $BUILD_LOG 2>&1
 
   make -j${IMPALA_BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
 
-  touch $SOURCE_DIR/check/llvm-$LLVM_VERSION
+  footer $PACKAGE $PACKAGE_VERSION
 fi

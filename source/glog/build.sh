@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 # Copyright 2012 Cloudera Inc.
 #
@@ -26,7 +25,7 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
+if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   GFLAGS_BUILD=$BUILD_DIR/gflags-$GFLAGS_VERSION

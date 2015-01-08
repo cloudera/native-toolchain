@@ -28,16 +28,12 @@ export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
 # Load all common version numbers for the thirdparty dependencies
 source $SOURCE_DIR/platform.sh
 
-# Flag allowing us to make assume that GCC and LLVM are built and installed
-# in IMPALA_TOOLCHAIN
-: ${HAVE_COMPILER=0}
-
 # Clean the complete build
 : ${CLEAN=0}
 
 if [ $CLEAN -eq 1 ]; then
   echo "Cleaning.."
-#  git clean -fdx $SOURCE_DIR
+  git clean -fdx $SOURCE_DIR
 fi
 
 # Destination directory for build
@@ -58,7 +54,7 @@ export CXX="$BUILD_DIR/gcc-$GCC_VERSION/bin/g++"
 # Upgrade rpath variable to catch current library location and possible future location
 FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64',-rpath,'/opt/toolchain/gcc-$GCC_VERSION'"
 FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
-export CXXFLAGS="-static-libstdc++ -static-libgcc -std=c++11"
+export CXXFLAGS="-static-libstdc++ -static-libgcc -std=c++11 "
 export LDFLAGS="$FULL_RPATH $FULL_LPATH"
 
 # Build LLVM
@@ -85,7 +81,6 @@ $SOURCE_DIR/source/boost/build.sh
 ################################################################################
 
 $SOURCE_DIR/source/thrift/build.sh
-
 
 ################################################################################
 # gflags

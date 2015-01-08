@@ -22,7 +22,7 @@ set -e
 set -u
 
 function prepare() {
-  PACKAGE="$(basename $1)"; PACKAGE="${PACKAGE^^}"
+  PACKAGE="$(basename $1)"; PACKAGE=`echo "${PACKAGE}" | awk '{print toupper($0)}'`
   PACKAGE_VERSION="${PACKAGE}_VERSION"
   # Replace potential - with _
   PACKAGE_VERSION="${PACKAGE_VERSION//-/_}"
@@ -37,7 +37,7 @@ function header() {
   echo "# Building: ${1}-${2}"
 
   # Package name might be upper case
-  LPACKAGE=${1,,}
+  LPACKAGE=`echo "${1}" | awk '{print tolower($0)}'`
   cd $SOURCE_DIR/source/$LPACKAGE
 
   LOCAL_INSTALL=$BUILD_DIR/$LPACKAGE-$2
@@ -63,13 +63,14 @@ function header() {
     DIR=$LPACKAGE-$2
   fi
 
+
   # Depending how ugly things are packaged we might have directories that are different
   # from the archive name, looking at you boost
+  RDIR="${DIR//-/_}"; RDIR="${RDIR//./_}"
   if [ -d "$DIR" ]; then
     cd $DIR
-  elif [ -d "${DIR//-/_}" ]; then
-    DIR="${DIR//-/_}"; DIR="${DIR//./_}"
-    cd $DIR
+  elif [ -d "${RDIR}" ]; then
+    cd $RDIR
   else
     cd $LPACKAGE
   fi
@@ -79,4 +80,27 @@ function footer() {
   touch $SOURCE_DIR/check/$1-$2
   echo "# Build Complete ${1}-${2}"
   echo "#######################################################################"
+}
+
+
+# Check if environment variables BUILD_ALL=0 and a variable of the
+# name PACKAGE_NAME_VERSION is set indicating that this package needs
+# to be build.
+function needs_build_package() {
+
+  if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
+    return 0
+  fi
+
+  # First check if the build_all variable is set or not
+  : ${BUILD_ALL=0}
+
+  ENV_NAME="BUILD_${PACKAGE}"
+  ENV_NAME=${!ENV_NAME=0}
+
+  if [ $BUILD_ALL -eq 0 ] && [ $ENV_NAME -eq 1 ]; then
+    return 0 # Build package
+  else
+    return 1 # Dont build this package
+  fi
 }

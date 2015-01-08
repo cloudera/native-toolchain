@@ -25,10 +25,10 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
+if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  ./configure --enable-slaapd=no --enable-static --with-pic --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
+  ./configure --enable-slapd=no --enable-static --with-pic --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
   make -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
   make -j${IMPALA_BUILD_THREADS:-4} depend >> $BUILD_LOG 2>&1
   make -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
