@@ -68,10 +68,13 @@ function header() {
   # from the archive name, looking at you boost
   RDIR="${DIR//-/_}"; RDIR="${RDIR//./_}"
   if [ -d "$DIR" ]; then
+    PDIR=$DIR
     cd $DIR
   elif [ -d "${RDIR}" ]; then
+    PDIR=$RDIR
     cd $RDIR
   else
+    PDIR=$LPACKAGE
     cd $LPACKAGE
   fi
 }
@@ -130,7 +133,9 @@ function build_dist_package() {
 
   # Build the package to $BUILD_DIR directory with the given version
   TOOLCHAIN_PREFIX="/opt/bin-toolchain"
+  DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}${WITH_GCC}"
   fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
-    -t $TARGET -n $LPACKAGE -v "${PACKAGE_VERSION}${WITH_GCC}" $LOCAL_INSTALL
+    -t $TARGET -n "${DIST_NAME}" -v "${PACKAGE_VERSION}${WITH_GCC}" -C $BUILD_DIR \
+    $PDIR
 
 }
