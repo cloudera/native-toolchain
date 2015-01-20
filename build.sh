@@ -28,8 +28,14 @@ export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
 # Load all common version numbers for the thirdparty dependencies
 source $SOURCE_DIR/platform.sh
 
+export TOOLCHAIN_DEST_PATH=/opt/bin-toolchain
+
 # Clean the complete build
 : ${CLEAN=0}
+
+# Package flag when not suing the system GCC
+: ${WITH_GCC=""}
+export WITH_GCC=$WITH_GCC
 
 if [ $CLEAN -eq 1 ]; then
   echo "Cleaning.."
@@ -47,15 +53,20 @@ mkdir -p $SOURCE_DIR/check
 # Build GCC that is used to build LLVM
 $SOURCE_DIR/source/gcc/build.sh
 
-# Stage one is done, we can upgrade our compiler
-export CC="$BUILD_DIR/gcc-$GCC_VERSION/bin/gcc"
-export CXX="$BUILD_DIR/gcc-$GCC_VERSION/bin/g++"
+: ${SYSTEM_GCC=0}
 
-# Upgrade rpath variable to catch current library location and possible future location
-FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64',-rpath,'/opt/toolchain/gcc-$GCC_VERSION'"
-FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
-export CXXFLAGS="-static-libstdc++ -static-libgcc -std=c++11 "
-export LDFLAGS="$FULL_RPATH $FULL_LPATH"
+if [[ $SYSTEM_GCC -eq 0 ]]; then
+  # Stage one is done, we can upgrade our compiler
+  export CC="$BUILD_DIR/gcc-$GCC_VERSION/bin/gcc"
+  export CXX="$BUILD_DIR/gcc-$GCC_VERSION/bin/g++"
+
+  # Upgrade rpath variable to catch current library location and possible future location
+  FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64',-rpath,'$TOOLCHAIN_DEST_PATH/gcc-$GCC_VERSION'"
+  FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
+  export CXXFLAGS="-static-libstdc++ -static-libgcc -std=c++11 "
+  export LDFLAGS="$FULL_RPATH $FULL_LPATH"
+  export WITH_GCC="+gcc"
+fi
 
 # Build LLVM
 $SOURCE_DIR/source/llvm/build.sh

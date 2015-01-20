@@ -34,7 +34,6 @@ if needs_build_package ; then
   cd build
   cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL .. >> $BUILD_LOG 2>&1
   make -C . -j${IMPALA_BUILD_THREADS:-4} >> $BUILD_LOG 2>&1
-  cp avro-c.pc src >> $BUILD_LOG 2>&1
   make -C . -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION

@@ -77,6 +77,10 @@ function header() {
 }
 
 function footer() {
+
+  # Build Package
+  build_dist_package >> $BUILD_LOG 2>&1
+
   touch $SOURCE_DIR/check/$1-$2
   echo "# Build Complete ${1}-${2}"
   echo "#######################################################################"
@@ -103,4 +107,30 @@ function needs_build_package() {
   else
     return 1 # Dont build this package
   fi
+}
+
+
+# Build the RPM or DEB package depending on the operating system
+# Depends on the LOCAL_INSTALL variable containing the target
+# directory
+function build_dist_package() {
+  set +e
+  YUM_CMD=$(which yum)
+  APT_CMD=$(which apt-get)
+  set -e
+  SOURCE_TYPE="dir"
+  if [[ ! -z $YUM_CMD  ]]; then
+    TARGET="rpm"
+  elif [[ ! -z $APT_CMD ]]; then
+    TARGET="deb"
+  else
+    echo "Cannot build package"
+    return 1
+  fi
+
+  # Build the package to $BUILD_DIR directory with the given version
+  TOOLCHAIN_PREFIX="/opt/bin-toolchain"
+  fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
+    -t $TARGET -n $LPACKAGE -v "${PACKAGE_VERSION}${WITH_GCC}" $LOCAL_INSTALL
+
 }
