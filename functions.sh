@@ -118,9 +118,16 @@ function needs_build_package() {
 # directory
 function build_dist_package() {
   set +e
+  FPM_CMD=$(which fpm)
   YUM_CMD=$(which yum)
   APT_CMD=$(which apt-get)
   set -e
+
+  if [[ -z $FPM_CMD ]]; then
+    # No FPM installed, will not build packages
+    return 0
+  fi
+
   SOURCE_TYPE="dir"
   if [[ ! -z $YUM_CMD  ]]; then
     TARGET="rpm"
