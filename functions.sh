@@ -40,27 +40,30 @@ function header() {
   LPACKAGE=`echo "${1}" | awk '{print tolower($0)}'`
   cd $SOURCE_DIR/source/$LPACKAGE
 
+  # Build name
+  LPACKAGE_VERSION=$LPACKAGE-$2
+
   LOCAL_INSTALL=$BUILD_DIR/$LPACKAGE-$2
   BUILD_LOG=$SOURCE_DIR/check/$LPACKAGE-$2.log
 
   # Extract the sources
-  if [ -f $LPACKAGE-$2.tar.gz ]; then
-    tar zxf $LPACKAGE-$2.tar.gz
-    DIR=$LPACKAGE-$2
-  elif [ -f $LPACKAGE-$2.tgz ]; then
-    tar zxf $LPACKAGE-$2.tgz
-    DIR=$LPACKAGE-$2
-  elif [ -f $LPACKAGE-$2.src.tar.gz ]; then
-    tar zxf $LPACKAGE-$2.src.tar.gz
-    DIR=$LPACKAGE-$2.src
+  if [ -f $LPACKAGE_VERSION.tar.gz ]; then
+    tar zxf $LPACKAGE_VERSION.tar.gz
+    DIR=$LPACKAGE_VERSION
+  elif [ -f $LPACKAGE_VERSION.tgz ]; then
+    tar zxf $LPACKAGE_VERSION.tgz
+    DIR=$LPACKAGE_VERSION
+  elif [ -f $LPACKAGE_VERSION.src.tar.gz ]; then
+    tar zxf $LPACKAGE_VERSION.src.tar.gz
+    DIR=$LPACKAGE_VERSION.src
   elif [ -f $LPACKAGE-src-$2.tar.gz ]; then
     tar zxf $LPACKAGE-src-$2.tar.gz
     DIR=$LPACKAGE-src-$2
-  elif [ -f $LPACKAGE-$2.zip ]; then
-    unzip -o $LPACKAGE-$2.zip
-    DIR=$LPACKAGE-$2
+  elif [ -f $LPACKAGE_VERSION.zip ]; then
+    unzip -o $LPACKAGE_VERSION.zip
+    DIR=$LPACKAGE_VERSION
   else
-    DIR=$LPACKAGE-$2
+    DIR=$LPACKAGE_VERSION
   fi
 
 
@@ -68,13 +71,10 @@ function header() {
   # from the archive name, looking at you boost
   RDIR="${DIR//-/_}"; RDIR="${RDIR//./_}"
   if [ -d "$DIR" ]; then
-    PDIR=$DIR
     cd $DIR
   elif [ -d "${RDIR}" ]; then
-    PDIR=$RDIR
     cd $RDIR
   else
-    PDIR=$LPACKAGE
     cd $LPACKAGE
   fi
 }
@@ -136,6 +136,6 @@ function build_dist_package() {
   DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}${WITH_GCC}"
   fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
     -t $TARGET -n "${DIST_NAME}" -v "${PACKAGE_VERSION}${WITH_GCC}" -C $BUILD_DIR \
-    $PDIR
+    $LPACKAGE_VERSION
 
 }
