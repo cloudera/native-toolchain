@@ -77,6 +77,9 @@ function header() {
   else
     cd $LPACKAGE
   fi
+
+  # Apply patches for this package
+  apply_patches
 }
 
 function footer() {
@@ -109,6 +112,19 @@ function needs_build_package() {
     return 0 # Build package
   else
     return 1 # Dont build this package
+  fi
+}
+
+# Check the package_name-version-patches directory and apply patches
+# depending on patch-level. Patches must be prepared that they can be
+# applied directly on the extracted source tree from within the source
+# (-p2).
+function apply_patches() {
+  if [[ -d $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches ]]; then
+    echo "Apply patches..."
+    for p in `find $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches -type f`; do
+      patch -p2 < $p >> $BUILD_LOG 2>&1
+    done
   fi
 }
 

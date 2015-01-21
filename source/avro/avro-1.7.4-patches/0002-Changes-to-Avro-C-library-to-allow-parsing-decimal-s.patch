@@ -1,0 +1,367 @@
+From e978f767e3d14657726c68077a0d4b1d46949fc2 Mon Sep 17 00:00:00 2001
+From: Skye Wanderman-Milne <skye@cloudera.com>
+Date: Fri, 2 May 2014 13:30:08 -0700
+Subject: [PATCH] Changes to Avro C library to allow parsing decimal schemas
+
+This augments the schema representation to handle decimals, storing
+the scale and precision in the decimal's schema object. This is the
+only functionality required by Impala. Elsewhere in the code decimals
+are handled the same as bytes, which should mean that decimal values
+look like bytes values, but I haven't tested this functionality.
+
+diff --git a/avro-src-1.7.4/lang/c/src/avro/basics.h b/avro-src-1.7.4/lang/c/src/avro/basics.h
+index 0ce7a0d..18a6128 100644
+--- a/avro-src-1.7.4/lang/c/src/avro/basics.h
++++ b/avro-src-1.7.4/lang/c/src/avro/basics.h
+@@ -40,7 +40,8 @@ enum avro_type_t {
+ 	AVRO_MAP,
+ 	AVRO_ARRAY,
+ 	AVRO_UNION,
+-	AVRO_LINK
++	AVRO_LINK,
++	AVRO_DECIMAL,
+ };
+ typedef enum avro_type_t avro_type_t;
+ 
+@@ -66,6 +67,7 @@ typedef struct avro_obj_t *avro_schema_t;
+ #define avro_typeof(obj)      ((obj)->type)
+ #define is_avro_string(obj)   (obj && avro_typeof(obj) == AVRO_STRING)
+ #define is_avro_bytes(obj)    (obj && avro_typeof(obj) == AVRO_BYTES)
++#define is_avro_decimal(obj)  (obj && avro_typeof(obj) == AVRO_DECIMAL)
+ #define is_avro_int32(obj)    (obj && avro_typeof(obj) == AVRO_INT32)
+ #define is_avro_int64(obj)    (obj && avro_typeof(obj) == AVRO_INT64)
+ #define is_avro_float(obj)    (obj && avro_typeof(obj) == AVRO_FLOAT)
+@@ -74,6 +76,7 @@ typedef struct avro_obj_t *avro_schema_t;
+ #define is_avro_null(obj)     (obj && avro_typeof(obj) == AVRO_NULL)
+ #define is_avro_primitive(obj)(is_avro_string(obj) \
+                              ||is_avro_bytes(obj) \
++                             ||is_avro_decimal(obj) \
+                              ||is_avro_int32(obj) \
+                              ||is_avro_int64(obj) \
+                              ||is_avro_float(obj) \
+@@ -89,10 +92,10 @@ typedef struct avro_obj_t *avro_schema_t;
+ #define is_avro_map(obj)      (obj && avro_typeof(obj) == AVRO_MAP)
+ #define is_avro_array(obj)    (obj && avro_typeof(obj) == AVRO_ARRAY)
+ #define is_avro_union(obj)    (obj && avro_typeof(obj) == AVRO_UNION)
+-#define is_avro_complex_type(obj) (!(is_avro_primitive(obj))
++#define is_avro_complex_type(obj) (!(is_avro_primitive(obj)))
+ #define is_avro_link(obj)     (obj && avro_typeof(obj) == AVRO_LINK)
+ 
+-
++const char *avro_type_name(const avro_type_t type);
+ 
+ CLOSE_EXTERN
+ #endif
+diff --git a/avro-src-1.7.4/lang/c/src/avro/schema.h b/avro-src-1.7.4/lang/c/src/avro/schema.h
+index 56af958..8da618e 100644
+--- a/avro-src-1.7.4/lang/c/src/avro/schema.h
++++ b/avro-src-1.7.4/lang/c/src/avro/schema.h
+@@ -65,6 +65,10 @@ int avro_schema_enum_symbol_append(const avro_schema_t
+ avro_schema_t avro_schema_fixed(const char *name, const int64_t len);
+ int64_t avro_schema_fixed_size(const avro_schema_t fixed);
+ 
++avro_schema_t avro_schema_decimal(const int64_t scale, const int64_t precision);
++int64_t avro_schema_decimal_scale(const avro_schema_t decimal);
++int64_t avro_schema_decimal_precision(const avro_schema_t decimal);
++
+ avro_schema_t avro_schema_map(const avro_schema_t values);
+ avro_schema_t avro_schema_map_values(avro_schema_t map);
+ 
+diff --git a/avro-src-1.7.4/lang/c/src/consume-binary.c b/avro-src-1.7.4/lang/c/src/consume-binary.c
+index 3571526..d974fec 100644
+--- a/avro-src-1.7.4/lang/c/src/consume-binary.c
++++ b/avro-src-1.7.4/lang/c/src/consume-binary.c
+@@ -264,6 +264,7 @@ avro_consume_binary(avro_reader_t reader, avro_consumer_t *consumer, void *ud)
+ 		break;
+ 
+ 	case AVRO_BYTES:
++	case AVRO_DECIMAL:
+ 		{
+ 			char *bytes;
+ 			int64_t len;
+diff --git a/avro-src-1.7.4/lang/c/src/datum.c b/avro-src-1.7.4/lang/c/src/datum.c
+index 3197e3f..7d84cf2 100644
+--- a/avro-src-1.7.4/lang/c/src/datum.c
++++ b/avro-src-1.7.4/lang/c/src/datum.c
+@@ -1056,7 +1056,8 @@ static void avro_datum_free(avro_datum_t datum)
+ 				avro_freet(struct avro_string_datum_t, string);
+ 			}
+ 			break;
+-		case AVRO_BYTES:{
++		case AVRO_BYTES:
++		case AVRO_DECIMAL: {
+ 				struct avro_bytes_datum_t *bytes;
+ 				bytes = avro_datum_to_bytes(datum);
+ 				if (bytes->free) {
+diff --git a/avro-src-1.7.4/lang/c/src/datum_equal.c b/avro-src-1.7.4/lang/c/src/datum_equal.c
+index 068dbda..380fd8d 100644
+--- a/avro-src-1.7.4/lang/c/src/datum_equal.c
++++ b/avro-src-1.7.4/lang/c/src/datum_equal.c
+@@ -135,6 +135,7 @@ int avro_datum_equal(const avro_datum_t a, const avro_datum_t b)
+ 		return strcmp(avro_datum_to_string(a)->s,
+ 			      avro_datum_to_string(b)->s) == 0;
+ 	case AVRO_BYTES:
++	case AVRO_DECIMAL:
+ 		return (avro_datum_to_bytes(a)->size ==
+ 			avro_datum_to_bytes(b)->size)
+ 		    && memcmp(avro_datum_to_bytes(a)->bytes,
+diff --git a/avro-src-1.7.4/lang/c/src/datum_size.c b/avro-src-1.7.4/lang/c/src/datum_size.c
+index 22ead84..06d682d 100644
+--- a/avro-src-1.7.4/lang/c/src/datum_size.c
++++ b/avro-src-1.7.4/lang/c/src/datum_size.c
+@@ -207,6 +207,7 @@ static int64_t size_datum(avro_writer_t writer, const avro_encoding_t * enc,
+ 		return enc->size_string(writer, avro_datum_to_string(datum)->s);
+ 
+ 	case AVRO_BYTES:
++	case AVRO_DECIMAL:
+ 		return enc->size_bytes(writer,
+ 				       avro_datum_to_bytes(datum)->bytes,
+ 				       avro_datum_to_bytes(datum)->size);
+diff --git a/avro-src-1.7.4/lang/c/src/datum_skip.c b/avro-src-1.7.4/lang/c/src/datum_skip.c
+index c73742c..50b1ada 100644
+--- a/avro-src-1.7.4/lang/c/src/datum_skip.c
++++ b/avro-src-1.7.4/lang/c/src/datum_skip.c
+@@ -155,6 +155,7 @@ int avro_skip_data(avro_reader_t reader, avro_schema_t writers_schema)
+ 		break;
+ 
+ 	case AVRO_BYTES:
++  case AVRO_DECIMAL:
+ 		rval = enc->skip_bytes(reader);
+ 		break;
+ 
+diff --git a/avro-src-1.7.4/lang/c/src/datum_validate.c b/avro-src-1.7.4/lang/c/src/datum_validate.c
+index 28eb289..1754dec 100644
+--- a/avro-src-1.7.4/lang/c/src/datum_validate.c
++++ b/avro-src-1.7.4/lang/c/src/datum_validate.c
+@@ -62,6 +62,7 @@ avro_schema_datum_validate(avro_schema_t expected_schema, avro_datum_t datum)
+ 		return is_avro_string(datum);
+ 
+ 	case AVRO_BYTES:
++	case AVRO_DECIMAL:
+ 		return is_avro_bytes(datum);
+ 
+ 	case AVRO_INT32:
+diff --git a/avro-src-1.7.4/lang/c/src/schema.c b/avro-src-1.7.4/lang/c/src/schema.c
+index 9198e0c..917a54a 100644
+--- a/avro-src-1.7.4/lang/c/src/schema.c
++++ b/avro-src-1.7.4/lang/c/src/schema.c
+@@ -203,6 +203,13 @@ static void avro_schema_free(avro_schema_t schema)
+ 			}
+ 			break;
+ 
++		case AVRO_DECIMAL:{
++				struct avro_decimal_schema_t *decimal;
++				decimal = avro_schema_to_decimal(schema);
++				avro_freet(struct avro_fixed_schema_t, decimal);
++			}
++			break;
++
+ 		case AVRO_MAP:{
+ 				struct avro_map_schema_t *map;
+ 				map = avro_schema_to_map(schema);
+@@ -362,6 +369,30 @@ int64_t avro_schema_fixed_size(const avro_schema_t fixed)
+ 	return avro_schema_to_fixed(fixed)->size;
+ }
+ 
++avro_schema_t avro_schema_decimal(const int64_t scale, const int64_t precision)
++{
++	struct avro_decimal_schema_t *decimal =
++	    (struct avro_decimal_schema_t *) avro_new(struct avro_decimal_schema_t);
++	if (!decimal) {
++		avro_set_error("Cannot allocate new decimal schema");
++		return NULL;
++	}
++	decimal->scale = scale;
++	decimal->precision = precision;
++	avro_schema_init(&decimal->obj, AVRO_DECIMAL);
++	return &decimal->obj;
++}
++
++int64_t avro_schema_decimal_scale(const avro_schema_t decimal)
++{
++	return avro_schema_to_decimal(decimal)->scale;
++}
++
++int64_t avro_schema_decimal_precision(const avro_schema_t decimal)
++{
++	return avro_schema_to_decimal(decimal)->precision;
++}
++
+ avro_schema_t avro_schema_union(void)
+ {
+ 	struct avro_union_schema_t *schema =
+@@ -805,7 +836,13 @@ avro_type_from_json_t(json_t *json, avro_type_t *type,
+ 	if (strcmp(type_str, "string") == 0) {
+ 		*type = AVRO_STRING;
+ 	} else if (strcmp(type_str, "bytes") == 0) {
+-		*type = AVRO_BYTES;
++    json_t *json_logical_type = json_object_get(json, "logicalType");
++    const char *logical_type_str = json_string_value(json_logical_type);
++    if (logical_type_str && strcmp(logical_type_str, "decimal") == 0) {
++      *type = AVRO_DECIMAL;
++    } else {
++      *type = AVRO_BYTES;
++    }
+ 	} else if (strcmp(type_str, "int") == 0) {
+ 		*type = AVRO_INT32;
+ 	} else if (strcmp(type_str, "long") == 0) {
+@@ -1155,6 +1192,27 @@ avro_schema_from_json_t(json_t *json, avro_schema_t *schema,
+ 		}
+ 		break;
+ 
++	case AVRO_DECIMAL:
++		{
++			json_t *json_scale = json_object_get(json, "scale");
++			json_t *json_precision = json_object_get(json, "precision");
++			json_int_t scale = 0; // default scale is 0
++			json_int_t precision; // precision is required
++			if (!json_is_integer(json_precision)) {
++				avro_set_error("Decimal type must have an integer attribute \"precision\"");
++				return EINVAL;
++			}
++			precision = json_integer_value(json_precision);
++      if (json_is_integer(json_scale)) {
++        scale = json_integer_value(json_scale);
++      } else if (json_scale) {
++				avro_set_error("Decimal type \"scale\" attribute must be an integer");
++				return EINVAL;
++      }
++			*schema = avro_schema_decimal((int64_t) scale, (int64_t) precision);
++		}
++		break;
++
+ 	default:
+ 		avro_set_error("Unknown schema type");
+ 		return EINVAL;
+@@ -1471,6 +1529,8 @@ const char *avro_schema_type_name(const avro_schema_t schema)
+ 		return "string";
+ 	} else if (is_avro_bytes(schema)) {
+ 		return "bytes";
++	} else if (is_avro_decimal(schema)) {
++		return "decimal";
+ 	} else if (is_avro_link(schema)) {
+ 		avro_schema_t  target = avro_schema_link_target(schema);
+ 		return avro_schema_type_name(target);
+@@ -1479,6 +1539,29 @@ const char *avro_schema_type_name(const avro_schema_t schema)
+ 	return NULL;
+ }
+ 
++const char *avro_type_name(const avro_type_t type)
++{
++  switch (type) {
++    case AVRO_STRING: return "string";
++    case AVRO_BYTES: return "bytes";
++    case AVRO_INT32: return "int";
++    case AVRO_INT64: return "long";
++    case AVRO_FLOAT: return "float";
++    case AVRO_DOUBLE: return "double";
++    case AVRO_BOOLEAN: return "boolean";
++    case AVRO_NULL: return "null";
++    case AVRO_RECORD: return "record";
++    case AVRO_ENUM: return "enum";
++    case AVRO_FIXED: return "fixed";
++    case AVRO_MAP: return "map";
++    case AVRO_ARRAY: return "array";
++    case AVRO_UNION: return "union";
++    case AVRO_LINK: return "link";
++    case AVRO_DECIMAL: return "decimal";
++  }
++  return "unknown type";
++}
++
+ avro_datum_t avro_datum_from_schema(const avro_schema_t schema)
+ {
+ 	check_param(NULL, is_avro_schema(schema), "schema");
+@@ -1488,6 +1571,7 @@ avro_datum_t avro_datum_from_schema(const avro_schema_t schema)
+ 			return avro_givestring("", NULL);
+ 
+ 		case AVRO_BYTES:
++		case AVRO_DECIMAL:
+ 			return avro_givebytes("", 0, NULL);
+ 
+ 		case AVRO_INT32:
+@@ -1642,6 +1726,20 @@ static int write_fixed(avro_writer_t out, const struct avro_fixed_schema_t *fixe
+ 	check(rval, avro_write_str(out, size));
+ 	return avro_write_str(out, "}");
+ }
++static int write_decimal(avro_writer_t out, const struct avro_decimal_schema_t *decimal)
++{
++	int rval;
++	char scale[16];
++	char precision[16];
++	check(rval, avro_write_str(out, "{\"type\":\"bytes\",\"logicalType\":\"decimal\""));
++	check(rval, avro_write_str(out, "\",\"scale\":"));
++	snprintf(scale, sizeof(scale), "%" PRId64, decimal->scale);
++	check(rval, avro_write_str(out, scale));
++	check(rval, avro_write_str(out, "\",\"precision\":"));
++	snprintf(precision, sizeof(precision), "%" PRId64, decimal->precision);
++	check(rval, avro_write_str(out, precision));
++	return avro_write_str(out, "}");
++}
+ static int write_map(avro_writer_t out, const struct avro_map_schema_t *map)
+ {
+ 	int rval;
+@@ -1725,6 +1823,8 @@ int avro_schema_to_json(const avro_schema_t schema, avro_writer_t out)
+ 		return write_enum(out, avro_schema_to_enum(schema));
+ 	case AVRO_FIXED:
+ 		return write_fixed(out, avro_schema_to_fixed(schema));
++	case AVRO_DECIMAL:
++		return write_decimal(out, avro_schema_to_decimal(schema));
+ 	case AVRO_MAP:
+ 		return write_map(out, avro_schema_to_map(schema));
+ 	case AVRO_ARRAY:
+diff --git a/avro-src-1.7.4/lang/c/src/schema.h b/avro-src-1.7.4/lang/c/src/schema.h
+index c887ef4..b93f467 100644
+--- a/avro-src-1.7.4/lang/c/src/schema.h
++++ b/avro-src-1.7.4/lang/c/src/schema.h
+@@ -67,6 +67,12 @@ struct avro_fixed_schema_t {
+ 	int64_t size;
+ };
+ 
++struct avro_decimal_schema_t {
++	struct avro_obj_t obj;
++	int64_t scale;
++	int64_t precision;
++};
++
+ struct avro_link_schema_t {
+ 	struct avro_obj_t obj;
+ 	avro_schema_t to;
+@@ -78,6 +84,7 @@ struct avro_link_schema_t {
+ #define avro_schema_to_map(schema_)     (container_of(schema_, struct avro_map_schema_t, obj))
+ #define avro_schema_to_union(schema_)   (container_of(schema_, struct avro_union_schema_t, obj))
+ #define avro_schema_to_fixed(schema_)   (container_of(schema_, struct avro_fixed_schema_t, obj))
++#define avro_schema_to_decimal(schema_) (container_of(schema_, struct avro_decimal_schema_t, obj))
+ #define avro_schema_to_link(schema_)    (container_of(schema_, struct avro_link_schema_t, obj))
+ 
+ #endif
+diff --git a/avro-src-1.7.4/lang/c/src/schema_equal.c b/avro-src-1.7.4/lang/c/src/schema_equal.c
+index 564096a..046e7cc 100644
+--- a/avro-src-1.7.4/lang/c/src/schema_equal.c
++++ b/avro-src-1.7.4/lang/c/src/schema_equal.c
+@@ -106,6 +106,12 @@ schema_fixed_equal(struct avro_fixed_schema_t *a, struct avro_fixed_schema_t *b)
+ }
+ 
+ static int
++schema_decimal_equal(struct avro_decimal_schema_t *a, struct avro_decimal_schema_t *b)
++{
++	return (a->scale == b->scale) && (a->precision == b->precision);
++}
++
++static int
+ schema_map_equal(struct avro_map_schema_t *a, struct avro_map_schema_t *b)
+ {
+ 	return avro_schema_equal(a->values, b->values);
+@@ -174,6 +180,9 @@ int avro_schema_equal(avro_schema_t a, avro_schema_t b)
+ 	} else if (is_avro_fixed(a)) {
+ 		return schema_fixed_equal(avro_schema_to_fixed(a),
+ 					  avro_schema_to_fixed(b));
++	} else if (is_avro_decimal(a)) {
++		return schema_decimal_equal(avro_schema_to_decimal(a),
++					  avro_schema_to_decimal(b));
+ 	} else if (is_avro_map(a)) {
+ 		return schema_map_equal(avro_schema_to_map(a),
+ 					avro_schema_to_map(b));
+-- 
+2.1.3
+

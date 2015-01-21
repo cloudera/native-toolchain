@@ -1,0 +1,293 @@
+From 24fb0ef4d4ed40d652db9cc809fa9767a1439b08 Mon Sep 17 00:00:00 2001
+From: Skye Wanderman-Milne <skye@cloudera.com>
+Date: Tue, 25 Jun 2013 18:19:20 -0700
+Subject: [PATCH] Patch Avro library to support schemas with default values.
+
+diff --git a/thirdparty/avro-c-1.7.4/examples/quickstop.c b/thirdparty/avro-c-1.7.4/examples/quickstop.c
+index d0c396f..bdf4860 100644
+--- a/avro-src-1.7.4/lang/c/examples/quickstop.c
++++ b/avro-src-1.7.4/lang/c/examples/quickstop.c
+@@ -193,9 +193,9 @@ int main(void)
+ 	first_name_schema = avro_schema_string();
+ 	phone_schema = avro_schema_string();
+ 	avro_schema_record_field_append(projection_schema, "First",
+-					first_name_schema);
++					first_name_schema, NULL);
+ 	avro_schema_record_field_append(projection_schema, "Phone",
+-					phone_schema);
++					phone_schema, NULL);
+ 
+ 	/* Read only the record you're interested in */
+ 	fprintf(stdout,
+diff --git a/avro-c-1.7.4/src/avro/basics.h b/avro-c-1.7.4/src/avro/basics.h
+index d934af7..0ce7a0d 100644
+--- a/avro-c-1.7.4/lang/c/src/avro/basics.h
++++ b/avro-src-1.7.4/lang/c/src/avro/basics.h
+@@ -56,6 +56,9 @@ struct avro_obj_t {
+ 	volatile int  refcount;
+ };
+ 
++typedef struct avro_obj_t *avro_datum_t;
++typedef struct avro_obj_t *avro_schema_t;
++
+ #define avro_classof(obj)     ((obj)->class_type)
+ #define is_avro_schema(obj)   (obj && avro_classof(obj) == AVRO_SCHEMA)
+ #define is_avro_datum(obj)    (obj && avro_classof(obj) == AVRO_DATUM)
+diff --git a/avro-src-1.7.4/src/avro/legacy.h b/avro-src-1.7.4/src/avro/legacy.h
+index 6f65daa..52d2a0c 100644
+--- a/avro-src-1.7.4/lang/c/src/avro/legacy.h
++++ b/avro-src-1.7.4/lang/c/src/avro/legacy.h
+@@ -66,7 +66,6 @@ avro_alloc_free_func(void *ptr, size_t sz);
+  * constructors do need an explicit schema parameter.
+  */
+ 
+-typedef struct avro_obj_t *avro_datum_t;
+ avro_datum_t avro_string(const char *str);
+ avro_datum_t avro_givestring(const char *str,
+ 			     avro_free_func_t free);
+diff --git a/avro-src-1.7.4/src/avro/schema.h b/avro-src-1.7.4/src/avro/schema.h
+index b9c59cd..56af958 100644
+--- a/avro-src-1.7.4/lang/c/src/avro/schema.h
++++ b/avro-src-1.7.4/lang/c/src/avro/schema.h
+@@ -29,8 +29,6 @@ extern "C" {
+ 
+ #include <avro/basics.h>
+ 
+-typedef struct avro_obj_t *avro_schema_t;
+-
+ avro_schema_t avro_schema_string(void);
+ avro_schema_t avro_schema_bytes(void);
+ avro_schema_t avro_schema_int(void);
+@@ -44,13 +42,16 @@ avro_schema_t avro_schema_record(const char *name, const char *space);
+ avro_schema_t avro_schema_record_field_get(const avro_schema_t
+ 					   record, const char *field_name);
+ const char *avro_schema_record_field_name(const avro_schema_t schema, int index);
++avro_datum_t avro_schema_record_field_default(
++    const avro_schema_t schema, int index);
+ int avro_schema_record_field_get_index(const avro_schema_t schema,
+ 				       const char *field_name);
+ avro_schema_t avro_schema_record_field_get_by_index
+ (const avro_schema_t record, int index);
+ int avro_schema_record_field_append(const avro_schema_t record,
+ 				    const char *field_name,
+-				    const avro_schema_t type);
++				    const avro_schema_t type,
++				    const avro_datum_t default_value);
+ size_t avro_schema_record_size(const avro_schema_t record);
+ 
+ avro_schema_t avro_schema_enum(const char *name);
+diff --git a/avro-src-1.7.4/src/schema.c b/avro-src-1.7.4/src/schema.c
+index f89a084..9198e0c 100644
+--- a/avro-src-1.7.4/lang/c/src/schema.c
++++ b/avro-src-1.7.4/lang/c/src/schema.c
+@@ -34,6 +34,65 @@
+ 
+ #define DEFAULT_TABLE_SIZE 32
+ 
++static int json_t_to_avro_value_helper(
++		const avro_schema_t schema, const json_t *json, avro_datum_t datum)
++{
++	switch (schema->type) {
++		case AVRO_BOOLEAN:
++			check_param(EINVAL, json_is_boolean(json), "JSON boolean");
++			if (avro_boolean_set(datum, json_is_true(json))) return EINVAL;
++			return 0;
++		case AVRO_DOUBLE:
++			check_param(EINVAL, json_is_real(json), "JSON float");
++			if (avro_double_set(datum, json_real_value(json))) return EINVAL;
++			return 0;
++		case AVRO_FLOAT:
++			check_param(EINVAL, json_is_real(json), "JSON float");
++			if (avro_float_set(datum, json_real_value(json))) return EINVAL;
++			return 0;
++		case AVRO_INT32:
++			check_param(EINVAL, json_is_integer(json), "JSON integer");
++			if (avro_int32_set(datum, json_integer_value(json))) return EINVAL;
++			return 0;
++		case AVRO_INT64:
++			check_param(EINVAL, json_is_integer(json), "JSON integer");
++			if (avro_int64_set(datum, json_integer_value(json))) return EINVAL;
++			return 0;
++		case AVRO_NULL:
++			check_param(EINVAL, json_is_null(json), "JSON null");
++			return 0;
++		case AVRO_STRING: {
++			check_param(EINVAL, json_is_string(json), "JSON string");
++			if (avro_string_set(datum, json_string_value(json))) return EINVAL;
++			return 0;
++		}
++		case AVRO_BYTES:
++		case AVRO_ARRAY:
++		case AVRO_ENUM:
++		case AVRO_FIXED:
++		case AVRO_MAP:
++		case AVRO_RECORD:
++		case AVRO_UNION:
++		default:
++			// TODO
++			avro_set_error("json_t_to_avro_value: unimplemented type");
++			return EINVAL;
++	}
++}
++
++static avro_datum_t json_t_to_avro_value(
++		const avro_schema_t schema, const json_t *json)
++{
++	avro_datum_t datum = avro_datum_from_schema(schema);
++	if (datum == NULL) return NULL;
++	int rval = json_t_to_avro_value_helper(schema, json, datum);
++	if (rval) {
++		avro_datum_decref(datum);
++		return NULL;
++	}
++	return datum;
++}
++
+ static void avro_schema_init(avro_schema_t schema, avro_type_t type)
+ {
+ 	schema->type = type;
+@@ -71,6 +130,7 @@ static int record_free_foreach(int i, struct avro_record_field_t *field,
+ 
+ 	avro_str_free(field->name);
+ 	avro_schema_decref(field->type);
++	avro_datum_decref(field->default_value);
+ 	avro_freet(struct avro_record_field_t, field);
+ 	return ST_DELETE;
+ }
+@@ -518,7 +578,8 @@ avro_schema_enum_symbol_append(const avro_schema_t enum_schema,
+ int
+ avro_schema_record_field_append(const avro_schema_t record_schema,
+ 				const char *field_name,
+-				const avro_schema_t field_schema)
++				const avro_schema_t field_schema,
++				const avro_datum_t default_value)
+ {
+ 	check_param(EINVAL, is_avro_schema(record_schema), "record schema");
+ 	check_param(EINVAL, is_avro_record(record_schema), "record schema");
+@@ -544,6 +605,7 @@ avro_schema_record_field_append(const avro_schema_t record_schema,
+ 	new_field->index = record->fields->num_entries;
+ 	new_field->name = avro_strdup(field_name);
+ 	new_field->type = avro_schema_incref(field_schema);
++	new_field->default_value = default_value;
+ 	st_insert(record->fields, record->fields->num_entries,
+ 		  (st_data_t) new_field);
+ 	st_insert(record->fields_byname, (st_data_t) new_field->name,
+@@ -645,6 +707,17 @@ const char *avro_schema_record_field_name(const avro_schema_t schema, int index)
+ 	return val.field->name;
+ }
+ 
++avro_datum_t avro_schema_record_field_default(
++    const avro_schema_t schema, int index)
++{
++	union {
++		st_data_t data;
++		struct avro_record_field_t *field;
++	} val;
++	st_lookup(avro_schema_to_record(schema)->fields, index, &val.data);
++	return val.field->default_value;
++}
++
+ avro_schema_t avro_schema_record_field_get_by_index
+ (const avro_schema_t record, int index)
+ {
+@@ -866,6 +939,7 @@ avro_schema_from_json_t(json_t *json, avro_schema_t *schema,
+ 				    json_array_get(json_fields, i);
+ 				json_t *json_field_name;
+ 				json_t *json_field_type;
++				json_t *json_default_value;
+ 				avro_schema_t json_field_type_schema;
+ 				int field_rval;
+ 
+@@ -896,11 +970,30 @@ avro_schema_from_json_t(json_t *json, avro_schema_t *schema,
+ 					avro_schema_decref(*schema);
+ 					return field_rval;
+ 				}
++				json_default_value =
++						json_object_get(json_field, "default");
++				avro_datum_t default_value = NULL;
++				if (json_default_value) {
++					avro_schema_t default_schema = json_field_type_schema;
++					if (json_field_type_schema->type == AVRO_UNION) {
++						// From the spec: "Default values for union fields correspond
++						// to the first schema in the union."
++						default_schema =
++								avro_schema_union_branch(json_field_type_schema, 0);
++					}
++					default_value =
++							json_t_to_avro_value(default_schema, json_default_value);
++					if (default_value == NULL) {
++						avro_schema_decref(*schema);
++						return EINVAL;
++					}
++				}
+ 				field_rval =
+ 				    avro_schema_record_field_append(*schema,
+ 								    json_string_value
+ 								    (json_field_name),
+-								    json_field_type_schema);
++										json_field_type_schema,
++										default_value);
+ 				avro_schema_decref(json_field_type_schema);
+ 				if (field_rval != 0) {
+ 					avro_schema_decref(*schema);
+@@ -1167,9 +1260,11 @@ avro_schema_t avro_schema_copy(avro_schema_t schema)
+ 				st_lookup(record_schema->fields, i, &val.data);
+ 				avro_schema_t type_copy =
+ 				    avro_schema_copy(val.field->type);
++				avro_datum_incref(val.field->default_value);
+ 				avro_schema_record_field_append(new_schema,
+ 								val.field->name,
+-								type_copy);
++								type_copy,
++								val.field->default_value);
+ 			}
+ 		}
+ 		break;
+diff --git a/avro-src-1.7.4/src/schema.h b/avro-src-1.7.4/src/schema.h
+index efeeac3..c887ef4 100644
+--- a/avro-src-1.7.4/lang/c/src/schema.h
++++ b/avro-src-1.7.4/lang/c/src/schema.h
+@@ -27,9 +27,7 @@ struct avro_record_field_t {
+ 	int index;
+ 	char *name;
+ 	avro_schema_t type;
+-	/*
+-	 * TODO: default values 
+-	 */
++	avro_datum_t default_value; // can be NULL
+ };
+ 
+ struct avro_record_schema_t {
+diff --git a/avro-src-1.7.4/tests/test_avro_data.c b/avro-src-1.7.4/tests/test_avro_data.c
+index 652ff16..535054a 100644
+--- a/avro-src-1.7.4/lang/c/tests/test_avro_data.c
++++ b/avro-src-1.7.4/lang/c/tests/test_avro_data.c
+@@ -353,8 +353,8 @@ static int test_null(void)
+ static int test_record(void)
+ {
+ 	avro_schema_t schema = avro_schema_record("person", NULL);
+-	avro_schema_record_field_append(schema, "name", avro_schema_string());
+-	avro_schema_record_field_append(schema, "age", avro_schema_int());
++	avro_schema_record_field_append(schema, "name", avro_schema_string(), NULL);
++	avro_schema_record_field_append(schema, "age", avro_schema_int(), NULL);
+ 
+ 	avro_datum_t datum = avro_record(schema);
+ 	avro_datum_t name_datum, age_datum;
+diff --git a/avro-src-1.7.4/tests/test_avro_schema.c b/avro-src-1.7.4/tests/test_avro_schema.c
+index e343add..99c7206 100644
+--- a/avro-src-1.7.4/lang/c/tests/test_avro_schema.c
++++ b/avro-src-1.7.4/lang/c/tests/test_avro_schema.c
+@@ -188,8 +188,8 @@ static int test_record(void)
+ {
+ 	avro_schema_t schema = avro_schema_record("person", NULL);
+ 
+-	avro_schema_record_field_append(schema, "name", avro_schema_string());
+-	avro_schema_record_field_append(schema, "age", avro_schema_int());
++	avro_schema_record_field_append(schema, "name", avro_schema_string(), NULL);
++	avro_schema_record_field_append(schema, "age", avro_schema_int(), NULL);
+ 
+ 	if (avro_schema_record_field_get_index(schema, "name") != 0) {
+ 		fprintf(stderr, "Incorrect index for \"name\" field\n");
+-- 
+2.1.3
+
