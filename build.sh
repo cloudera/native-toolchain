@@ -63,6 +63,7 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   # Upgrade rpath variable to catch current library location and possible future location
   FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64',-rpath,'$TOOLCHAIN_DEST_PATH/gcc-$GCC_VERSION'"
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
+  export CFLAGS="-fPIC"
   export CXXFLAGS="-static-libstdc++ -static-libgcc -std=c++11 -fPIC"
   export LDFLAGS="$FULL_RPATH $FULL_LPATH"
   export WITH_GCC="+gcc"
@@ -142,3 +143,13 @@ $SOURCE_DIR/source/avro/build.sh
 # Build Rapidjson
 ################################################################################
 $SOURCE_DIR/source/rapidjson/build.sh
+
+################################################################################
+# Build ZLib
+################################################################################
+$SOURCE_DIR/source/zlib/build.sh
+
+################################################################################
+# Build BZip2
+################################################################################
+$SOURCE_DIR/source/bzip2/build.sh
