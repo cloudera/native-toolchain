@@ -13,24 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-export GCC_VERSION=4.9.2
-export LLVM_VERSION=3.5.0
+# cleans and rebuilds thirdparty/. The Impala build environment must be set up
+# by bin/impala-config.sh before running this script.
 
-export AVRO_VERSION=1.7.4
-export BOOST_VERSION=1.57.0
-export BZIP2_VERSION=1.0.6
-export CYRUS_SASL_VERSION=2.1.23
-export GFLAGS_VERSION=2.0
-export GLOG_VERSION=0.3.2
-export GPERFTOOLS_VERSION=2.0
-export GTEST_VERSION=1.6.0
-export LIBEVENT_VERSION=1.4.15
-export LZ4_VERSION=svn
-export MINIKDC_VERSION=1.0.0
-export OPENLDAP_VERSION=2.4.25
-export RAPIDJSON_VERSION=0.11
-export RE2_VERSION=20130115
-export SNAPPY_VERSION=1.0.5
-export SQUEASEL_VERSION=3.3
-export THRIFT_VERSION=0.9.0
-export ZLIB_VERSION=1.2.8
+# Exit on non-true return value
+set -e
+# Exit on reference to uninitialized variable
+set -u
+
+source $SOURCE_DIR/functions.sh
+THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
+prepare $THIS_DIR
+
+if needs_build_package ; then
+  header $PACKAGE $PACKAGE_VERSION
+
+  ./autogen.sh >> $BUILD_LOG 2>&1
+  ./configure --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
+  make -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+
+  footer $PACKAGE $PACKAGE_VERSION
+fi

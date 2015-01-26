@@ -29,6 +29,8 @@ if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   BOOST_ROOT=$BUILD_DIR/boost-$BOOST_VERSION
+  ZLIB_ROOT=$BUILD_DIR/zlib-$ZLIB_VERSION
+  LIBEVENT_ROOT=$BUILD_DIR/libevent-$LIBEVENT_VERSION
 
   if [ -d "${PIC_LIB_PATH:-}" ]; then
     PIC_LIB_OPTIONS="--with-zlib=${PIC_LIB_PATH} "
@@ -38,6 +40,8 @@ if needs_build_package ; then
     --with-php=no --with-java=no --with-perl=no --with-erlang=no \
     --with-ruby=no --with-haskell=no --with-erlang=no --with-d=no \
     --with-boost=${BOOST_ROOT} \
+    --with-zlib=${ZLIB_ROOT} \
+    --with-libevent=${LIBEVENT_ROOT} \
     --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} >> $BUILD_LOG 2>&1
   make >> $BUILD_LOG 2>&1
   make install >> $BUILD_LOG 2>&1
