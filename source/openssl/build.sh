@@ -28,15 +28,9 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  # Disable everything except those protocols needed -- currently just Kerberos.
-  # Sasl does not have a --with-pic configuration.
-  CFLAGS="-fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" ./configure \
-    -with-openssl=$BUILD_DIR/openssl-$OPENSSL_VERSION \
-    --disable-sql --disable-otp --disable-ldap --disable-digest --with-saslauthd=no \
-    --prefix=$LOCAL_INSTALL --enable-static --enable-staticdlopen > $BUILD_LOG 2>&1
-  # the first time you do a make it fails, build again.
-  ( make || make -j${IMPALA_BUILD_THREADS:-4} ) >> $BUILD_LOG 2>&1
-  make install >> $BUILD_LOG 2>&1
+  CFLAGS="-fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" ./config shared zlib --prefix=$LOCAL_INSTALL #>> $BUILD_LOG 2>&1
+  make -j${IMPALA_BUILD_THREADS:-4} all
+  make install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi
