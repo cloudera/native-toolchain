@@ -28,9 +28,9 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  CFLAGS="-fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" ./config shared zlib --prefix=$LOCAL_INSTALL #>> $BUILD_LOG 2>&1
-  make -j${IMPALA_BUILD_THREADS:-4} all
-  make install
+  CFLAGS="-fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" ./config shared zlib --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
+  make -j${IMPALA_BUILD_THREADS:-4} all >> $BUILD_LOG 2>&1
+  make install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
 fi
