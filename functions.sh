@@ -98,12 +98,12 @@ function footer() {
 # to be build.
 function needs_build_package() {
 
-  if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
+  # First check if the build_all variable is set or not
+  : ${BUILD_ALL=1}
+
+  if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ] && [ $BUILD_ALL -eq 1 ]; then
     return 0
   fi
-
-  # First check if the build_all variable is set or not
-  : ${BUILD_ALL=0}
 
   ENV_NAME="BUILD_${PACKAGE}"
   ENV_NAME=${!ENV_NAME=0}
