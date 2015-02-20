@@ -59,5 +59,11 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
 
   make -j${IMPALA_BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
 
+  # Do not forget to install clang as well
+  if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
+    cd tools/clang
+    make -j${IMPALA_BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
+  fi
+
   footer $PACKAGE $PACKAGE_VERSION
 fi
