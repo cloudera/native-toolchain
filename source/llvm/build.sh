@@ -33,6 +33,13 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
     # CLANG
     tar zxf ../../cfe-$LLVM_VERSION.src.tar.gz
     mv cfe-$LLVM_VERSION.src clang
+
+    # CLANG Extras
+    cd clang/tools
+    tar zxf ../../../../clang-tools-extra-$LLVM_VERSION.src.tar.gz
+    mv clang-tools-extra-$LLVM_VERSION.src extra
+    cd ../../
+
     # COMPILER RT
     cd ../projects
     tar zxf ../../compiler-rt-$LLVM_VERSION.src.tar.gz
@@ -55,7 +62,7 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
       EXTRA_CONFIG_ARG=--with-python=`which python26`
   fi
 
-  ../$LLVM.src/configure $EXTRA_CONFIG_ARG --enable-targets=x86_64 --enable-terminfo=no --prefix=$LOCAL_INSTALL --with-pic --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION --with-extra-ld-options="$LDFLAGS" > $BUILD_LOG 2>&1
+  ../$LLVM.src/configure $EXTRA_CONFIG_ARG --enable-targets=x86_64,cpp --enable-optimized --enable-terminfo=no --prefix=$LOCAL_INSTALL --with-pic --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION --with-extra-ld-options="$LDFLAGS" > $BUILD_LOG 2>&1
 
   make -j${IMPALA_BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
 
