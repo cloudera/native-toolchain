@@ -28,26 +28,22 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
 
   # Crappy CentOS 5.6 doesnt like us to build Clang, so skip it
   RELEASE_NAME=`lsb_release -r -i`
-  if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
-    cd tools
-    # CLANG
-    tar zxf ../../cfe-$LLVM_VERSION.src.tar.gz
-    mv cfe-$LLVM_VERSION.src clang
+  cd tools
+  # CLANG
+  tar zxf ../../cfe-$LLVM_VERSION.src.tar.gz
+  mv cfe-$LLVM_VERSION.src clang
 
-    # CLANG Extras
-    cd clang/tools
-    tar zxf ../../../../clang-tools-extra-$LLVM_VERSION.src.tar.gz
-    mv clang-tools-extra-$LLVM_VERSION.src extra
-    cd ../../
+  # CLANG Extras
+  cd clang/tools
+  tar zxf ../../../../clang-tools-extra-$LLVM_VERSION.src.tar.gz
+  mv clang-tools-extra-$LLVM_VERSION.src extra
+  cd ../../
 
-    # COMPILER RT
-    cd ../projects
-    tar zxf ../../compiler-rt-$LLVM_VERSION.src.tar.gz
-    mv compiler-rt-$LLVM_VERSION.src compiler-rt-3.5.0.src.tar.gz
-    cd ../../
-  else
-    cd ..
-  fi
+  # COMPILER RT
+  cd ../projects
+  tar zxf ../../compiler-rt-$LLVM_VERSION.src.tar.gz
+  mv compiler-rt-$LLVM_VERSION.src compiler-rt-3.5.0.src.tar.gz
+  cd ../../
 
   mkdir -p build
   cd build
@@ -67,10 +63,8 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   make -j${IMPALA_BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
 
   # Do not forget to install clang as well
-  if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
-    cd tools/clang
-    make -j${IMPALA_BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
-  fi
+  cd tools/clang
+  make -j${IMPALA_BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
 fi
