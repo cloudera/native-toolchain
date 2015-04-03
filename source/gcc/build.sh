@@ -29,8 +29,8 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   mkdir build
   cd build
 
-  #../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL --enable-languages=c,c++ --disable-multilib >> $BUILD_LOG 2>&1
-  ../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL --enable-languages=c,c++ >> $BUILD_LOG 2>&1
+  ../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL --enable-languages=c,c++ --disable-multilib >> $BUILD_LOG 2>&1
+  #../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL --enable-languages=c,c++ >> $BUILD_LOG 2>&1
   make -j${IMPALA_BUILD_THREADS:-4}  >> $BUILD_LOG 2>&1
   make install >> $BUILD_LOG 2>&1
   footer $PACKAGE $PACKAGE_VERSION
