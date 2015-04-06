@@ -31,8 +31,7 @@ if needs_build_package ; then
   CFLAGS="-fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" ./config shared zlib --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
 
   # For some reason, the first build seems to fail sometimes
-  (make -j${IMPALA_BUILD_THREADS:-4} all || true) >> $BUILD_LOG 2>&1 
-  make -j${IMPALA_BUILD_THREADS:-4} all >> $BUILD_LOG 2>&1
+  make  all >> $BUILD_LOG 2>&1
   make install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
