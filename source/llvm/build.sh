@@ -20,11 +20,11 @@ prepare $THIS_DIR
 
 if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   header $PACKAGE $PACKAGE_VERSION
+  LLVM=llvm-$LLVM_VERSION
 
   # Cleanup possible leftovers
-  rm -Rf build
-
-  LLVM=llvm-$LLVM_VERSION
+  rm -Rf build-$LLVM
+  rm -Rf $LLVM.src
 
   # Crappy CentOS 5.6 doesnt like us to build Clang, so skip it
   RELEASE_NAME=`lsb_release -r -i`
@@ -45,8 +45,8 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   mv compiler-rt-$LLVM_VERSION.src compiler-rt-3.5.0.src.tar.gz
   cd ../../
 
-  mkdir -p build
-  cd build
+  mkdir -p build-$LLVM
+  cd build-$LLVM
 
   # Some ancient systems have another python installed
   PY_VERSION=`python -V 2>&1`
