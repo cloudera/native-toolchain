@@ -136,6 +136,7 @@ function build_dist_package() {
   set +e
   FPM_CMD=$(which fpm)
   YUM_CMD=$(which yum)
+  YAST_CMD=$(which yast)
   APT_CMD=$(which apt-get)
   set -e
 
@@ -149,6 +150,8 @@ function build_dist_package() {
     TARGET="rpm"
   elif [[ ! -z $APT_CMD ]]; then
     TARGET="deb"
+  elif [[ ! -z $YAST_CMD ]]; then
+    TARGET="rpm"
   else
     echo "Cannot build package"
     return 1
@@ -158,11 +161,6 @@ function build_dist_package() {
   TOOLCHAIN_PREFIX="/opt/bin-toolchain"
   DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}${WITH_GCC}"
   fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
-    -t rpm -n "${DIST_NAME}" -v "${PACKAGE_VERSION}${WITH_GCC}" -C $BUILD_DIR \
+    -t $TARGET -n "${DIST_NAME}" -v "${PACKAGE_VERSION}${WITH_GCC}" -C $BUILD_DIR \
     $LPACKAGE_VERSION
-
-  fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
-    -t deb -n "${DIST_NAME}" -v "${PACKAGE_VERSION}${WITH_GCC}" -C $BUILD_DIR \
-    $LPACKAGE_VERSION
-
 }
