@@ -69,9 +69,16 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   export WITH_GCC="+gcc"
 fi
 
-# Build LLVM
+################################################################################
+# LLVM
+################################################################################
+# Build Default LLVM
 $SOURCE_DIR/source/llvm/build.sh
 
+# Build Older LLVM
+LLVM_VERSION=3.3 $SOURCE_DIR/source/llvm/build.sh
+
+################################################################################
 # Once this is done proceed with the regular thirdparty build
 cd $SOURCE_DIR
 
