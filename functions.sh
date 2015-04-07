@@ -136,7 +136,7 @@ function build_dist_package() {
   set +e
   FPM_CMD=$(which fpm)
   YUM_CMD=$(which yum)
-  YAST_CMD=$(which yast)
+  RPM_CMD=$(which rpm)
   APT_CMD=$(which apt-get)
   set -e
 
@@ -150,7 +150,7 @@ function build_dist_package() {
     TARGET="rpm"
   elif [[ ! -z $APT_CMD ]]; then
     TARGET="deb"
-  elif [[ ! -z $YAST_CMD ]]; then
+  elif [[ ! -z $RPM_CMD ]]; then
     TARGET="rpm"
   else
     echo "Cannot build package"
