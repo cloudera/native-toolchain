@@ -14,7 +14,7 @@
 # limitations under the License.
 
 export GCC_VERSION=4.9.2
-export LLVM_VERSION=3.3.0
+export LLVM_VERSION=3.3
 
 export AVRO_VERSION=1.7.4
 export BOOST_VERSION=1.57.0
