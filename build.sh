@@ -78,7 +78,7 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   # Upgrade rpath variable to catch current library location and possible future location
   FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64',"
   FULL_RPATH="${FULL_RPATH}-rpath,'$TOOLCHAIN_DEST_PATH/gcc-$GCC_VERSION'"
-  FULL_RPATH="${FULL_RPATH}-rpath,'\$ORIGIN/../lib'"
+  FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
   export CFLAGS="-fPIC"
