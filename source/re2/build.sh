@@ -34,7 +34,7 @@ if needs_build_package ; then
   sed -i 's/LDFLAGS=-pthread/LDFLAGS+=-pthread/' Makefile
   sed -i 's/CXX=g\+\+/CXX?=g\+\+/' Makefile
   sed -i 's/prefix=\/usr/prefix?=\/usr/' Makefile
-  prefix=$LOCAL_INSTALL make -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  prefix=$LOCAL_INSTALL make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

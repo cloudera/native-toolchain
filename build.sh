@@ -21,6 +21,7 @@ set -e
 # Exit on reference to uninitialized variable
 set -u
 
+export BUILD_THREADS=`nproc`
 
 # SOURCE DIR for the current script
 export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"

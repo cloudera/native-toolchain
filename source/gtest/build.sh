@@ -29,7 +29,7 @@ if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   cmake -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} . >> $BUILD_LOG 2>&1
-  make -j${IMPALA_BUILD_THREADS:-4} >> $BUILD_LOG 2>&1
+  make -j${BUILD_THREADS:-4} >> $BUILD_LOG 2>&1
 
   # Gtest doesnt provide a install target so we make one
   mkdir -p $LOCAL_INSTALL/lib

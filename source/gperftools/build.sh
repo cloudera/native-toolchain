@@ -32,7 +32,7 @@ if needs_build_package ; then
   # we're not compiling the rest of our code to not omit frame pointers but it
   # still seems to generate useful profiling data.
   ./configure --enable-frame-pointers --with-pic --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
-  make -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

@@ -60,11 +60,11 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
 
   ../$LLVM.src/configure $EXTRA_CONFIG_ARG --enable-targets=x86_64,cpp --enable-optimized --enable-terminfo=no --prefix=$LOCAL_INSTALL --with-pic --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION --with-extra-ld-options="$LDFLAGS" > $BUILD_LOG 2>&1
 
-  make -j${IMPALA_BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
+  make -j${BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
 
   # Do not forget to install clang as well
   cd tools/clang
-  make -j${IMPALA_BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
+  make -j${BUILD_THREADS:-4} REQUIRES_RTTI=1 install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

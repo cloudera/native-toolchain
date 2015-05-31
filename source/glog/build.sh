@@ -31,7 +31,7 @@ if needs_build_package ; then
   GFLAGS_BUILD=$BUILD_DIR/gflags-$GFLAGS_VERSION
 
   ./configure --with-gflags=$GFLAGS_BUILD --with-pic --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
-  make -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

@@ -29,9 +29,9 @@ if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   ./configure --enable-slapd=no --enable-static --with-pic --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
-  make -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
-  make -j${IMPALA_BUILD_THREADS:-4} depend >> $BUILD_LOG 2>&1
-  make -j${IMPALA_BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  make -j${BUILD_THREADS:-4} depend >> $BUILD_LOG 2>&1
+  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

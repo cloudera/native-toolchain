@@ -35,7 +35,7 @@ if needs_build_package ; then
     --disable-sql --disable-otp --disable-ldap --disable-digest --with-saslauthd=no \
     --prefix=$LOCAL_INSTALL --enable-static --enable-staticdlopen > $BUILD_LOG 2>&1
   # the first time you do a make it fails, build again.
-  ( make || make -j${IMPALA_BUILD_THREADS:-4} ) >> $BUILD_LOG 2>&1
+  ( make || make -j${BUILD_THREADS:-4} ) >> $BUILD_LOG 2>&1
   make install >> $BUILD_LOG 2>&1
 
   footer $PACKAGE $PACKAGE_VERSION
