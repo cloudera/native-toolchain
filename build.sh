@@ -33,10 +33,6 @@ export TOOLCHAIN_DEST_PATH=/opt/bin-toolchain
 # Clean the complete build
 : ${CLEAN=0}
 
-# Package flag when not suing the system GCC
-: ${WITH_GCC=""}
-export WITH_GCC=$WITH_GCC
-
 if [ $CLEAN -eq 1 ]; then
   echo "Cleaning.."
   git clean -fdx $SOURCE_DIR
@@ -56,17 +52,29 @@ $SOURCE_DIR/source/gcc/build.sh
 : ${SYSTEM_GCC=0}
 
 if [[ $SYSTEM_GCC -eq 0 ]]; then
+  # Change compiler vars for packaging
+  export COMPILER="gcc"
+  export COMPILER_VERSION=$GCC_VERSION
+
   # Stage one is done, we can upgrade our compiler
   export CC="$BUILD_DIR/gcc-$GCC_VERSION/bin/gcc"
   export CXX="$BUILD_DIR/gcc-$GCC_VERSION/bin/g++"
 
+  # Update the destination path for the toolchain
+  export TOOLCHAIN_DEST_PATH="${TOOLCHAIN_DEST_PATH}/${COMPILER}-${COMPILER_VERSION}"
+
   # Upgrade rpath variable to catch current library location and possible future location
-  FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64',-rpath,'$TOOLCHAIN_DEST_PATH/gcc-$GCC_VERSION'"
+  FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64',"
+  FULL_RPATH="${FULL_RPATH}-rpath,'$TOOLCHAIN_DEST_PATH/gcc-$GCC_VERSION'"
+  FULL_RPATH="${FULL_RPATH}-rpath,'\$ORIGIN/../lib'"
+
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
   export CFLAGS="-fPIC"
   export CXXFLAGS="-static-libstdc++ -static-libgcc -std=c++11 -fPIC"
   export LDFLAGS="$FULL_RPATH $FULL_LPATH"
-  export WITH_GCC="+gcc"
+else
+  export COMPILER="gcc"
+  export COMPILER_VERSION="system"
 fi
 
 ################################################################################
@@ -75,8 +83,7 @@ fi
 # Build Default LLVM
 $SOURCE_DIR/source/llvm/build.sh
 
-# Build Older LLVM
-LLVM_VERSION=3.3 $SOURCE_DIR/source/llvm/build.sh
+LLVM_VERSION=3.5.1 $SOURCE_DIR/source/llvm/build.sh
 
 ################################################################################
 # Once this is done proceed with the regular thirdparty build

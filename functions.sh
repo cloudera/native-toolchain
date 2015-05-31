@@ -159,8 +159,13 @@ function build_dist_package() {
 
   # Build the package to $BUILD_DIR directory with the given version
   TOOLCHAIN_PREFIX="/opt/bin-toolchain"
-  DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}${WITH_GCC}"
+
+  # Append compiler and version to toolchain path
+  TOOLCHAIN_PREFIX="${TOOLCHAIN_PREFIX}/${COMPILER}-${COMPILER_VERSION}"
+
+  DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}"
   fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
-    -t $TARGET -n "${DIST_NAME}" -v "${PACKAGE_VERSION}${WITH_GCC}" -C $BUILD_DIR \
+    -t $TARGET -n "${DIST_NAME}" -v "${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+    -C $BUILD_DIR \
     $LPACKAGE_VERSION
 }
