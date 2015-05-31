@@ -27,7 +27,7 @@ if [[ $DEBUG -eq 1 ]]; then
   set -x
 fi
 
-export BUILD_THREADS=`nproc`
+export BUILD_THREADS=`grep -c ^processor /proc/cpuinfo`
 
 # SOURCE DIR for the current script
 export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
