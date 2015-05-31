@@ -21,6 +21,12 @@ set -e
 # Exit on reference to uninitialized variable
 set -u
 
+: ${DEBUG=0}
+
+if [[ $DEBUG -eq 1 ]]; then
+  set -x
+fi
+
 export BUILD_THREADS=`nproc`
 
 # SOURCE DIR for the current script
@@ -46,17 +52,22 @@ export BUILD_DIR=$SOURCE_DIR/build
 # Create a check directory containing a sentry file for each package
 mkdir -p $SOURCE_DIR/check
 
+# Flag to determine the system compiler is used
+: ${SYSTEM_GCC=0}
+
+if [[ $SYSTEM_GCC -eq 0 ]]; then
+  export COMPILER="gcc"
+  export COMPILER_VERSION=$GCC_VERSION
+else
+  export COMPILER="gcc"
+  export COMPILER_VERSION="system"
+fi
+
 # Now, start building the compilers first
 # Build GCC that is used to build LLVM
 $SOURCE_DIR/source/gcc/build.sh
 
-: ${SYSTEM_GCC=0}
-
 if [[ $SYSTEM_GCC -eq 0 ]]; then
-  # Change compiler vars for packaging
-  export COMPILER="gcc"
-  export COMPILER_VERSION=$GCC_VERSION
-
   # Stage one is done, we can upgrade our compiler
   export CC="$BUILD_DIR/gcc-$GCC_VERSION/bin/gcc"
   export CXX="$BUILD_DIR/gcc-$GCC_VERSION/bin/g++"
@@ -73,9 +84,6 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   export CFLAGS="-fPIC"
   export CXXFLAGS="-static-libstdc++ -static-libgcc -std=c++11 -fPIC"
   export LDFLAGS="$FULL_RPATH $FULL_LPATH"
-else
-  export COMPILER="gcc"
-  export COMPILER_VERSION="system"
 fi
 
 ################################################################################
