@@ -118,12 +118,19 @@ function needs_build_package() {
 # Check the package_name-version-patches directory and apply patches
 # depending on patch-level. Patches must be prepared that they can be
 # applied directly on the extracted source tree from within the source
-# (-p2).
+# (-p2 / -p1).
 function apply_patches() {
   if [[ -d $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches ]]; then
     echo "Apply patches..."
     for p in `find $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches -type f`; do
+      set +e
+      # Check if patch can be applied at -p2 first, then p1
       patch -p2 < $p >> $BUILD_LOG 2>&1
+      RET_VAL=$?
+      set -e
+      if [[ $RET_VAL -ne 0 ]]; then
+        patch -p1 < $p >> $BUILD_LOG 2>&1
+      fi
     done
   fi
 }
