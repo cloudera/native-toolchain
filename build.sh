@@ -223,5 +223,4 @@ all_deps=("llvm${LLVM_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
   "bzip2${BZIP2_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
   "gdb${GDB_VERSION}-${COMPILER}-${COMPILER_VERSION}"
   )
-echo ${all_deps[@]}
 build_meta_package "impala-deps" $all_deps
