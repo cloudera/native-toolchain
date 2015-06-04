@@ -146,6 +146,7 @@ function set_target_package_type() {
 
   if [[ -z $FPM_CMD ]]; then
     # No FPM installed, will not build packages
+    TARGET=
     return 0
   fi
 
@@ -169,6 +170,10 @@ function build_dist_package() {
   SOURCE_TYPE="dir"
   set_target_package_type
 
+  if [[ -z $TARGET ]]; then
+    return 0
+  fi
+
   DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}"
   fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
     -t $TARGET -n "${DIST_NAME}" -v "${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
@@ -184,6 +189,11 @@ function build_meta_package() {
   SOURCE_TYPE="empty"
 
   set_target_package_type
+
+  if [[ -z $TARGET ]]; then
+    return 0
+  fi
+
   DEPENDENCIES=""
   for dep in ${PACKAGES[@]}; do
     DEPENDENCIES="${DEPENDENCIES} -d ${dep}"
