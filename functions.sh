@@ -136,10 +136,7 @@ function apply_patches() {
 }
 
 
-# Build the RPM or DEB package depending on the operating system
-# Depends on the LOCAL_INSTALL variable containing the target
-# directory
-function build_dist_package() {
+function set_target_package_type() {
   set +e
   FPM_CMD=$(which fpm)
   YUM_CMD=$(which yum)
@@ -152,7 +149,6 @@ function build_dist_package() {
     return 0
   fi
 
-  SOURCE_TYPE="dir"
   if [[ ! -z $YUM_CMD  ]]; then
     TARGET="rpm"
   elif [[ ! -z $APT_CMD ]]; then
@@ -163,16 +159,36 @@ function build_dist_package() {
     echo "Cannot build package"
     return 1
   fi
+}
 
-  # Build the package to $BUILD_DIR directory with the given version
-  TOOLCHAIN_PREFIX="/opt/bin-toolchain"
 
-  # Append compiler and version to toolchain path
-  TOOLCHAIN_PREFIX="${TOOLCHAIN_PREFIX}/${COMPILER}-${COMPILER_VERSION}"
+# Build the RPM or DEB package depending on the operating system
+# Depends on the LOCAL_INSTALL variable containing the target
+# directory
+function build_dist_package() {
+  SOURCE_TYPE="dir"
+  set_target_package_type
 
   DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}"
   fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
     -t $TARGET -n "${DIST_NAME}" -v "${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
     -C $BUILD_DIR \
     $LPACKAGE_VERSION
+}
+
+# Given the assumption that all other build steps completed successfully, generate a meta
+# package that pulls in all dependencies.
+function build_meta_package() {
+  NAME=$1
+  PACKAGES=$2
+  SOURCE_TYPE="empty"
+
+  set_target_package_type
+  DEPENDENCIES=""
+  for dep in ${PACKAGES[@]}; do
+    DEPENDENCIES="${DEPENDENCIES} -d ${dep}"
+  done
+
+  fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX -s $SOURCE_TYPE \
+    ${DEPENDENCIES} -t $TARGET -n "impala-dependencies"
 }

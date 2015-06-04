@@ -63,6 +63,15 @@ else
   export COMPILER_VERSION="system"
 fi
 
+# Load functions
+source $SOURCE_DIR/functions.sh
+
+# Build the package to $BUILD_DIR directory with the given version
+TOOLCHAIN_PREFIX="/opt/bin-toolchain"
+
+# Append compiler and version to toolchain path
+export TOOLCHAIN_PREFIX="${TOOLCHAIN_PREFIX}/${COMPILER}-${COMPILER_VERSION}"
+
 # Now, start building the compilers first
 # Build GCC that is used to build LLVM
 $SOURCE_DIR/source/gcc/build.sh
@@ -184,3 +193,35 @@ $SOURCE_DIR/source/zlib/build.sh
 # Build BZip2
 ################################################################################
 $SOURCE_DIR/source/bzip2/build.sh
+
+################################################################################
+# Build GDB
+################################################################################
+$SOURCE_DIR/source/gdb/build.sh
+
+################################################################################
+# Finally, build the meta package
+################################################################################
+all_deps=("llvm${LLVM_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "gcc${GCC_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "openssl${OPENSSL_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "cyrus-sasl${CYRUS_SASL_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "boost${BOOST_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "libevent${LIBEVENT_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "thrift${THRIFT_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "gflags${GFLAGS_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "glog${GLOG_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "gperftools${GPERFTOOLS_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "gtest${GTEST_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "snappy${SNAPPY_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "lz4${LZ4_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "re2${RE2_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "openldap${OPENLDAP_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "avro${AVRO_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "rapidjson${RAPIDJSON_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "zlib${ZLIB_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "bzip2${BZIP2_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+  "gdb${GDB_VERSION}-${COMPILER}-${COMPILER_VERSION}"
+  )
+echo ${all_deps[@]}
+build_meta_package "impala-deps" $all_deps
