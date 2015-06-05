@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+export PLATFORM_VERSION=1
 
 export GCC_VERSION=4.9.2
 export LLVM_VERSION=3.3

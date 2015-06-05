@@ -176,7 +176,8 @@ function build_dist_package() {
 
   DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}"
   fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
-    -t $TARGET -n "${DIST_NAME}" -v "${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
+    -t $TARGET -n "${DIST_NAME}" \
+    -v "${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}-${PLATFORM_VERSION}" \
     -C $BUILD_DIR \
     $LPACKAGE_VERSION
 }
@@ -199,6 +200,8 @@ function build_meta_package() {
     DEPENDENCIES="${DEPENDENCIES} -d ${dep}"
   done
 
+  # Build the package
   fpm -f -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX -s $SOURCE_TYPE \
-    ${DEPENDENCIES} -t $TARGET -n "impala-dependencies"
+    ${DEPENDENCIES} -t $TARGET -n "impala-dependencies" \
+    -v "impala-dependencies-${PLATFORM_VERSION}"
 }
