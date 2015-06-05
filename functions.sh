@@ -149,6 +149,7 @@ function set_target_package_type() {
   FPM_CMD=$(which fpm)
   YUM_CMD=$(which yum)
   RPM_CMD=$(which rpm)
+  ZYPPER_CMD=$(which zypper)
   APT_CMD=$(which apt-get)
   set -e
 
@@ -158,10 +159,12 @@ function set_target_package_type() {
     return 0
   fi
 
-  if [[ ! -z $YUM_CMD  ]]; then
-    TARGET="rpm"
-  elif [[ ! -z $APT_CMD ]]; then
+  if [[ "$RELEASE_NAME" =~ Ubuntu ]]; then
     TARGET="deb"
+  elif [[ "$RELEASE_NAME" =~ Debian ]]; then
+    TARGET="deb"
+  elif [[ ! -z $YUM_CMD ]]; then
+    TARGET="rpm"
   elif [[ ! -z $RPM_CMD ]]; then
     TARGET="rpm"
   else

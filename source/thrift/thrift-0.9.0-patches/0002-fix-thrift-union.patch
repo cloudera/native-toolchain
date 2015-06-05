@@ -1,0 +1,401 @@
+From f76f2b539f76df7c90d582ffee4e77ec831fc9b9 Mon Sep 17 00:00:00 2001
+From: Alan Choi <alan@cloudera.com>
+Date: Mon, 11 Feb 2013 13:55:51 -0800
+Subject: [PATCH] This patch fixes the Thrift union issue (in thirdparty).
+
+Here's the description of the fix:
+
+Default field in an union should be treated as if it's optional:
+1. it should not be written to the wire if it has not been set
+2. exactly one field should be set.
+3. when comparing 2 union struct, the __isset flag should be examined.
+
+Added C++ union test in DebugProtoTest.
+Added Java and C++ test in ThriftTest.
+
+I've ran "make check" and it passes.
+---
+ .../compiler/cpp/src/generate/t_cpp_generator.cc   | 35 +++++++++++++++---
+ thrift-0.9.0/compiler/cpp/src/main.cc   | 13 +++++++
+ thrift-0.9.0/compiler/cpp/src/main.h    |  5 +++
+ .../thrift-0.9.0/compiler/cpp/src/thrifty.yy       |  3 ++
+ .../thrift-0.9.0/lib/cpp/test/DebugProtoTest.cpp   | 43 ++++++++++++++++++++++
+ .../lib/cpp/test/OptionalRequiredTest.cpp          |  1 -
+ .../org/apache/thrift/server/ServerTestBase.java   |  8 ++++
+ .../test/org/apache/thrift/test/TestClient.java    | 22 ++++++++++-
+ thrift-0.9.0/test/ThriftTest.thrift     | 12 ++++++
+ .../thrift-0.9.0/test/cpp/src/TestClient.cpp       | 13 +++++++
+ .../thrift-0.9.0/test/cpp/src/TestServer.cpp       | 18 +++++++++
+ 11 files changed, 164 insertions(+), 9 deletions(-)
+
+diff --git a/thrift-0.9.0/compiler/cpp/src/generate/t_cpp_generator.cc b/thrift-0.9.0/compiler/cpp/src/generate/t_cpp_generator.cc
+index 9b960bf..0ad3767 100644
+--- a/thrift-0.9.0/compiler/cpp/src/generate/t_cpp_generator.cc
++++ b/thrift-0.9.0/compiler/cpp/src/generate/t_cpp_generator.cc
+@@ -943,9 +943,16 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
+     out << " val) {" << endl << indent() <<
+       indent() << (*m_iter)->get_name() << " = val;" << endl;
+
+-    // assume all fields are required except optional fields.
+-    // for optional fields change __isset.name to true
+-    bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
++    // Clear default constructor to clear __isset flags if it is a union.
++    if (tstruct->is_union()) {
++      out <<
++        indent() <<
++        indent() << "__isset = _" << tstruct->get_name() << "__isset();" << endl;
++    }
++
++    // all non-required fields has "__isset.name".
++    // change __isset.name to true
++    bool is_optional = (*m_iter)->get_req() != t_field::T_REQUIRED;
+     if (is_optional) {
+       out <<
+         indent() <<
+@@ -966,7 +973,8 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
+     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+       // Most existing Thrift code does not use isset or optional/required,
+       // so we treat "default" fields as required.
+-      if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
++      // For union, "default" fields are treated as optional.
++      if (!tstruct->is_union() && (*m_iter)->get_req() != t_field::T_OPTIONAL) {
+         out <<
+           indent() << "if (!(" << (*m_iter)->get_name()
+                    << " == rhs." << (*m_iter)->get_name() << "))" << endl <<
+@@ -1377,13 +1385,16 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
+   indent_up();
+
+   out <<
+-    indent() << "uint32_t xfer = 0;" << endl;
++    indent() << "uint32_t xfer = 0;" << endl <<
++    indent() << "uint32_t fcnt = 0;" << endl;
+
+   indent(out) <<
+     "xfer += oprot->writeStructBegin(\"" << name << "\");" << endl;
+
+   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+-    bool check_if_set = (*f_iter)->get_req() == t_field::T_OPTIONAL ||
++    // Check __isset for union fields, exception fields and option fields.
++    bool check_if_set = tstruct->is_union() ||
++                        (*f_iter)->get_req() == t_field::T_OPTIONAL ||
+                         (*f_iter)->get_type()->is_xception();
+     if (check_if_set) {
+       out << endl << indent() << "if (this->__isset." << (*f_iter)->get_name() << ") {" << endl;
+@@ -1392,6 +1403,9 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
+       out << endl;
+     }
+
++    out <<
++      indent() << "++fcnt;" << endl;
++
+     // Write field header
+     out <<
+       indent() << "xfer += oprot->writeFieldBegin(" <<
+@@ -1415,6 +1429,15 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
+
+   out << endl;
+
++  if (tstruct->is_union()) {
++    // Union must have one set value.
++    out <<
++      indent() << "if (fcnt != 1) {" << endl <<
++      indent() << "    throw ::apache::thrift::TException(" <<
++      "\"Union must have one set value.\");" << endl <<
++      indent() << "}" << endl;
++  }
++
+   // Write the struct map
+   out <<
+     indent() << "xfer += oprot->writeFieldStop();" << endl <<
+diff --git a/thrift-0.9.0/compiler/cpp/src/main.cc b/thrift-0.9.0/compiler/cpp/src/main.cc
+index 3f085ae..5bb9c81 100644
+--- a/thrift-0.9.0/compiler/cpp/src/main.cc
++++ b/thrift-0.9.0/compiler/cpp/src/main.cc
+@@ -862,6 +862,19 @@ bool validate_throws(t_struct* throws) {
+ }
+
+ /**
++ * Check that all the elements of an union block are not REQUIRED.
++ */
++void validate_union(t_struct* tunion) {
++  const vector<t_field*>& fields = tunion->get_members();
++  vector<t_field*>::const_iterator f_iter;
++  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
++    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
++      throw "Union field " + (*f_iter)->get_name() + " must not be required";
++    }
++  }
++}
++
++/**
+  * Parses a program
+  */
+ void parse(t_program* program, t_program* parent_program) {
+diff --git a/thrift-0.9.0/compiler/cpp/src/main.h b/thrift-0.9.0/compiler/cpp/src/main.h
+index 9b7d82d..667fc43 100644
+--- a/thrift-0.9.0/compiler/cpp/src/main.h
++++ b/thrift-0.9.0/compiler/cpp/src/main.h
+@@ -68,6 +68,11 @@ void validate_field_value(t_field* field, t_const_value* cv);
+ bool validate_throws(t_struct* throws);
+
+ /**
++ * Check members of an union
++ */
++void validate_union(t_struct* tunion);
++
++/**
+  * Converts a string filename into a thrift program name
+  */
+ std::string program_name(std::string filename);
+diff --git a/thrift-0.9.0/compiler/cpp/src/thrifty.yy b/thrift-0.9.0/compiler/cpp/src/thrifty.yy
+index 696fd46..1c3bdc6 100644
+--- a/thrift-0.9.0/compiler/cpp/src/thrifty.yy
++++ b/thrift-0.9.0/compiler/cpp/src/thrifty.yy
+@@ -748,6 +748,9 @@ Struct:
+         $$->annotations_ = $7->annotations_;
+         delete $7;
+       }
++      if ($1 == struct_is_union) {
++        validate_union($$);
++      }
+     }
+
+ XsdAll:
+diff --git a/thrift-0.9.0/lib/cpp/test/DebugProtoTest.cpp b/thrift-0.9.0/lib/cpp/test/DebugProtoTest.cpp
+index 26cc1ea..a4ad33b 100644
+--- a/thrift-0.9.0/lib/cpp/test/DebugProtoTest.cpp
++++ b/thrift-0.9.0/lib/cpp/test/DebugProtoTest.cpp
+@@ -21,6 +21,19 @@
+ #include <cmath>
+ #include "gen-cpp/DebugProtoTest_types.h"
+ #include <thrift/protocol/TDebugProtocol.h>
++#include <thrift/protocol/TBinaryProtocol.h>
++#include <thrift/transport/TBufferTransports.h>
++
++using namespace apache::thrift;
++using namespace apache::thrift::transport;
++using namespace apache::thrift::protocol;
++
++template <typename Struct1, typename Struct2>
++void write_to_read(const Struct1 & w, Struct2 & r) {
++  TBinaryProtocol protocol(boost::shared_ptr<TTransport>(new TMemoryBuffer));
++  w.write(&protocol);
++  r.read(&protocol);
++}
+
+ int main() {
+   using std::cout;
+@@ -100,6 +113,36 @@ int main() {
+
+   cout << apache::thrift::ThriftDebugString(hm) << endl << endl;
+
++  // Union Test
++  TestUnion u1, u2;
++  u1.__set_i32_field(1);
++  u1.__set_string_field("abc");
++  write_to_read(u1, u2);
++  assert(u2.__isset.string_field);
++  assert(!u2.__isset.i32_field);
++  assert(strncmp(u2.string_field.c_str(), "abc", 3) == 0);
++
++  // Union test - setting more than one field will cause exception
++  bool has_exception = false;
++  try {
++    TestUnion u3, u4;
++    u3.__isset.i32_field = true;
++    u3.__isset.string_field = true;
++    write_to_read(u3, u4);
++  } catch (TException& exn) {
++    has_exception = true;
++  }
++  assert(has_exception);
++
++  // Union test - not setting any field will cause exception
++  has_exception = false;
++  try {
++    TestUnion u3, u4;
++    write_to_read(u3, u4);
++  } catch (TException& exn) {
++    has_exception = true;
++  }
++  assert(has_exception);
+
+   return 0;
+ }
+diff --git a/thrift-0.9.0/lib/cpp/test/OptionalRequiredTest.cpp b/thrift-0.9.0/lib/cpp/test/OptionalRequiredTest.cpp
+index ddafa81..8f2957d 100644
+--- a/thrift-0.9.0/lib/cpp/test/OptionalRequiredTest.cpp
++++ b/thrift-0.9.0/lib/cpp/test/OptionalRequiredTest.cpp
+@@ -61,7 +61,6 @@ void write_to_read(const Struct1 & w, Struct2 & r) {
+   r.read(&protocol);
+ }
+
+-
+ int main() {
+
+   cout << "This old school struct should have three fields." << endl;
+diff --git a/thrift-0.9.0/lib/java/test/org/apache/thrift/server/ServerTestBase.java b/thrift-0.9.0/lib/java/test/org/apache/thrift/server/ServerTestBase.java
+index 08b57e2..c644ffe 100644
+--- a/thrift-0.9.0/lib/java/test/org/apache/thrift/server/ServerTestBase.java
++++ b/thrift-0.9.0/lib/java/test/org/apache/thrift/server/ServerTestBase.java
+@@ -47,6 +47,7 @@ import thrift.test.Xception;
+ import thrift.test.Xception2;
+ import thrift.test.Xtruct;
+ import thrift.test.Xtruct2;
++import thrift.test.TUnion;
+
+ public abstract class ServerTestBase extends TestCase {
+
+@@ -273,6 +274,13 @@ public abstract class ServerTestBase extends TestCase {
+         throw new RuntimeException(ie);
+       }
+     }
++
++    public TUnion testUnion(TUnion thing) {
++      System.out.print("testUnion(" + thing + ")\n");
++      TUnion result = thing;
++      return result;
++    }
++
+   } // class TestHandler
+
+   private static final List<TProtocolFactory> PROTOCOLS = Arrays.asList(
+diff --git a/thrift-0.9.0/lib/java/test/org/apache/thrift/test/TestClient.java b/thrift-0.9.0/lib/java/test/org/apache/thrift/test/TestClient.java
+index 45369ba..8b6921e 100644
+--- a/thrift-0.9.0/lib/java/test/org/apache/thrift/test/TestClient.java
++++ b/thrift-0.9.0/lib/java/test/org/apache/thrift/test/TestClient.java
+@@ -125,6 +125,25 @@ public class TestClient {
+         } catch (TApplicationException tax) {
+           tax.printStackTrace();
+         }
++
++        /**
++         * UNION TEST
++         */
++        System.out.print("testUnion(string_field=abc)");
++        TUnion myunion = new TUnion();
++        myunion.setI32_field(123);
++        myunion.setString_field("abc");
++        TUnion res = testClient.testUnion(myunion);
++        System.out.print(" = \"" + res + "\"\n");
++        if (res.isSetI32_field()) {
++          System.out.println("FAILURE - i32_field is set\n");
++        }
++        if (!res.isSetString_field()) {
++          System.out.println("FAILURE - string_field is not set\n");
++        }
++        if (!res.getString_field().equals("abc")) {
++          System.out.println("FAILURE - unexpected string_field:" + res.getString_field() + "\n");
++        }
+
+         /**
+          * STRING TEST
+@@ -449,8 +468,7 @@ public class TestClient {
+                              Long.toString(onewayElapsedMillis) +
+                              "ms");
+         }
+-
+-
++
+         long stop = System.nanoTime();
+         long tot = stop-start;
+
+diff --git a/thrift-0.9.0/test/ThriftTest.thrift b/thrift-0.9.0/test/ThriftTest.thrift
+index 2be53fa..3b69b7e 100644
+--- a/thrift-0.9.0/test/ThriftTest.thrift
++++ b/thrift-0.9.0/test/ThriftTest.thrift
+@@ -120,6 +120,11 @@ struct OneField {
+   1: EmptyStruct field
+ }
+
++union TUnion {
++  1: string string_field;
++  2: i32 i32_field;
++}
++
+ service ThriftTest
+ {
+   /**
+@@ -282,6 +287,13 @@ service ThriftTest
+    * @param i32 secondsToSleep - the number of seconds to sleep
+    */
+   oneway void testOneway(1:i32 secondsToSleep)
++
++  /**
++   * Prints 'testUnion("{%s}")'
++   * @param TUnion thing - input TUnion
++   * @return TUnion - returns the TUnion 'thing'
++   */
++  TUnion testUnion(1: TUnion thing)
+ }
+
+ service SecondService
+diff --git a/thrift-0.9.0/test/cpp/src/TestClient.cpp b/thrift-0.9.0/test/cpp/src/TestClient.cpp
+index fbf04f0..fe29170 100644
+--- a/thrift-0.9.0/test/cpp/src/TestClient.cpp
++++ b/thrift-0.9.0/test/cpp/src/TestClient.cpp
+@@ -288,6 +288,7 @@ int main(int argc, char** argv) {
+     printf(" = %"PRId64"\n", i64);
+     if (i64 != -34359738368LL)
+         failCount++;
++
+     /**
+      * DOUBLE TEST
+      */
+@@ -298,6 +299,18 @@ int main(int argc, char** argv) {
+         failCount++;
+
+     /**
++     * UNION TEST
++     */
++    printf("testUnion()");
++    TUnion u1;
++    u1.__set_i32_field(123);
++    u1.__set_string_field("abc");
++    TUnion u2;
++    testClient.testUnion(u2, u1);
++    if (u1 != u2)
++        failCount++;
++
++    /**
+      * STRUCT TEST
+      */
+     printf("testStruct({\"Zero\", 1, -3, -5})");
+diff --git a/thrift-0.9.0/test/cpp/src/TestServer.cpp b/thrift-0.9.0/test/cpp/src/TestServer.cpp
+index c99fbac..ae3c766 100644
+--- a/thrift-0.9.0/test/cpp/src/TestServer.cpp
++++ b/thrift-0.9.0/test/cpp/src/TestServer.cpp
+@@ -135,6 +135,18 @@ class TestHandler : public ThriftTestIf {
+     out = thing;
+   }
+
++  void testUnion(TUnion &out, const TUnion &thing) {
++    printf("testUnion({");
++    if (thing.__isset.string_field) {
++      printf("string_field=%s", thing.string_field.c_str());
++    }
++    if (thing.__isset.i32_field) {
++      printf("i32_field=%d", thing.i32_field);
++    }
++    printf("})\n");
++    out = thing;
++  }
++
+   void testSet(set<int32_t> &out, const set<int32_t> &thing) {
+     printf("testSet({");
+     set<int32_t>::const_iterator s_iter;
+@@ -418,6 +430,12 @@ public:
+     cob(res);
+   }
+
++  virtual void testUnion(std::tr1::function<void(TUnion  const& _return)> cob, const TUnion & thing) {
++    TUnion res;
++    _delegate->testUnion(res, thing);
++    cob(res);
++  }
++
+   virtual void testSet(std::tr1::function<void(std::set<int32_t>  const& _return)> cob, const std::set<int32_t> & thing) {
+     std::set<int32_t> res;
+     _delegate->testSet(res, thing);
+--
+1.9.3

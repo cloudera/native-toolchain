@@ -1,0 +1,195 @@
+From e0ad25def29e4ab2a3b610d4ab9bae7adf3f7ecd Mon Sep 17 00:00:00 2001
+From: Henry Robinson <henry@cloudera.com>
+Date: Fri, 18 Jan 2013 15:48:51 -0800
+Subject: [PATCH] Reverting THRIFT-1773 (Python 2.4 incompatibility)
+
+---
+ .../compiler/cpp/src/generate/t_py_generator.cc        |  4 ++--
+ .../thrift-0.9.0/lib/py/src/server/THttpServer.py      |  2 +-
+ .../lib/py/src/server/TProcessPoolServer.py            |  6 +++---
+ thirdparty/thrift-0.9.0/lib/py/src/server/TServer.py   | 18 +++++++++---------
+ .../thrift-0.9.0/lib/py/src/transport/TSSLSocket.py    |  6 +++---
+ 5 files changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/thrift-0.9.0/compiler/cpp/src/generate/t_py_generator.cc b/thrift-0.9.0/compiler/cpp/src/generate/t_py_generator.cc
+index 08f2e68..8d07a13 100644
+--- a/thrift-0.9.0/compiler/cpp/src/generate/t_py_generator.cc
++++ b/thrift-0.9.0/compiler/cpp/src/generate/t_py_generator.cc
+@@ -1792,7 +1792,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
+         indent() << "  error.raiseException()" << endl;
+       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+         f_service_ <<
+-          indent() << "except " << type_name((*x_iter)->get_type()) << " as " << (*x_iter)->get_name() << ":" << endl;
++          indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
+         if (!tfunction->is_oneway()) {
+           indent_up();
+           f_service_ <<
+@@ -1847,7 +1847,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
+       indent_down();
+       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+         f_service_ <<
+-          indent() << "except " << type_name((*x_iter)->get_type()) << " as " << (*x_iter)->get_name() << ":" << endl;
++          indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
+         if (!tfunction->is_oneway()) {
+           indent_up();
+           f_service_ <<
+diff --git a/thrift-0.9.0/lib/py/src/server/THttpServer.py b/thrift-0.9.0/lib/py/src/server/THttpServer.py
+index 6f92173..be54bab 100644
+--- a/thrift-0.9.0/lib/py/src/server/THttpServer.py
++++ b/thrift-0.9.0/lib/py/src/server/THttpServer.py
+@@ -73,7 +73,7 @@ class THttpServer(TServer.TServer):
+         oprot = thttpserver.outputProtocolFactory.getProtocol(otrans)
+         try:
+           thttpserver.processor.process(iprot, oprot)
+-        except ResponseException as exn:
++        except ResponseException, exn:
+           exn.handler(self)
+         else:
+           self.send_response(200)
+diff --git a/thrift-0.9.0/lib/py/src/server/TProcessPoolServer.py b/thrift-0.9.0/lib/py/src/server/TProcessPoolServer.py
+index 86c4312..7a695a8 100644
+--- a/thrift-0.9.0/lib/py/src/server/TProcessPoolServer.py
++++ b/thrift-0.9.0/lib/py/src/server/TProcessPoolServer.py
+@@ -59,7 +59,7 @@ class TProcessPoolServer(TServer):
+                 self.serveClient(client)
+             except (KeyboardInterrupt, SystemExit):
+                 return 0
+-            except Exception as x:
++            except Exception, x:
+                 logging.exception(x)
+
+     def serveClient(self, client):
+@@ -74,7 +74,7 @@ class TProcessPoolServer(TServer):
+                 self.processor.process(iprot, oprot)
+         except TTransportException, tx:
+             pass
+-        except Exception as x:
++        except Exception, x:
+             logging.exception(x)
+
+         itrans.close()
+@@ -106,7 +106,7 @@ class TProcessPoolServer(TServer):
+                 break
+             except (SystemExit, KeyboardInterrupt):
+                 break
+-            except Exception as x:
++            except Exception, x:
+                 logging.exception(x)
+
+         self.isRunning.value = False
+diff --git a/thrift-0.9.0/lib/py/src/server/TServer.py b/thrift-0.9.0/lib/py/src/server/TServer.py
+index 97097cc..2f24842 100644
+--- a/thrift-0.9.0/lib/py/src/server/TServer.py
++++ b/thrift-0.9.0/lib/py/src/server/TServer.py
+@@ -84,7 +84,7 @@ class TSimpleServer(TServer):
+           self.processor.process(iprot, oprot)
+       except TTransport.TTransportException, tx:
+         pass
+-      except Exception as x:
++      except Exception, x:
+         logging.exception(x)
+
+       itrans.close()
+@@ -108,7 +108,7 @@ class TThreadedServer(TServer):
+         t.start()
+       except KeyboardInterrupt:
+         raise
+-      except Exception as x:
++      except Exception, x:
+         logging.exception(x)
+
+   def handle(self, client):
+@@ -121,7 +121,7 @@ class TThreadedServer(TServer):
+         self.processor.process(iprot, oprot)
+     except TTransport.TTransportException, tx:
+       pass
+-    except Exception as x:
++    except Exception, x:
+       logging.exception(x)
+
+     itrans.close()
+@@ -161,7 +161,7 @@ class TThreadPoolServer(TServer):
+         self.processor.process(iprot, oprot)
+     except TTransport.TTransportException, tx:
+       pass
+-    except Exception as x:
++    except Exception, x:
+       logging.exception(x)
+
+     itrans.close()
+@@ -174,7 +174,7 @@ class TThreadPoolServer(TServer):
+         t = threading.Thread(target=self.serveThread)
+         t.setDaemon(self.daemon)
+         t.start()
+-      except Exception as x:
++      except Exception, x:
+         logging.exception(x)
+
+     # Pump the socket for clients
+@@ -183,7 +183,7 @@ class TThreadPoolServer(TServer):
+       try:
+         client = self.serverTransport.accept()
+         self.clients.put(client)
+-      except Exception as x:
++      except Exception, x:
+         logging.exception(x)
+
+
+@@ -208,7 +208,7 @@ class TForkingServer(TServer):
+     def try_close(file):
+       try:
+         file.close()
+-      except IOError as e:
++      except IOError, e:
+         logging.warning(e, exc_info=True)
+
+     self.serverTransport.listen()
+@@ -242,7 +242,7 @@ class TForkingServer(TServer):
+                 self.processor.process(iprot, oprot)
+             except TTransport.TTransportException, tx:
+               pass
+-            except Exception as e:
++            except Exception, e:
+               logging.exception(e)
+               ecode = 1
+           finally:
+@@ -253,7 +253,7 @@ class TForkingServer(TServer):
+
+       except TTransport.TTransportException, tx:
+         pass
+-      except Exception as x:
++      except Exception, x:
+         logging.exception(x)
+
+   def collect_children(self):
+diff --git a/thrift-0.9.0/lib/py/src/transport/TSSLSocket.py b/thrift-0.9.0/lib/py/src/transport/TSSLSocket.py
+index e0ff4f9..6d79ac6 100644
+--- a/thrift-0.9.0/lib/py/src/transport/TSSLSocket.py
++++ b/thrift-0.9.0/lib/py/src/transport/TSSLSocket.py
+@@ -86,13 +86,13 @@ class TSSLSocket(TSocket.TSocket):
+         self.handle.settimeout(self._timeout)
+         try:
+           self.handle.connect(ip_port)
+-        except socket.error as e:
++        except socket.error, e:
+           if res is not res0[-1]:
+             continue
+           else:
+             raise e
+         break
+-    except socket.error as e:
++    except socket.error, e:
+       if self._unix_socket:
+         message = 'Could not connect to secure socket %s' % self._unix_socket
+       else:
+@@ -188,7 +188,7 @@ class TSSLServerSocket(TSocket.TServerSocket):
+     try:
+       client = ssl.wrap_socket(plain_client, certfile=self.certfile,
+                       server_side=True, ssl_version=self.SSL_VERSION)
+-    except ssl.SSLError as ssl_exc:
++    except ssl.SSLError, ssl_exc:
+       # failed handshake/ssl wrap, close socket to client
+       plain_client.close()
+       # raise ssl_exc
+--
+1.9.3
