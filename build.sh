@@ -63,6 +63,9 @@ else
   export COMPILER_VERSION="system"
 fi
 
+# Check Platform
+RELEASE_NAME=`lsb_release -r -i`
+
 # Load functions
 source $SOURCE_DIR/functions.sh
 
@@ -91,7 +94,7 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
   export CFLAGS="-fPIC"
-  export CXXFLAGS="-static-libstdc++ -static-libgcc -std=c++11 -fPIC"
+  export CXXFLAGS="-static-libstdc++ -static-libgcc -fPIC"
   export LDFLAGS="$FULL_RPATH $FULL_LPATH"
 fi
 
@@ -197,7 +200,9 @@ $SOURCE_DIR/source/bzip2/build.sh
 ################################################################################
 # Build GDB
 ################################################################################
-$SOURCE_DIR/source/gdb/build.sh
+if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
+  $SOURCE_DIR/source/gdb/build.sh
+fi
 
 ################################################################################
 # Finally, build the meta package
@@ -220,7 +225,10 @@ all_deps=("llvm${LLVM_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
   "avro${AVRO_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
   "rapidjson${RAPIDJSON_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
   "zlib${ZLIB_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
-  "bzip2${BZIP2_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
-  "gdb${GDB_VERSION}-${COMPILER}-${COMPILER_VERSION}"
-  )
+  "bzip2${BZIP2_VERSION}-${COMPILER}-${COMPILER_VERSION}")
+
+if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
+  all_deps += ("gdb${GDB_VERSION}-${COMPILER}-${COMPILER_VERSION}")
+fi
+
 build_meta_package "impala-deps" $all_deps

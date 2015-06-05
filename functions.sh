@@ -87,6 +87,14 @@ function footer() {
   # Build Package
   build_dist_package >> $BUILD_LOG 2>&1
 
+  # For all binaries of the package symlink to bin
+  if [[ -d $BUILD_DIR/$LPACKAGE_VERSION/bin ]]; then
+    mkdir -p $BUILD_DIR/bin
+    for p in `ls $BUILD_DIR/$LPACKAGE_VERSION/bin`; do
+      ln -f -s $BUILD_DIR/$LPACKAGE_VERSION/bin/$p $BUILD_DIR/bin/$p
+    done
+  fi
+
   touch $SOURCE_DIR/check/$1-$2
   echo "# Build Complete ${1}-${2}"
   echo "#######################################################################"
@@ -135,7 +143,7 @@ function apply_patches() {
   fi
 }
 
-
+# Determines what the platforms packaging type is
 function set_target_package_type() {
   set +e
   FPM_CMD=$(which fpm)
