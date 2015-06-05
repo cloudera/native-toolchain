@@ -64,7 +64,7 @@ else
 fi
 
 # Check Platform
-RELEASE_NAME=`lsb_release -r -i`
+export RELEASE_NAME=`lsb_release -r -i`
 
 # Load functions
 source $SOURCE_DIR/functions.sh
