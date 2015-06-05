@@ -35,7 +35,7 @@ export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
 # Load all common version numbers for the thirdparty dependencies
 source $SOURCE_DIR/platform.sh
 
-export TOOLCHAIN_DEST_PATH=/opt/bin-toolchain
+export TOOLCHAIN_DEST_PATH=/opt/cloudera-bin-toolchain
 
 # Clean the complete build
 : ${CLEAN=0}
