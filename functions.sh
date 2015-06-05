@@ -199,6 +199,6 @@ function build_meta_package() {
     DEPENDENCIES="${DEPENDENCIES} -d ${dep}"
   done
 
-  fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX -s $SOURCE_TYPE \
+  fpm -f -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX -s $SOURCE_TYPE \
     ${DEPENDENCIES} -t $TARGET -n "impala-dependencies"
 }

@@ -29,6 +29,11 @@ if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   ./configure --prefix=$LOCAL_INSTALL > $BUILD_LOG 2>&1
+
+  # Some build machines might not have makeinfo
+  sed -i 's/MAKEINFO = .*missing makeinfo$/MAKEINFO = \/bin\/true/' Makefile
+  sed -i 's/MAKEINFO = @MAKEINFO@$/MAKEINFO = \/bin\/true/' gdb/Makefile.in
+
   make -j${BUILD_THREADS:-4} >> $BUILD_LOG 2>&1
   make install >> $BUILD_LOG 2>&1
 
