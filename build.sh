@@ -104,7 +104,7 @@ fi
 # Build Default LLVM
 $SOURCE_DIR/source/llvm/build.sh
 
-LLVM_VERSION=3.5.1 $SOURCE_DIR/source/llvm/build.sh
+#LLVM_VERSION=3.5.1 $SOURCE_DIR/source/llvm/build.sh
 
 ################################################################################
 # Once this is done proceed with the regular thirdparty build
@@ -228,7 +228,7 @@ all_deps=("llvm${LLVM_VERSION}-${COMPILER}-${COMPILER_VERSION}" \
   "bzip2${BZIP2_VERSION}-${COMPILER}-${COMPILER_VERSION}")
 
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
-  all_deps += ("gdb${GDB_VERSION}-${COMPILER}-${COMPILER_VERSION}")
+  all_deps+=("gdb${GDB_VERSION}-${COMPILER}-${COMPILER_VERSION}")
 fi
 
 build_meta_package "impala-deps" $all_deps
