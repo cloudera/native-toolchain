@@ -27,6 +27,20 @@ function prepare() {
   # Replace potential - with _
   PACKAGE_VERSION="${PACKAGE_VERSION//-/_}"
   PACKAGE_VERSION="${!PACKAGE_VERSION}"
+
+  # Regex to match patch level
+  regex="(.*)-p([[:digit:]]+)$"
+
+  # Extract the patch level
+  if [[ $PACKAGE_VERSION =~ $regex ]]; then
+    export PATCH_LEVEL="${BASH_REMATCH[2]}"
+    export PATCH_VERSION="-p${PATCH_LEVEL}"
+    export PACKAGE_VERSION="${BASH_REMATCH[1]}"
+  else
+    export PATCH_LEVEL=
+    export PATCH_VERSION=
+  fi
+
   PACKAGE_STRING="$PACKAGE-$PACKAGE_VERSION"
 }
 
@@ -43,7 +57,7 @@ function header() {
   # Build name
   LPACKAGE_VERSION=$LPACKAGE-$2
 
-  LOCAL_INSTALL=$BUILD_DIR/$LPACKAGE-$2
+  LOCAL_INSTALL=$BUILD_DIR/$LPACKAGE-$2${PATCH_VERSION}
   BUILD_LOG=$SOURCE_DIR/check/$LPACKAGE-$2.log
 
   # Extract the sources
@@ -88,10 +102,10 @@ function footer() {
   build_dist_package >> $BUILD_LOG 2>&1
 
   # For all binaries of the package symlink to bin
-  if [[ -d $BUILD_DIR/$LPACKAGE_VERSION/bin ]]; then
+  if [[ -d $BUILD_DIR/${LPACKAGE_VERSION}${PATCH_VERSION}/bin ]]; then
     mkdir -p $BUILD_DIR/bin
-    for p in `ls $BUILD_DIR/$LPACKAGE_VERSION/bin`; do
-      ln -f -s $BUILD_DIR/$LPACKAGE_VERSION/bin/$p $BUILD_DIR/bin/$p
+    for p in `ls $BUILD_DIR/$LPACKAGE_VERSION$PATCH_VERSION/bin`; do
+      ln -f -s $BUILD_DIR/${LPACKAGE_VERSION}${PATCH_VERSION}/bin/$p $BUILD_DIR/bin/$p
     done
   fi
 
@@ -129,8 +143,10 @@ function needs_build_package() {
 # (-p2 / -p1).
 function apply_patches() {
   if [[ -d $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches ]]; then
-    echo "Apply patches..."
+    echo "Apply patches up to ${PATCH_LEVEL}"
+    INIT_VAL=1
     for p in `find $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches -type f`; do
+      echo "Applying patch ${INIT_VAL}..."
       set +e
       # Check if patch can be applied at -p2 first, then p1
       patch -p2 < $p >> $BUILD_LOG 2>&1
@@ -138,6 +154,11 @@ function apply_patches() {
       set -e
       if [[ $RET_VAL -ne 0 ]]; then
         patch -p1 < $p >> $BUILD_LOG 2>&1
+      fi
+      INIT_VAL=$(($INIT_VAL + 1))
+      if [[ $INIT_VAL -gt $PATCH_LEVEL ]]; then
+        echo "All required patches applied."
+        return 0
       fi
     done
   fi
@@ -185,10 +206,10 @@ function build_dist_package() {
     return 0
   fi
 
-  DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}"
+  DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"
   fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
     -t $TARGET -n "${DIST_NAME}" \
-    -v "${PACKAGE_VERSION}-${COMPILER}-${COMPILER_VERSION}-${PLATFORM_VERSION}" \
+    -v "${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}-${PLATFORM_VERSION}" \
     -C $BUILD_DIR \
     $LPACKAGE_VERSION
 }
