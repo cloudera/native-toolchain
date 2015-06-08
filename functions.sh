@@ -218,7 +218,8 @@ function build_dist_package() {
 # package that pulls in all dependencies.
 function build_meta_package() {
   NAME=$1
-  PACKAGES=$2
+  shift
+  PACKAGES=("${@}")
   SOURCE_TYPE="empty"
 
   set_target_package_type
