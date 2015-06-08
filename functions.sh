@@ -211,7 +211,7 @@ function build_dist_package() {
     -t $TARGET -n "${DIST_NAME}" \
     -v "${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}-${PLATFORM_VERSION}" \
     -C $BUILD_DIR \
-    $LPACKAGE_VERSION
+    ${LPACKAGE_VERSION}${PATCH_VERSION}
 }
 
 # Given the assumption that all other build steps completed successfully, generate a meta
