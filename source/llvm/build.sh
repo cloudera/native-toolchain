@@ -42,7 +42,7 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   # COMPILER RT
   cd ../projects
   tar zxf ../../compiler-rt-$LLVM_VERSION.src.tar.gz
-  mv compiler-rt-$LLVM_VERSION.src compiler-rt-3.5.0.src.tar.gz
+  mv compiler-rt-$LLVM_VERSION.src compiler-rt
   cd ../../
 
   mkdir -p build-$LLVM
