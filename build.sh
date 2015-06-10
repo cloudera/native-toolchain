@@ -231,4 +231,4 @@ if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
   all_deps+=("gdb${GDB_VERSION}-${COMPILER}-${COMPILER_VERSION}")
 fi
 
-build_meta_package "impala-deps" "${all_deps[@]}"
+build_meta_package "impala-dependencies" "${all_deps[@]}"

@@ -235,6 +235,6 @@ function build_meta_package() {
 
   # Build the package
   fpm -f -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX -s $SOURCE_TYPE \
-    ${DEPENDENCIES} -t $TARGET -n "impala-dependencies" \
-    -v "impala-dependencies-${PLATFORM_VERSION}"
+    ${DEPENDENCIES} -t $TARGET -n "${NAME}" \
+    -v "${NAME}-${PLATFORM_VERSION}"
 }
