@@ -205,6 +205,11 @@ if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
 fi
 
 ################################################################################
+# Build CMake
+################################################################################
+$SOURCE_DIR/source/cmake/build.sh
+
+################################################################################
 # Finally, build the meta package
 ################################################################################
 all_deps=( "llvm${LLVM_VERSION}-${COMPILER}-${COMPILER_VERSION}"
@@ -225,7 +230,9 @@ all_deps=( "llvm${LLVM_VERSION}-${COMPILER}-${COMPILER_VERSION}"
   "avro${AVRO_VERSION}-${COMPILER}-${COMPILER_VERSION}"
   "rapidjson${RAPIDJSON_VERSION}-${COMPILER}-${COMPILER_VERSION}"
   "zlib${ZLIB_VERSION}-${COMPILER}-${COMPILER_VERSION}"
-  "bzip2${BZIP2_VERSION}-${COMPILER}-${COMPILER_VERSION}")
+  "bzip2${BZIP2_VERSION}-${COMPILER}-${COMPILER_VERSION}"
+  "cmake${CMAKE_VERSION}-${COMPILER}-${COMPILER_VERSION}"
+)
 
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
   all_deps+=("gdb${GDB_VERSION}-${COMPILER}-${COMPILER_VERSION}")
