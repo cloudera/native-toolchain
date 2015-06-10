@@ -37,7 +37,7 @@ if needs_build_package ; then
   fi
   JAVA_PREFIX=${LOCAL_INSTALL}/java PY_PREFIX=${LOCAL_INSTALL}/python \
     ./configure --with-pic --prefix=${LOCAL_INSTALL} \
-    --with-php=no --with-java=no --with-perl=no --with-erlang=no \
+    --with-php=no --with-java=no --with-perl=no --with-erlang=no --with-csharp=no \
     --with-ruby=no --with-haskell=no --with-erlang=no --with-d=no \
     --with-boost=${BOOST_ROOT} \
     --with-zlib=${ZLIB_ROOT} \
