@@ -26,11 +26,13 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   ./contrib/download_prerequisites
 
   cd ..
-  mkdir build
+  mkdir -p build
   cd build
 
-  ../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL --enable-languages=c,c++ --disable-multilib >> $BUILD_LOG 2>&1
-  #../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL --enable-languages=c,c++ >> $BUILD_LOG 2>&1
+  # Omitting the frame pointer is for debugability
+  ../gcc-$GCC_VERSION/configure --enable-frame-pointer --prefix=$LOCAL_INSTALL \
+    --enable-cxx-flags='-fno-omit-frame-pointer' \
+    --enable-languages=c,c++ --disable-multilib >> $BUILD_LOG 2>&1
   make -j${BUILD_THREADS:-4}  >> $BUILD_LOG 2>&1
   make install >> $BUILD_LOG 2>&1
   footer $PACKAGE $PACKAGE_VERSION
