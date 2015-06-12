@@ -99,10 +99,27 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
 fi
 
 ################################################################################
+# Build Python
+################################################################################
+PYTHON_VERSION=2.7.10 $SOURCE_DIR/source/python/build.sh
+
+################################################################################
+# Build CMake
+################################################################################
+$SOURCE_DIR/source/cmake/build.sh
+
+################################################################################
 # LLVM
 ################################################################################
+
 # Build Default LLVM
 $SOURCE_DIR/source/llvm/build.sh
+
+# CentOS 5 can't build trunk LLVM due to missing perf counter
+if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
+  #Build Trunk LLVM
+  LLVM_VERSION=trunk $SOURCE_DIR/source/llvm/build.sh
+fi
 
 #LLVM_VERSION=3.5.1 $SOURCE_DIR/source/llvm/build.sh
 
@@ -203,11 +220,6 @@ $SOURCE_DIR/source/bzip2/build.sh
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
   $SOURCE_DIR/source/gdb/build.sh
 fi
-
-################################################################################
-# Build CMake
-################################################################################
-$SOURCE_DIR/source/cmake/build.sh
 
 ################################################################################
 # Finally, build the meta package
