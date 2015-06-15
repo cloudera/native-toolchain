@@ -93,8 +93,8 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
-  export CFLAGS="-fPIC"
-  export CXXFLAGS="-static-libstdc++ -fPIC"
+  export CFLAGS="-fPIC -O3 -g"
+  export CXXFLAGS="-static-libstdc++ -fPIC -O3 -g"
   export LDFLAGS="$FULL_RPATH $FULL_LPATH"
 fi
 
