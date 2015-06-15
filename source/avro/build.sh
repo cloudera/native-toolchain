@@ -32,7 +32,7 @@ if needs_build_package ; then
 
   mkdir -p build
   cd build
-  cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL .. >> $BUILD_LOG 2>&1
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL .. >> $BUILD_LOG 2>&1
   make -C . -j${BUILD_THREADS:-4} >> $BUILD_LOG 2>&1
 
   # Different versions of CMake produce different locations for the avro-c.pc file
