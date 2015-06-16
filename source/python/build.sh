@@ -30,6 +30,6 @@ if needs_build_package ; then
 
   LDFLAGS= wrap ./configure --prefix=$LOCAL_INSTALL
   wrap make -j${BUILD_THREADS:-4}
-  warp make install
+  wrap make install
   footer $PACKAGE $PACKAGE_VERSION
 fi
