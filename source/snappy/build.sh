@@ -29,8 +29,8 @@ if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   #./autogen.sh
-  ./configure --with-pic --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
-  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  wrap ./configure --with-pic --prefix=$LOCAL_INSTALL
+  wrap make -j${BUILD_THREADS:-4} install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

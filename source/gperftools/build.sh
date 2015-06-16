@@ -31,8 +31,8 @@ if needs_build_package ; then
   # TODO: google perf tools indicates this might be necessary on 64 bit systems.
   # we're not compiling the rest of our code to not omit frame pointers but it
   # still seems to generate useful profiling data.
-  ./configure --enable-frame-pointers --with-pic --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
-  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  wrap ./configure --enable-frame-pointers --with-pic --prefix=$LOCAL_INSTALL
+  wrap make -j${BUILD_THREADS:-4} install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

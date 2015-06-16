@@ -28,8 +28,8 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  LDFLAGS= ./configure --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
-  make -j${BUILD_THREADS:-4} >> $BUILD_LOG 2>&1
-  make install >> $BUILD_LOG 2>&1
+  LDFLAGS= wrap ./configure --prefix=$LOCAL_INSTALL
+  wrap make -j${BUILD_THREADS:-4}
+  warp make install
   footer $PACKAGE $PACKAGE_VERSION
 fi

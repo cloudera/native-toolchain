@@ -28,10 +28,10 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  ./configure --enable-slapd=no --enable-static --with-pic --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
-  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
-  make -j${BUILD_THREADS:-4} depend >> $BUILD_LOG 2>&1
-  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  wrap ./configure --enable-slapd=no --enable-static --with-pic --prefix=$LOCAL_INSTALL
+  wrap make -j${BUILD_THREADS:-4} install
+  wrap make -j${BUILD_THREADS:-4} depend
+  wrap make -j${BUILD_THREADS:-4} install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

@@ -36,26 +36,26 @@ if needs_build_package ; then
     PIC_LIB_OPTIONS="--with-zlib=${PIC_LIB_PATH} "
   fi
   JAVA_PREFIX=${LOCAL_INSTALL}/java PY_PREFIX=${LOCAL_INSTALL}/python \
-    ./configure --with-pic --prefix=${LOCAL_INSTALL} \
+    wrap ./configure --with-pic --prefix=${LOCAL_INSTALL} \
     --with-php=no --with-java=no --with-perl=no --with-erlang=no --with-csharp=no \
     --with-ruby=no --with-haskell=no --with-erlang=no --with-d=no \
     --with-boost=${BOOST_ROOT} \
     --with-zlib=${ZLIB_ROOT} \
     --with-libevent=${LIBEVENT_ROOT} \
-    --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} >> $BUILD_LOG 2>&1
-  make >> $BUILD_LOG 2>&1
-  make install >> $BUILD_LOG 2>&1
+    --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-}
+  wrap make
+  wrap make install
   cd contrib/fb303
   rm -f config.cache
   chmod 755 ./bootstrap.sh
-  ./bootstrap.sh >> $BUILD_LOG 2>&1
-  chmod 755 configure >> $BUILD_LOG 2>&1
-  CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX=${LOCAL_INSTALL}/python ./configure \
+  wrap ./bootstrap.sh
+  wrap chmod 755 configure
+  CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX=${LOCAL_INSTALL}/python wrap ./configure \
     --with-boost=${BOOST_ROOT} \
     --with-java=no --with-php=no --prefix=${LOCAL_INSTALL} \
-    --with-thriftpath=${LOCAL_INSTALL} >> $BUILD_LOG 2>&1
-  make >> $BUILD_LOG 2>&1
-  make install >> $BUILD_LOG 2>&1
+    --with-thriftpath=${LOCAL_INSTALL}
+  wrap make
+  wrap make install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

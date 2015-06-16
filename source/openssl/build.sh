@@ -28,11 +28,13 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  CFLAGS="-fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" ./config shared zlib --prefix=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
+  CFLAGS="$CFLAGS -fPIC -DPIC" \
+    CXXFLAGS="$CXXFLAGS -fPIC -DPIC" \
+    wrap ./config shared zlib --prefix=$LOCAL_INSTALL
 
   # For some reason, the first build seems to fail sometimes
-  make  all >> $BUILD_LOG 2>&1
-  make install >> $BUILD_LOG 2>&1
+  wrap make  all
+  wrap make install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

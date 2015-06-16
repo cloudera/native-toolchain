@@ -28,8 +28,8 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL . >> $BUILD_LOG 2>&1
-  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL .
+  wrap make -j${BUILD_THREADS:-4} install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

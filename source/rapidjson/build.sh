@@ -29,7 +29,7 @@ if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
   mkdir -p $LOCAL_INSTALL/include
-  cp -R include/rapidjson $LOCAL_INSTALL/include >> $BUILD_LOG 2>&1
+  wrap cp -R include/rapidjson $LOCAL_INSTALL/include
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

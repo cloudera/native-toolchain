@@ -34,8 +34,8 @@ if needs_build_package ; then
   sed -i 's/MAKEINFO = .*missing makeinfo$/MAKEINFO = \/bin\/true/' Makefile
   sed -i 's/MAKEINFO = @MAKEINFO@$/MAKEINFO = \/bin\/true/' gdb/Makefile.in
 
-  make -j${BUILD_THREADS:-4} >> $BUILD_LOG 2>&1
-  make install >> $BUILD_LOG 2>&1
+  wrap make -j${BUILD_THREADS:-4}
+  wrap make install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

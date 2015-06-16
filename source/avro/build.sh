@@ -32,14 +32,14 @@ if needs_build_package ; then
 
   mkdir -p build
   cd build
-  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL .. >> $BUILD_LOG 2>&1
-  make -C . -j${BUILD_THREADS:-4} >> $BUILD_LOG 2>&1
+  wrap cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL ..
+  wrap make -C . -j${BUILD_THREADS:-4}
 
   # Different versions of CMake produce different locations for the avro-c.pc file
   if [[ -e avro-c.pc ]]; then
     cp avro-c.pc src/
   fi
 
-  make -C . -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  wrap make -C . -j${BUILD_THREADS:-4} install
   footer $PACKAGE $PACKAGE_VERSION
 fi

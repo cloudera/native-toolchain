@@ -28,9 +28,9 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  ./bootstrap --prefix=${LOCAL_INSTALL} --parallel=${BUILD_THREADS} >> $BUILD_LOG 2>&1
-  make -j${BUILD_THREADS} >> $BUILD_LOG 2>&1
-  make install >> $BUILD_LOG 2>&1
+  wrap ./bootstrap --prefix=${LOCAL_INSTALL} --parallel=${BUILD_THREADS}
+  wrap make -j${BUILD_THREADS}
+  wrap make install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

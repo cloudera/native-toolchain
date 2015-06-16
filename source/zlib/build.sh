@@ -28,9 +28,9 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  CFLAGS="-fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL >> $BUILD_LOG 2>&1
-  make -j${BUILD_THREADS:-4} >> $BUILD_LOG 2>&1
-  make install >> $BUILD_LOG 2>&1
+  CFLAGS="$CFLAGS -fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL
+  wrap make -j${BUILD_THREADS:-4}
+  wrap make install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi

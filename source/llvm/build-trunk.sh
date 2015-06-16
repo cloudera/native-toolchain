@@ -40,18 +40,18 @@ function build_trunk() {
   cd build-trunk
 
   # Invoke CMake with the correct configuration
-  $BUILD_DIR/cmake-$CMAKE_VERSION/bin/cmake ../llvm-trunk \
+  wrap $BUILD_DIR/cmake-$CMAKE_VERSION/bin/cmake ../llvm-trunk \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=$BUILD_DIR/llvm-trunk \
       -DLLVM_TARGETS_TO_BUILD=X86 \
       -DLLVM_ENABLE_RTTI=ON \
       -DLLVM_PARALLEL_COMPILE_JOBS=${BUILD_THREADS:-4} \
       -DLLVM_PARALLEL_LINK_JOBS=${BUILD_THREADS:-4} \
-      -DPYTHON_EXECUTABLE=$BUILD_DIR/python-$PYTHON_VERSION/bin/python >> $BUILD_LOG 2>&1
+      -DPYTHON_EXECUTABLE=$BUILD_DIR/python-$PYTHON_VERSION/bin/python
 
-  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  wrap make -j${BUILD_THREADS:-4} install
   cd tools/clang
-  make -j${BUILD_THREADS:-4} install >> $BUILD_LOG 2>&1
+  wrap make -j${BUILD_THREADS:-4} install
 
   footer $PACKAGE $PACKAGE_VERSION
 }

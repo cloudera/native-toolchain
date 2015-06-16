@@ -21,6 +21,14 @@ set -e
 # Exit on reference to uninitialized variable
 set -u
 
+function wrap() {
+  if [[ $DEBUG -eq 0 ]]; then
+    "$@" >> $BUILD_LOG 2>&1
+  else
+    "$@" 2>&1 | tee $BUILD_LOG
+  fi
+}
+
 function prepare() {
   PACKAGE="$(basename $1)"; PACKAGE=`echo "${PACKAGE}" | awk '{print toupper($0)}'`
   PACKAGE_VERSION="${PACKAGE}_VERSION"

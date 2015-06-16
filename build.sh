@@ -26,6 +26,7 @@ set -u
 if [[ $DEBUG -eq 1 ]]; then
   set -x
 fi
+export DEBUG
 
 export BUILD_THREADS=`grep -c ^processor /proc/cpuinfo`
 
@@ -93,8 +94,8 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
-  export CFLAGS="-fPIC -O3"
-  export CXXFLAGS="-static-libstdc++ -fPIC -O3"
+  export CFLAGS="-fPIC -O3 -m64 -mtune=generic"
+  export CXXFLAGS="-static-libstdc++ -fPIC -O3 -m64 -mtune=generic"
   export LDFLAGS="$FULL_RPATH $FULL_LPATH"
 fi
 

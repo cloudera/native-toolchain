@@ -30,10 +30,10 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   cd build
 
   # Omitting the frame pointer is for debugability
-  ../gcc-$GCC_VERSION/configure --enable-frame-pointer --prefix=$LOCAL_INSTALL \
+  wrap ../gcc-$GCC_VERSION/configure --enable-frame-pointer --prefix=$LOCAL_INSTALL \
     --enable-cxx-flags='-fno-omit-frame-pointer' \
-    --enable-languages=c,c++ --disable-multilib >> $BUILD_LOG 2>&1
-  make -j${BUILD_THREADS:-4}  >> $BUILD_LOG 2>&1
-  make install >> $BUILD_LOG 2>&1
+    --enable-languages=c,c++ --disable-multilib
+  wrap make -j${BUILD_THREADS:-4}
+  wrap make install
   footer $PACKAGE $PACKAGE_VERSION
 fi
