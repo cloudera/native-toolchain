@@ -28,7 +28,6 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  wrap autoreconf
   wrap ./configure --prefix=$LOCAL_INSTALL
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
