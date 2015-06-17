@@ -226,7 +226,8 @@ function build_dist_package() {
   FULL_TAR_NAME="${LPACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}"
   FULL_TAR_NAME+="-${COMPILER_VERSION}"
   tar zcf ${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz \
-    ${BUILD_DIR}/${LPACKAGE_VERSION}${PATCH_VERSION}
+    --directory=${BUILD_DIR} \
+    ${LPACKAGE_VERSION}${PATCH_VERSION}
 }
 
 # Given the assumption that all other build steps completed successfully, generate a meta
