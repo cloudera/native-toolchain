@@ -214,13 +214,13 @@ function build_dist_package() {
     return 0
   fi
 
-  # System package
-  DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"
-  fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
-    -t $TARGET -n "${DIST_NAME}" \
-    -v "${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}-${PLATFORM_VERSION}" \
-    -C $BUILD_DIR \
-    ${LPACKAGE_VERSION}${PATCH_VERSION}
+  # # System package
+  # DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"
+  # fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
+  #   -t $TARGET -n "${DIST_NAME}" \
+  #   -v "${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}-${PLATFORM_VERSION}" \
+  #   -C $BUILD_DIR \
+  #   ${LPACKAGE_VERSION}${PATCH_VERSION}
 
   # Produce a tar.gz for the binary product for easier bootstrapping
   FULL_TAR_NAME="${LPACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}"
