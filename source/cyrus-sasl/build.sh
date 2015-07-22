@@ -31,7 +31,6 @@ if needs_build_package ; then
   # Disable everything except those protocols needed -- currently just Kerberos.
   # Sasl does not have a --with-pic configuration.
   CFLAGS="$CFLAGS -fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" wrap ./configure \
-    -with-openssl=$BUILD_DIR/openssl-$OPENSSL_VERSION \
     --disable-sql --disable-otp --disable-ldap --disable-digest --with-saslauthd=no \
     --prefix=$LOCAL_INSTALL --enable-static --enable-staticdlopen
   # the first time you do a make it fails, build again.
