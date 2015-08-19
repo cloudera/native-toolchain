@@ -56,7 +56,7 @@ function prepare() {
 # that can be used per build
 function header() {
   echo "#######################################################################"
-  echo "# Building: ${1}-${2}"
+  echo "# Building: ${1}-${2}${PATCH_VERSION}"
 
   # Package name might be upper case
   LPACKAGE=`echo "${1}" | awk '{print tolower($0)}'`
@@ -66,7 +66,7 @@ function header() {
   LPACKAGE_VERSION=$LPACKAGE-$2
 
   LOCAL_INSTALL=$BUILD_DIR/$LPACKAGE-$2${PATCH_VERSION}
-  BUILD_LOG=$SOURCE_DIR/check/$LPACKAGE-$2.log
+  BUILD_LOG=$SOURCE_DIR/check/$LPACKAGE-${2}${PATCH_VERSION}.log
 
   # Extract the sources
   if [ -f $LPACKAGE_VERSION.tar.gz ]; then
@@ -92,16 +92,26 @@ function header() {
   # Depending how ugly things are packaged we might have directories that are different
   # from the archive name, looking at you boost
   RDIR="${DIR//-/_}"; RDIR="${RDIR//./_}"
+  FINAL_DIR=
   if [ -d "$DIR" ]; then
-    cd $DIR
+    FINAL_DIR=$DIR
   elif [ -d "${RDIR}" ]; then
-    cd $RDIR
+    FINAL_DIR=$RDIR
   else
-    cd $LPACKAGE
+    FINAL_DIR=$LPACKAGE
   fi
+  pushd $FINAL_DIR
 
   # Apply patches for this package
-  apply_patches
+  if [[ -n "$PATCH_VERSION" ]]; then
+    apply_patches
+
+    # Once the patches are applied, move the directory to the correct name
+    # with the patch level in the name
+    popd
+    mv $FINAL_DIR $FINAL_DIR$PATCH_VERSION
+    pushd $FINAL_DIR$PATCH_VERSION
+  fi
 }
 
 function footer() {
@@ -117,8 +127,8 @@ function footer() {
     done
   fi
 
-  touch $SOURCE_DIR/check/$1-$2
-  echo "# Build Complete ${1}-${2}"
+  touch $SOURCE_DIR/check/${1}-${2}${PATCH_VERSION}
+  echo "# Build Complete ${1}-${2}${PATCH_VERSION}"
   echo "#######################################################################"
 }
 
@@ -131,7 +141,7 @@ function needs_build_package() {
   # First check if the build_all variable is set or not
   : ${BUILD_ALL=1}
 
-  if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ] && [ $BUILD_ALL -eq 1 ]; then
+  if [ ! -f $SOURCE_DIR/check/${PACKAGE_STRING}${PATCH_VERSION} ] && [ $BUILD_ALL -eq 1 ]; then
     return 0
   fi
 
