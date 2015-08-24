@@ -22,11 +22,15 @@ set -e
 set -u
 
 : ${DEBUG=0}
+: ${FAIL_ON_PUBLISH=1}
+: ${PUBLISH_DEPENDENCIES=1}
 
 if [[ $DEBUG -eq 1 ]]; then
   set -x
 fi
 export DEBUG
+export FAIL_ON_PUBLISH
+export PUBLISH_DEPENDENCIES
 
 export BUILD_THREADS=`grep -c ^processor /proc/cpuinfo`
 
