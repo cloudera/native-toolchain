@@ -224,20 +224,30 @@ function build_dist_package() {
     return 0
   fi
 
-  # # System package
-  # DIST_NAME="${LPACKAGE}${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"
-  # fpm -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX  -s $SOURCE_TYPE -f \
-  #   -t $TARGET -n "${DIST_NAME}" \
-  #   -v "${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}-${PLATFORM_VERSION}" \
-  #   -C $BUILD_DIR \
-  #   ${LPACKAGE_VERSION}${PATCH_VERSION}
-
   # Produce a tar.gz for the binary product for easier bootstrapping
   FULL_TAR_NAME="${LPACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}"
-  FULL_TAR_NAME+="-${COMPILER_VERSION}"
-  tar zcf ${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz \
+  FULL_TAR_NAME+="-${COMPILER_VERSION}.tar.gz"
+
+  tar zcf ${BUILD_DIR}/${FULL_TAR_NAME}\
     --directory=${BUILD_DIR} \
     ${LPACKAGE_VERSION}${PATCH_VERSION}
+
+  # Set generic
+  : ${label-"generic"}
+
+  # If desired break on failure to publish the artifact
+  RET_VAL=true
+  if [[ $FAIL_ON_PUBLISH -eq 1 ]]; then
+    RET_VAL=false
+  fi
+
+  # Package and upload the archive to the artifactory
+  mvn deploy:deploy-file -DgroupId=com.cloudera.toolchain\
+      -DartifactId="${LPACKAGE}"\
+      -Dversion="${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"\
+      -Dfile="${BUILD_DIR}/${FULL_TAR_NAME}"\
+      -Durl="http://maven.jenkins.cloudera.com:8081/artifactory/cdh-staging-local/"\
+      -DrepositoryId=cdh.releases.repo -Dpackaging=tar.gz -Dclassifier=${label} || $RET_VAL
 }
 
 # Given the assumption that all other build steps completed successfully, generate a meta
