@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-export PLATFORM_VERSION=11
+export PLATFORM_VERSION=12
 
 export GCC_VERSION=4.9.2
 export LLVM_VERSION=3.3
 
-export AVRO_VERSION=1.7.4-p2
+export AVRO_VERSION=1.7.4-p3
 export BOOST_VERSION=1.57.0
 export BREAKPAD_VERSION=20150612-p1
 export BZIP2_VERSION=1.0.6-p1
