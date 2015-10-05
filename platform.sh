@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-export PLATFORM_VERSION=12
+export PLATFORM_VERSION=13
 
 export GCC_VERSION=4.9.2
 export LLVM_VERSION=3.3
@@ -38,5 +38,5 @@ export RAPIDJSON_VERSION=0.11
 export RE2_VERSION=20130115-p1
 export SNAPPY_VERSION=1.0.5
 export SQUEASEL_VERSION=3.3
-export THRIFT_VERSION=0.9.0-p2
+export THRIFT_VERSION=0.9.0-p4
 export ZLIB_VERSION=1.2.8
