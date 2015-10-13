@@ -69,7 +69,11 @@ else
 fi
 
 # Check Platform
-export RELEASE_NAME=`lsb_release -r -i`
+if [[ "$OSTYPE" =~ ^linux ]]; then
+  export RELEASE_NAME=`lsb_release -r -i`
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  export RELEASE_NAME="OSX-$(sw_vers -productVersion)"
+fi
 
 # Load functions
 source $SOURCE_DIR/functions.sh
