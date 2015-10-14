@@ -15,7 +15,7 @@
 export PLATFORM_VERSION=12
 
 export GCC_VERSION=4.9.2
-export LLVM_VERSION=3.3
+export LLVM_VERSION=3.3-p1
 
 export AVRO_VERSION=1.7.4-p3
 export BOOST_VERSION=1.57.0

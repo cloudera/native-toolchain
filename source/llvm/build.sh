@@ -35,19 +35,19 @@ if needs_build_package ; then
     # Crappy CentOS 5.6 doesnt like us to build Clang, so skip it
     cd tools
     # CLANG
-    tar zxf ../../cfe-$LLVM_VERSION.src.tar.gz
-    mv cfe-$LLVM_VERSION.src clang
+    tar zxf ../../cfe-$PACKAGE_VERSION.src.tar.gz
+    mv cfe-$PACKAGE_VERSION.src clang
 
     # CLANG Extras
     cd clang/tools
-    tar zxf ../../../../clang-tools-extra-$LLVM_VERSION.src.tar.gz
-    mv clang-tools-extra-$LLVM_VERSION.src extra
+    tar zxf ../../../../clang-tools-extra-$PACKAGE_VERSION.src.tar.gz
+    mv clang-tools-extra-$PACKAGE_VERSION.src extra
     cd ../../
 
     # COMPILER RT
     cd ../projects
-    tar zxf ../../compiler-rt-$LLVM_VERSION.src.tar.gz
-    mv compiler-rt-$LLVM_VERSION.src compiler-rt
+    tar zxf ../../compiler-rt-$PACKAGE_VERSION.src.tar.gz
+    mv compiler-rt-$PACKAGE_VERSION.src compiler-rt
     cd ../../
 
     mkdir -p build-$LLVM
@@ -63,7 +63,11 @@ if needs_build_package ; then
       EXTRA_CONFIG_ARG=--with-python=`which python26`
     fi
 
-    wrap ../$LLVM.src/configure $EXTRA_CONFIG_ARG --enable-targets=x86_64,cpp --enable-optimized --enable-terminfo=no --prefix=$LOCAL_INSTALL --with-pic --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION --with-extra-ld-options="$LDFLAGS"
+    if [[ ! "$OSTYPE" == "darwin"* ]]; then
+      EXTRA_CONFIG_ARG="$EXTRA_CONFIG_ARG --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION --with-extra-ld-options=\"$LDFLAGS\""
+    fi
+
+    wrap ../llvm-$PACKAGE_VERSION.src$PATCH_VERSION/configure $EXTRA_CONFIG_ARG --enable-targets=x86_64,cpp --enable-optimized --enable-terminfo=no --prefix=$LOCAL_INSTALL --with-pic
 
     wrap make -j${BUILD_THREADS:-4} REQUIRES_RTTI=1 install
 

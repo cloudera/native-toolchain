@@ -42,10 +42,13 @@ function build_trunk() {
   PYTHON_EXECUTABLE=$BUILD_DIR/python-$PYTHON_VERSION/bin/python
   if [[ "$OSTYPE" == "darwin"* ]]; then
     PYTHON_EXECUTABLE=/usr/bin/python
+    CMAKE_EXEC=cmake
+  else
+    CMAKE_EXEC=$BUILD_DIR/cmake-$CMAKE_VERSION/bin/cmake
   fi
 
   # Invoke CMake with the correct configuration
-  wrap $BUILD_DIR/cmake-$CMAKE_VERSION/bin/cmake ../llvm-trunk \
+  wrap $CMAKE_EXEC ../llvm-trunk \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=$BUILD_DIR/llvm-trunk \
       -DLLVM_TARGETS_TO_BUILD=X86 \

@@ -21,6 +21,8 @@ set -e
 # Exit on reference to uninitialized variable
 set -u
 
+set -o pipefail
+
 : ${DEBUG=0}
 : ${FAIL_ON_PUBLISH=1}
 : ${PUBLISH_DEPENDENCIES=1}
@@ -73,6 +75,8 @@ if [[ "$OSTYPE" =~ ^linux ]]; then
   export RELEASE_NAME=`lsb_release -r -i`
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   export RELEASE_NAME="OSX-$(sw_vers -productVersion)"
+  export DARWIN_VERSION=`sw_vers -productVersion`
+  export MACOSX_DEPLOYMENT_TARGET=$(echo $DARWIN_VERSION| sed -E 's/(10.[0-9]+).*/\1/')
 fi
 
 # Load functions
@@ -84,11 +88,11 @@ TOOLCHAIN_PREFIX="/opt/bin-toolchain"
 # Append compiler and version to toolchain path
 export TOOLCHAIN_PREFIX="${TOOLCHAIN_PREFIX}/${COMPILER}-${COMPILER_VERSION}"
 
-# Now, start building the compilers first
-# Build GCC that is used to build LLVM
-$SOURCE_DIR/source/gcc/build.sh
-
 if [[ $SYSTEM_GCC -eq 0 ]]; then
+  # Now, start building the compilers first
+  # Build GCC that is used to build LLVM
+  $SOURCE_DIR/source/gcc/build.sh
+
   # Stage one is done, we can upgrade our compiler
   export CC="$BUILD_DIR/gcc-$GCC_VERSION/bin/gcc"
   export CXX="$BUILD_DIR/gcc-$GCC_VERSION/bin/g++"
@@ -107,10 +111,15 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
-  export CFLAGS="-fPIC -O3 -m64 -mtune=generic"
-  export CXXFLAGS="-static-libstdc++ -fPIC -O3 -m64 -mtune=generic"
   export LDFLAGS="$FULL_RPATH $FULL_LPATH"
+  export CXXFLAGS="-static-libstdc++ -fPIC -O3 -m64 -mtune=generic"
+else
+  export LDFLAGS=
+  export CXXFLAGS="-fPIC -O3 -m64 -mtune=generic"
 fi
+  export CFLAGS="-fPIC -O3 -m64 -mtune=generic"
+
+
 
 ################################################################################
 # Build Python
@@ -120,7 +129,9 @@ PYTHON_VERSION=2.7.10 $SOURCE_DIR/source/python/build.sh
 ################################################################################
 # Build CMake
 ################################################################################
-$SOURCE_DIR/source/cmake/build.sh
+if [[ ! "$OSTYPE" == "darwin"* ]]; then
+  $SOURCE_DIR/source/cmake/build.sh
+fi
 
 ################################################################################
 # LLVM
@@ -129,13 +140,15 @@ $SOURCE_DIR/source/cmake/build.sh
 # Build Default LLVM
 $SOURCE_DIR/source/llvm/build.sh
 
+if [[ ! "$OSTYPE" == "darwin"* ]]; then
+  LLVM_VERSION=3.3 $SOURCE_DIR/source/llvm/build.sh
+fi
+
 # CentOS 5 can't build trunk LLVM due to missing perf counter
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
   #Build Trunk LLVM
   LLVM_VERSION=trunk $SOURCE_DIR/source/llvm/build.sh
 fi
-
-#LLVM_VERSION=3.5.1 $SOURCE_DIR/source/llvm/build.sh
 
 ################################################################################
 # Once this is done proceed with the regular thirdparty build
