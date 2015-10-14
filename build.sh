@@ -24,8 +24,8 @@ set -u
 set -o pipefail
 
 : ${DEBUG=0}
-: ${FAIL_ON_PUBLISH=1}
-: ${PUBLISH_DEPENDENCIES=1}
+: ${FAIL_ON_PUBLISH=0}
+: ${PUBLISH_DEPENDENCIES=0}
 
 if [[ $DEBUG -eq 1 ]]; then
   set -x

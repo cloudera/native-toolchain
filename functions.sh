@@ -184,47 +184,11 @@ function apply_patches() {
   fi
 }
 
-# Determines what the platforms packaging type is
-function set_target_package_type() {
-  set +e
-  FPM_CMD=$(which fpm)
-  YUM_CMD=$(which yum)
-  RPM_CMD=$(which rpm)
-  ZYPPER_CMD=$(which zypper)
-  APT_CMD=$(which apt-get)
-  set -e
-
-  if [[ -z $FPM_CMD ]]; then
-    # No FPM installed, will not build packages
-    TARGET=
-    return 0
-  fi
-
-  if [[ "$RELEASE_NAME" =~ Ubuntu ]]; then
-    TARGET="deb"
-  elif [[ "$RELEASE_NAME" =~ Debian ]]; then
-    TARGET="deb"
-  elif [[ ! -z $YUM_CMD ]]; then
-    TARGET="rpm"
-  elif [[ ! -z $RPM_CMD ]]; then
-    TARGET="rpm"
-  else
-    echo "Cannot build package"
-    return 1
-  fi
-}
-
-
 # Build the RPM or DEB package depending on the operating system
 # Depends on the LOCAL_INSTALL variable containing the target
 # directory
 function build_dist_package() {
   SOURCE_TYPE="dir"
-  set_target_package_type
-
-  if [[ -z $TARGET ]]; then
-    return 0
-  fi
 
   # Produce a tar.gz for the binary product for easier bootstrapping
   FULL_TAR_NAME="${LPACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}"
@@ -244,7 +208,7 @@ function build_dist_package() {
   fi
 
   # Package and upload the archive to the artifactory
-  if [[ $PUBLISH_DEPENDENCIES -eq 1 ]]; then
+  if [[ :"PUBLISH_DEPENDENCIES" -eq "1" ]]; then
     mvn deploy:deploy-file -DgroupId=com.cloudera.toolchain\
       -DartifactId="${LPACKAGE}"\
       -Dversion="${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"\
