@@ -33,7 +33,6 @@ if needs_build_package ; then
     rm -Rf $LLVM.src
 
     # Crappy CentOS 5.6 doesnt like us to build Clang, so skip it
-    RELEASE_NAME=`lsb_release -r -i`
     cd tools
     # CLANG
     tar zxf ../../cfe-$LLVM_VERSION.src.tar.gz

@@ -25,6 +25,14 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
 
   ./contrib/download_prerequisites
 
+
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Patch GMP
+    pushd gmp-4.3.2
+    patch -p1 < ../../manual_patches_gcc-4.9.2/gmp.patch
+    popd
+  fi
+
   cd ..
   mkdir -p build
   cd build
@@ -32,7 +40,8 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   # Omitting the frame pointer is for debugability
   wrap ../gcc-$GCC_VERSION/configure --enable-frame-pointer --prefix=$LOCAL_INSTALL \
     --enable-cxx-flags='-fno-omit-frame-pointer' \
-    --enable-languages=c,c++ --disable-multilib
+    --enable-languages=c,c++ --disable-multilib \
+    --with-build-config=bootstrap-debug
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
   footer $PACKAGE $PACKAGE_VERSION

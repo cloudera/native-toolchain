@@ -21,6 +21,8 @@ set -e
 # Exit on reference to uninitialized variable
 set -u
 
+set -o pipefail
+
 source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR

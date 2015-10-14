@@ -39,6 +39,11 @@ function build_trunk() {
   mkdir -p build-trunk
   cd build-trunk
 
+  PYTHON_EXECUTABLE=$BUILD_DIR/python-$PYTHON_VERSION/bin/python
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    PYTHON_EXECUTABLE=/usr/bin/python
+  fi
+
   # Invoke CMake with the correct configuration
   wrap $BUILD_DIR/cmake-$CMAKE_VERSION/bin/cmake ../llvm-trunk \
       -DCMAKE_BUILD_TYPE=Release \
@@ -47,7 +52,7 @@ function build_trunk() {
       -DLLVM_ENABLE_RTTI=ON \
       -DLLVM_PARALLEL_COMPILE_JOBS=${BUILD_THREADS:-4} \
       -DLLVM_PARALLEL_LINK_JOBS=${BUILD_THREADS:-4} \
-      -DPYTHON_EXECUTABLE=$BUILD_DIR/python-$PYTHON_VERSION/bin/python
+      -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE
 
   wrap make -j${BUILD_THREADS:-4} install
   cd tools/clang

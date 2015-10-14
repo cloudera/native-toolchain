@@ -21,6 +21,8 @@ set -e
 # Exit on reference to uninitialized variable
 set -u
 
+set -o pipefail
+
 function wrap() {
   if [[ $DEBUG -eq 0 ]]; then
     "$@" >> $BUILD_LOG 2>&1

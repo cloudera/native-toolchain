@@ -96,8 +96,13 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   # Update the destination path for the toolchain
   export TOOLCHAIN_DEST_PATH="${TOOLCHAIN_DEST_PATH}/${COMPILER}-${COMPILER_VERSION}"
 
+
   # Upgrade rpath variable to catch current library location and possible future location
-  FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64',"
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib,-rpath,'\$ORIGIN/../lib',"
+  else
+    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64',"
+  fi
   FULL_RPATH="${FULL_RPATH}-rpath,'$TOOLCHAIN_DEST_PATH/gcc-$GCC_VERSION'"
   FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
 
