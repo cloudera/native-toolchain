@@ -30,10 +30,15 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  echo "using gcc : 4.9.2 : $BUILD_DIR/gcc-$GCC_VERSION/bin/g++ ;" > tools/build/src/user-config.jam
+  if [[ ! "$OSTYPE" == "darwin"* ]]; then
+    echo "using gcc : $GCC_VERSION : $BUILD_DIR/gcc-$GCC_VERSION/bin/g++ ;" > tools/build/src/user-config.jam
+    TOOLSET=--toolset=gcc-$GCC_VERSION
+  else
+    TOOLSET=
+  fi
   # Update compilers to use our toolchain
   wrap ./bootstrap.sh --without-libraries=python --prefix=$LOCAL_INSTALL
-  wrap ./b2 -s"NO_BZIP2=1" --toolset=gcc-4.9.2 cxxflags="$CXXFLAGS" linkflags="$CXXFLAGS" --prefix=$LOCAL_INSTALL -j4 install
+  wrap ./b2 -s"NO_BZIP2=1" $TOOLSET cxxflags="$CXXFLAGS" linkflags="$CXXFLAGS" --prefix=$LOCAL_INSTALL -j4 install
 
   footer $PACKAGE $PACKAGE_VERSION
 fi
