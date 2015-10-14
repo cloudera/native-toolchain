@@ -30,11 +30,16 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
+  WITH_FRAMEWORKS=
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    WITH_FRAMEWORKS=--disable-macos-framework
+  fi
+
   # Disable everything except those protocols needed -- currently just Kerberos.
   # Sasl does not have a --with-pic configuration.
   CFLAGS="$CFLAGS -fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" wrap ./configure \
     --disable-sql --disable-otp --disable-ldap --disable-digest --with-saslauthd=no \
-    --prefix=$LOCAL_INSTALL --enable-static --enable-staticdlopen
+    --prefix=$LOCAL_INSTALL --enable-static --enable-staticdlopen $WITH_FRAMEWORKS
   # the first time you do a make it fails, build again.
   wrap make || /bin/true
   wrap make -j${BUILD_THREADS:-4}

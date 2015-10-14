@@ -157,7 +157,11 @@ cd $SOURCE_DIR
 ################################################################################
 # SASL
 ################################################################################
-$SOURCE_DIR/source/cyrus-sasl/build.sh
+if [[ ! "$OSTYPE" == "darwin"* ]]; then
+  $SOURCE_DIR/source/cyrus-sasl/build.sh
+else
+  CYRUS_SASL_VERSION=2.1.26 $SOURCE_DIR/source/cyrus-sasl/build.sh
+fi
 
 ################################################################################
 # Boost
