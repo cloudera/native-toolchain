@@ -1,0 +1,12 @@
+diff -git a/thrift-0.9.0/lib/cpp/src/thrift/concurrency/ThreadManager.h b/thrift-0.9.0/lib/cpp/src/thrift/concurrency/ThreadManager.h
+--- a/thrift-0.9.0/lib/cpp/src/thrift/concurrency/ThreadManager.h
++++ b/thrift-0.9.0/old/lib/cpp/src/thrift/concurrency/ThreadManager.h
+@@ -190,8 +190,6 @@ class ThreadManager {
+    */
+   static boost::shared_ptr<ThreadManager> newSimpleThreadManager(size_t count=4, size_t pendingTaskCountMax=0);
+ 
+-  class Task;
+-
+   class Worker;
+ 
+   class Impl;
