@@ -75,10 +75,12 @@ fi
 # Check Platform
 if [[ "$OSTYPE" =~ ^linux ]]; then
   export RELEASE_NAME=`lsb_release -r -i`
+  export ARCH_FLAGS=
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   export RELEASE_NAME="OSX-$(sw_vers -productVersion)"
   export DARWIN_VERSION=`sw_vers -productVersion`
   export MACOSX_DEPLOYMENT_TARGET=$(echo $DARWIN_VERSION| sed -E 's/(10.[0-9]+).*/\1/')
+  export ARCH_FLAGS="-stdlib=libstdc++"
 fi
 
 # Load functions
@@ -113,11 +115,11 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
-  export LDFLAGS="-stdlib=libstdc++ $FULL_RPATH $FULL_LPATH"
-  export CXXFLAGS="-stdlib=libstdc++ -static-libstdc++ -fPIC -O3 -m64 -mtune=generic"
+  export LDFLAGS="$ARCH_FLAGS $FULL_RPATH $FULL_LPATH"
+  export CXXFLAGS="$ARCH_FLAGS -static-libstdc++ -fPIC -O3 -m64 -mtune=generic"
 else
-  export LDFLAGS="-stdlib=libstdc++"
-  export CXXFLAGS="-stdlib=libstdc++ -fPIC -O3 -m64 -mtune=generic"
+  export LDFLAGS="$ARCH_FLAGS"
+  export CXXFLAGS="$ARCH_FLAGS -fPIC -O3 -m64 -mtune=generic"
 fi
 
 export CFLAGS="-fPIC -O3 -m64 -mtune=generic"
@@ -151,6 +153,9 @@ fi
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
   #Build Trunk LLVM
   LLVM_VERSION=trunk $SOURCE_DIR/source/llvm/build.sh
+
+  # Build LLVM 3.7.0
+  LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
 fi
 
 ################################################################################

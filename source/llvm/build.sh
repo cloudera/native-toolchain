@@ -24,6 +24,10 @@ if needs_build_package ; then
     . $SOURCE_DIR/source/llvm/build-trunk.sh
     cd $SOURCE_DIR/source/llvm
     build_trunk
+  elif [[ "$PACKAGE_VERSION" =~ "3.7" ]]; then
+    . $SOURCE_DIR/source/llvm/build-3.7.x.sh
+    cd $SOURCE_DIR/source/llvm
+    build_llvm
   else
     header $PACKAGE $PACKAGE_VERSION
     LLVM=llvm-$LLVM_VERSION
