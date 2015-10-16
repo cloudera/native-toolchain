@@ -192,7 +192,8 @@ $SOURCE_DIR/source/openssl/build.sh
 #  * depends on libevent
 ################################################################################
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
-  $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.0-p2 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.0-p4 $SOURCE_DIR/source/thrift/build.sh
 else
   THRIFT_VERSION=0.9.3 $SOURCE_DIR/source/thrift/build.sh
 fi
