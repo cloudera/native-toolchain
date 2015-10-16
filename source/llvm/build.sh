@@ -64,10 +64,11 @@ if needs_build_package ; then
     fi
 
     if [[ ! "$OSTYPE" == "darwin"* ]]; then
-      EXTRA_CONFIG_ARG="$EXTRA_CONFIG_ARG --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION --with-extra-ld-options=\"$LDFLAGS\""
+      EXTRA_CONFIG_ARG="$EXTRA_CONFIG_ARG --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION"
     fi
 
-    wrap ../llvm-$PACKAGE_VERSION.src$PATCH_VERSION/configure $EXTRA_CONFIG_ARG --enable-targets=x86_64,cpp --enable-optimized --enable-terminfo=no --prefix=$LOCAL_INSTALL --with-pic
+    echo "$EXTRA_CONFIG_ARG"
+    wrap ../llvm-$PACKAGE_VERSION.src$PATCH_VERSION/configure --enable-targets=x86_64,cpp --enable-optimized --enable-terminfo=no --prefix=$LOCAL_INSTALL --with-pic $EXTRA_CONFIG_ARG --with-extra-ld-options="$LDFLAGS"
 
     wrap make -j${BUILD_THREADS:-4} REQUIRES_RTTI=1 install
 
