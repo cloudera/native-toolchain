@@ -33,8 +33,12 @@ if needs_build_package ; then
   ./configure --prefix=$LOCAL_INSTALL > $BUILD_LOG 2>&1
 
   # Some build machines might not have makeinfo
-  sed -i 's/MAKEINFO = .*missing makeinfo$/MAKEINFO = \/bin\/true/' Makefile
-  sed -i 's/MAKEINFO = @MAKEINFO@$/MAKEINFO = \/bin\/true/' gdb/Makefile.in
+  EXTENSION=
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    EXTENSION=.bak
+  fi
+  sed -i $EXTENSION 's/MAKEINFO = .*missing makeinfo$/MAKEINFO = \/bin\/true/' Makefile
+  sed -i $EXTENSION 's/MAKEINFO = @MAKEINFO@$/MAKEINFO = \/bin\/true/' gdb/Makefile.in
 
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
