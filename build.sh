@@ -26,6 +26,7 @@ set -o pipefail
 : ${DEBUG=0}
 : ${FAIL_ON_PUBLISH=0}
 : ${PUBLISH_DEPENDENCIES=0}
+: ${PRODUCTION=0}
 
 if [[ $DEBUG -eq 1 ]]; then
   set -x
@@ -33,6 +34,7 @@ fi
 export DEBUG
 export FAIL_ON_PUBLISH
 export PUBLISH_DEPENDENCIES
+export PRODUCTION
 
 export BUILD_THREADS=`grep -c ^processor /proc/cpuinfo`
 
@@ -111,13 +113,14 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
-  export LDFLAGS="$FULL_RPATH $FULL_LPATH"
-  export CXXFLAGS="-static-libstdc++ -fPIC -O3 -m64 -mtune=generic"
+  export LDFLAGS="-stdlib=libstdc++ $FULL_RPATH $FULL_LPATH"
+  export CXXFLAGS="-stdlib=libstdc++ -static-libstdc++ -fPIC -O3 -m64 -mtune=generic"
 else
-  export LDFLAGS=
-  export CXXFLAGS="-fPIC -O3 -m64 -mtune=generic"
+  export LDFLAGS="-stdlib=libstdc++"
+  export CXXFLAGS="-stdlib=libstdc++ -fPIC -O3 -m64 -mtune=generic"
 fi
-  export CFLAGS="-fPIC -O3 -m64 -mtune=generic"
+
+export CFLAGS="-fPIC -O3 -m64 -mtune=generic"
 
 
 
@@ -174,11 +177,20 @@ $SOURCE_DIR/source/boost/build.sh
 $SOURCE_DIR/source/libevent/build.sh
 
 ################################################################################
+# Build OpenSSL - this is not intended for production use of Impala
+################################################################################
+$SOURCE_DIR/source/openssl/build.sh
+
+################################################################################
 # Thrift
 #  * depends on boost
 #  * depends on libevent
 ################################################################################
-$SOURCE_DIR/source/thrift/build.sh
+if [[ ! "$OSTYPE" == "darwin"* ]]; then
+  $SOURCE_DIR/source/thrift/build.sh
+else
+  THRIFT_VERSION=0.9.3 $SOURCE_DIR/source/thrift/build.sh
+fi
 
 ################################################################################
 # gflags

@@ -34,6 +34,14 @@ if needs_build_package ; then
   ZLIB_ROOT=$BUILD_DIR/zlib-$ZLIB_VERSION
   LIBEVENT_ROOT=$BUILD_DIR/libevent-$LIBEVENT_VERSION
 
+  # If we build in local dev mode, use the bundled OpenSSL
+  if [[ "$PRODUCTION" -eq "0" ]]; then
+    OPENSSL_ROOT=$BUILD_DIR/openssl-$OPENSSL_VERSION
+    OPENSSL_ARGS=--with-openssl=$OPENSSL_ROOT
+  else
+    OPENSSL_ARGS=
+  fi
+
   if [ -d "${PIC_LIB_PATH:-}" ]; then
     PIC_LIB_OPTIONS="--with-zlib=${PIC_LIB_PATH} "
   fi
@@ -44,7 +52,7 @@ if needs_build_package ; then
     --with-boost=${BOOST_ROOT} \
     --with-zlib=${ZLIB_ROOT} \
     --with-libevent=${LIBEVENT_ROOT} \
-    --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-}
+    --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} $OPENSSL_ARGS
   wrap make
   wrap make install
   cd contrib/fb303
@@ -55,7 +63,7 @@ if needs_build_package ; then
   CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX=${LOCAL_INSTALL}/python wrap ./configure \
     --with-boost=${BOOST_ROOT} \
     --with-java=no --with-php=no --prefix=${LOCAL_INSTALL} \
-    --with-thriftpath=${LOCAL_INSTALL}
+    --with-thriftpath=${LOCAL_INSTALL} $OPENSSL_ARGS
   wrap make
   wrap make install
 

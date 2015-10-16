@@ -32,10 +32,14 @@ if needs_build_package ; then
 
   # For some reason, re2 doesnt play nice with prefix installations and other
   # typical configuration parameters
-  sed -i 's/CXXFLAGS=-Wall/CXXFLAGS+=-Wall/' Makefile
-  sed -i 's/LDFLAGS=-pthread/LDFLAGS+=-pthread/' Makefile
-  sed -i 's/CXX=g\+\+/CXX?=g\+\+/' Makefile
-  sed -i 's/prefix=\/usr/prefix?=\/usr/' Makefile
+  EXTENSION=
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    EXTENSION=.bak
+  fi
+  sed -i $EXTENSION 's/CXXFLAGS=-Wall/CXXFLAGS+=-Wall/' Makefile
+  sed -i $EXTENSION 's/LDFLAGS=-pthread/LDFLAGS+=-pthread/' Makefile
+  sed -i $EXTENSION 's/CXX=g\+\+/CXX?=g\+\+/' Makefile
+  sed -i $EXTENSION 's/prefix=\/usr/prefix?=\/usr/' Makefile
   prefix=$LOCAL_INSTALL wrap make -j${BUILD_THREADS:-4} install
 
   footer $PACKAGE $PACKAGE_VERSION
