@@ -53,7 +53,7 @@ function build_llvm() {
   fi
 
   # Invoke CMake with the correct configuration
-  wrap $CMAKE_EXEC ../llvm-trunk \
+  wrap $CMAKE_EXEC ../$LLVM.src \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
       -DLLVM_TARGETS_TO_BUILD=X86 \

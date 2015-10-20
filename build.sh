@@ -143,17 +143,10 @@ fi
 ################################################################################
 
 # Build Default LLVM
-$SOURCE_DIR/source/llvm/build.sh
-
-if [[ ! "$OSTYPE" == "darwin"* ]]; then
-  LLVM_VERSION=3.3 $SOURCE_DIR/source/llvm/build.sh
-fi
+LLVM_VERSION=3.3-p1 $SOURCE_DIR/source/llvm/build.sh
 
 # CentOS 5 can't build trunk LLVM due to missing perf counter
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
-  #Build Trunk LLVM
-  LLVM_VERSION=trunk $SOURCE_DIR/source/llvm/build.sh
-
   # Build LLVM 3.7.0
   LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
 fi
