@@ -26,18 +26,18 @@ function build_llvm() {
   # Crappy CentOS 5.6 doesnt like us to build Clang, so skip it
   cd tools
   # CLANG
-  tar xaf ../../cfe-$PACKAGE_VERSION.src.tar.xz
+  tar xJf ../../cfe-$PACKAGE_VERSION.src.tar.xz
   mv cfe-$PACKAGE_VERSION.src clang
 
   # CLANG Extras
   cd clang/tools
-  tar xaf ../../../../clang-tools-extra-$PACKAGE_VERSION.src.tar.xz
+  tar xJf ../../../../clang-tools-extra-$PACKAGE_VERSION.src.tar.xz
   mv clang-tools-extra-$PACKAGE_VERSION.src extra
   cd ../../
 
   # COMPILER RT
   cd ../projects
-  tar xaf ../../compiler-rt-$PACKAGE_VERSION.src.tar.xz
+  tar xJf ../../compiler-rt-$PACKAGE_VERSION.src.tar.xz
   mv compiler-rt-$PACKAGE_VERSION.src compiler-rt
   cd ../../
 

@@ -72,28 +72,28 @@ function header() {
 
   # Extract the sources
   if [ -f $LPACKAGE_VERSION.tar.gz ]; then
-    tar xaf $LPACKAGE_VERSION.tar.gz
+    tar xzf $LPACKAGE_VERSION.tar.gz
     DIR=$LPACKAGE_VERSION
   elif [ -f $LPACKAGE_VERSION.tgz ]; then
-    tar xaf $LPACKAGE_VERSION.tgz
+    tar xzf $LPACKAGE_VERSION.tgz
     DIR=$LPACKAGE_VERSION
   elif [ -f $LPACKAGE_VERSION.src.tar.gz ]; then
-    tar xaf $LPACKAGE_VERSION.src.tar.gz
+    tar xzf $LPACKAGE_VERSION.src.tar.gz
     DIR=$LPACKAGE_VERSION.src
   elif [ -f $LPACKAGE-src-$2.tar.gz ]; then
-    tar xaf $LPACKAGE-src-$2.tar.gz
+    tar xzf $LPACKAGE-src-$2.tar.gz
     DIR=$LPACKAGE-src-$2
   elif [ -f $LPACKAGE_VERSION.tar.xz ]; then
-    tar xaf $LPACKAGE_VERSION.tar.xz
+    tar xJf $LPACKAGE_VERSION.tar.xz
     DIR=$LPACKAGE_VERSION
   elif [ -f $LPACKAGE_VERSION.xz ]; then
-    tar xaf $LPACKAGE_VERSION.xz
+    tar xJf $LPACKAGE_VERSION.xz
     DIR=$LPACKAGE_VERSION
   elif [ -f $LPACKAGE_VERSION.src.tar.xz ]; then
-    tar xaf $LPACKAGE_VERSION.src.tar.xz
+    tar xJf $LPACKAGE_VERSION.src.tar.xz
     DIR=$LPACKAGE_VERSION.src
   elif [ -f $LPACKAGE-src-$2.tar.xz ]; then
-    tar xaf $LPACKAGE-src-$2.tar.xz
+    tar xJf $LPACKAGE-src-$2.tar.xz
     DIR=$LPACKAGE-src-$2
   elif [ -f $LPACKAGE_VERSION.zip ]; then
     unzip -o $LPACKAGE_VERSION.zip
