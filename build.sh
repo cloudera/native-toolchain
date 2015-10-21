@@ -36,7 +36,7 @@ export FAIL_ON_PUBLISH
 export PUBLISH_DEPENDENCIES
 export PRODUCTION
 
-export BUILD_THREADS=`grep -c ^processor /proc/cpuinfo`
+export BUILD_THREADS=$(getconf _NPROCESSORS_ONLN)
 
 # SOURCE DIR for the current script
 export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
