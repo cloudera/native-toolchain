@@ -129,7 +129,9 @@ export CFLAGS="-fPIC -O3 -m64 -mtune=generic"
 ################################################################################
 # Build Python
 ################################################################################
-PYTHON_VERSION=2.7.10 $SOURCE_DIR/source/python/build.sh
+if [[ ! "$OSTYPE" == "darwin"* ]]; then
+  PYTHON_VERSION=2.7.10 $SOURCE_DIR/source/python/build.sh
+fi
 
 ################################################################################
 # Build CMake
@@ -188,7 +190,7 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
   THRIFT_VERSION=0.9.0-p2 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.9.0-p4 $SOURCE_DIR/source/thrift/build.sh
 else
-  THRIFT_VERSION=0.9.3 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
 fi
 
 ################################################################################
