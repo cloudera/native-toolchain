@@ -28,12 +28,18 @@ prepare $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
+  ARCH_FLAGS=
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    ARCH_FLAGS="darwin64-x86_64-cc enable-ec_nistp_64_gcc_128"
+  fi
+
   CFLAGS="$CFLAGS -fPIC -DPIC" \
     CXXFLAGS="$CXXFLAGS -fPIC -DPIC" \
-    wrap ./config shared zlib --prefix=$LOCAL_INSTALL
+    wrap perl ./Configure no-ssl2 no-ssl3 shared zlib \
+      --prefix=$LOCAL_INSTALL $ARCH_FLAGS
 
   # For some reason, the first build seems to fail sometimes
-  wrap make  all
+  wrap make all
   wrap make install
 
   footer $PACKAGE $PACKAGE_VERSION
