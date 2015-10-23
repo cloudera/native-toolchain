@@ -37,7 +37,7 @@ if needs_build_package ; then
     TOOLSET=
   fi
   # Update compilers to use our toolchain
-  wrap ./bootstrap.sh --without-libraries=python --prefix=$LOCAL_INSTALL
+  wrap ./bootstrap.sh --without-libraries=python --prefix=$LOCAL_INSTALL cxxflags="$CXXFLAGS"
   wrap ./b2 -s"NO_BZIP2=1" $TOOLSET cxxflags="$CXXFLAGS" linkflags="$CXXFLAGS" --prefix=$LOCAL_INSTALL -j4 install
 
   footer $PACKAGE $PACKAGE_VERSION
