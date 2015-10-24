@@ -118,13 +118,17 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   export LDFLAGS="$ARCH_FLAGS $FULL_RPATH $FULL_LPATH"
   export CXXFLAGS="$ARCH_FLAGS -static-libstdc++ -fPIC -O3 -m64 -mtune=generic"
 else
+  export CXX="g++ -stdlib=libstdc++"
   export LDFLAGS="$ARCH_FLAGS"
   export CXXFLAGS="$ARCH_FLAGS -fPIC -O3 -m64 -mtune=generic"
 fi
 
 export CFLAGS="-fPIC -O3 -m64 -mtune=generic"
 
-
+################################################################################
+# Boost
+################################################################################
+$SOURCE_DIR/source/boost/build.sh
 
 ################################################################################
 # Build Python
@@ -167,11 +171,6 @@ else
 fi
 
 ################################################################################
-# Boost
-################################################################################
-$SOURCE_DIR/source/boost/build.sh
-
-################################################################################
 # Build libevent
 ################################################################################
 $SOURCE_DIR/source/libevent/build.sh
@@ -201,6 +200,7 @@ $SOURCE_DIR/source/gflags/build.sh
 ################################################################################
 # Build pprof
 ################################################################################
+GPERFTOOLS_VERSION=2.3 $SOURCE_DIR/source/gperftools/build.sh
 $SOURCE_DIR/source/gperftools/build.sh
 
 ################################################################################
