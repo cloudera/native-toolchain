@@ -31,6 +31,8 @@ if needs_build_package ; then
   ARCH_FLAGS=
   if [[ "$OSTYPE" == "darwin"* ]]; then
     ARCH_FLAGS="darwin64-x86_64-cc enable-ec_nistp_64_gcc_128"
+  else
+    ARCH_FLAGS="linux-x86_64 enable-ec_nistp_64_gcc_128"
   fi
 
   CFLAGS="$CFLAGS -fPIC -DPIC" \
