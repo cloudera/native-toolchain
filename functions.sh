@@ -220,7 +220,7 @@ function build_dist_package() {
   fi
 
   # Package and upload the archive to the artifactory
-  if [[ :"PUBLISH_DEPENDENCIES" -eq "1" ]]; then
+  if [[ "PUBLISH_DEPENDENCIES" -eq "1" ]]; then
     mvn deploy:deploy-file -DgroupId=com.cloudera.toolchain\
       -DartifactId="${LPACKAGE}"\
       -Dversion="${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"\
