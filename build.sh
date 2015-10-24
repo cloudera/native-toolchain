@@ -72,16 +72,19 @@ else
   export COMPILER_VERSION="system"
 fi
 
+
+ARCH_FLAGS="-mno-avx2"
 # Check Platform
 if [[ "$OSTYPE" =~ ^linux ]]; then
   export RELEASE_NAME=`lsb_release -r -i`
-  export ARCH_FLAGS=
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   export RELEASE_NAME="OSX-$(sw_vers -productVersion)"
   export DARWIN_VERSION=`sw_vers -productVersion`
   export MACOSX_DEPLOYMENT_TARGET=$(echo $DARWIN_VERSION| sed -E 's/(10.[0-9]+).*/\1/')
-  export ARCH_FLAGS="-stdlib=libstdc++"
+  ARCH_FLAGS="${ARCH_FLAGS} -stdlib=libstdc++"
 fi
+
+export ARCH_FLAGS
 
 # Load functions
 source $SOURCE_DIR/functions.sh
@@ -123,7 +126,7 @@ else
   export CXXFLAGS="$ARCH_FLAGS -fPIC -O3 -m64 -mtune=generic"
 fi
 
-export CFLAGS="-fPIC -O3 -m64 -mtune=generic"
+export CFLAGS="-fPIC -O3 -m64 -mtune=generic -mno-avx2"
 
 ################################################################################
 # Boost
