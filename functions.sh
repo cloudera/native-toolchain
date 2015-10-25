@@ -177,8 +177,8 @@ function apply_patches() {
   if [[ -d $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches ]]; then
     echo "Apply patches up to ${PATCH_LEVEL}"
     INIT_VAL=1
-    for p in `find $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches -type f`; do
-      echo "Applying patch ${INIT_VAL}..."
+    for p in `find $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches -type f | sort`; do
+      echo "Applying patch ${INIT_VAL}...${p}"
       set +e
       # Check if patch can be applied at -p2 first, then p1
       patch -p2 < $p >> $BUILD_LOG 2>&1

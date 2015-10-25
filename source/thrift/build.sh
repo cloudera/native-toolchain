@@ -51,10 +51,11 @@ if needs_build_package ; then
     --with-ruby=no --with-haskell=no --with-erlang=no --with-d=no \
     --with-boost=${BOOST_ROOT} \
     --with-zlib=${ZLIB_ROOT} \
+    --with-libevent=${LIBEVENT_ROOT} \
     --with-nodejs=no \
     --with-lua=no \
     --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} $OPENSSL_ARGS
-  wrap make -j${BUILD_THREADS}
+  wrap make
   wrap make install
   cd contrib/fb303
   rm -f config.cache
