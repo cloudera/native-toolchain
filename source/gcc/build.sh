@@ -37,9 +37,7 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   mkdir -p build
   cd build
 
-  # Omitting the frame pointer is for debugability
-  wrap ../gcc-$GCC_VERSION/configure --enable-frame-pointer --prefix=$LOCAL_INSTALL \
-    --enable-cxx-flags='-fno-omit-frame-pointer' \
+  wrap ../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL \
     --enable-languages=c,c++ --disable-multilib \
     --with-build-config=bootstrap-debug
   wrap make -j${BUILD_THREADS:-4}
