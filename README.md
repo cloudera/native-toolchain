@@ -8,7 +8,7 @@ produce the binaries.
 
 To build a specific package run:
 
-   BUILD_ALL=0 BUILD_XXX=1 ./build.sh
+   BUILD_ALL=0 BUILD_XXX=1 ./buildall.sh
 
 where `XXX` is one of the packages from source.
 
@@ -17,4 +17,4 @@ where `XXX` is one of the packages from source.
 To build on Mac we cannot use a custom GCC, so we have to use
 the system compiler:
 
-    SYSYTEM_GCC=1 DEBUG=1 ./build.sh
+    SYSYTEM_GCC=1 DEBUG=1 ./buildall.sh
