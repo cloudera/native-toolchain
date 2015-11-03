@@ -23,6 +23,27 @@ set -u
 
 set -o pipefail
 
+# Prepend command with timestamp
+alias ts="sed \"s;^;`date '+%D %T'` ;\""
+
+# Checks if the existing build artifacts need to be removed and verifies
+# that all required directories exist.
+function prepare_build_dir() {
+  if [ $CLEAN -eq 1 ]; then
+    echo "Cleaning.."
+    git clean -fdx $SOURCE_DIR
+  fi
+
+  # Destination directory for build
+  mkdir -p $SOURCE_DIR/build
+  export BUILD_DIR=$SOURCE_DIR/build
+
+  # Create a check directory containing a sentry file for each package
+  mkdir -p $SOURCE_DIR/check
+}
+
+# Wraps the passed in command to either output it to a log file or tee the
+# output to stdout and write it to a logfile.
 function wrap() {
   if [[ $DEBUG -eq 0 ]]; then
     "$@" >> $BUILD_LOG 2>&1
