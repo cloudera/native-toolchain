@@ -34,28 +34,38 @@ set -o pipefail
 # If set to 1 will use -x flag in bash and print the output to stdout and write
 # it to the log file. If set to 0 only writes to the log file.
 : ${DEBUG=0}
+export DEBUG
 
 # If set to 1, will fail the build if the artifacts could not be published.
 : ${FAIL_ON_PUBLISH=0}
+export FAIL_ON_PUBLISH
 
 # If set to 1, the script will upload the artifacts to the internal artifactory
 : ${PUBLISH_DEPENDENCIES=0}
+export PUBLISH_DEPENDENCIES
 
 # A flag that can be used to trigger particular behavior. PRODUCTION=1 is how
 # the toolchain is used for packaging native products.
 : ${PRODUCTION=0}
+export PRODUCTION
 
 # Clean the complete build
 : ${CLEAN=0}
+export CLEAN
 
 # Flag to determine the system compiler is used
 : ${SYSTEM_GCC=0}
+export SYSTEM_GCC
+
+: ${GCC_VERSION=4.9.2}
+export GCC_VERSION
 
 # Determine the number of build threads
 BUILD_THREADS=$(getconf _NPROCESSORS_ONLN)
+export BUILD_THREADS
 
 # SOURCE DIR for the current script
-SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
+export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
 
 if [[ $DEBUG -eq 1 ]]; then
   set -x
@@ -66,6 +76,17 @@ source $SOURCE_DIR/functions.sh
 
 # Make sure the necessary file system layout exists
 prepare_build_dir
+
+if [[ $SYSTEM_GCC -eq 0 ]]; then
+  COMPILER="gcc"
+  COMPILER_VERSION=$GCC_VERSION
+else
+  COMPILER="gcc"
+  COMPILER_VERSION="system"
+fi
+
+export COMPILER
+export COMPILER_VERSION
 
 ################################################################################
 # Prepare compiler and linker commands. This will set the typical environment
@@ -108,11 +129,10 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
 
   # Upgrade rpath variable to catch current library location and possible future location
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib,-rpath,'\$ORIGIN/../lib',"
+    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib,-rpath,'\$ORIGIN/../lib'"
   else
-    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64',"
+    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64'"
   fi
-  FULL_RPATH="${FULL_RPATH}-rpath,'$TOOLCHAIN_DEST_PATH/gcc-$GCC_VERSION'"
   FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
@@ -126,16 +146,8 @@ fi
 
 CFLAGS="-fPIC -O3 -m64 -mtune=generic -mno-avx2"
 
-if [[ $SYSTEM_GCC -eq 0 ]]; then
-  COMPILER="gcc"
-  COMPILER_VERSION=$GCC_VERSION
-else
-  COMPILER="gcc"
-  COMPILER_VERSION="system"
-fi
 
 # List of export variables
-export BUILD_THREADS
 export CC
 export CFLAGS
 export CLEAN
@@ -144,10 +156,5 @@ export COMPILER_VERSION
 export CXX
 export CXXFLAGS
 export DEBUG
-export FAIL_ON_PUBLISH
 export LDFLAGS
-export PRODUCTION
-export PUBLISH_DEPENDENCIES
 export RELEASE_NAME
-export SOURCE_DIR
-export SYSTEM_GCC

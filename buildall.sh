@@ -25,7 +25,7 @@ set -o pipefail
 # The init.sh script contains all the necessary logic to setup the environment
 # for the build process. This includes setting the right compiler and linker
 # flags.
-source $SOURCE_DIR/init.sh
+source ./init.sh
 
 ################################################################################
 # How to add new versions to the toolchain:
@@ -38,7 +38,6 @@ source $SOURCE_DIR/init.sh
 #  removed, but only new versions can be added. Make sure that the library
 #  and version you want to add works as expected.
 ################################################################################
-
 ################################################################################
 # Boost
 ################################################################################
@@ -57,7 +56,6 @@ fi
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
   CMAKE_VERSION=3.2.3 $SOURCE_DIR/source/cmake/build.sh
 fi
-
 ################################################################################
 # LLVM
 ################################################################################
@@ -68,22 +66,20 @@ LLVM_VERSION=3.3-p1 $SOURCE_DIR/source/llvm/build.sh
 # CentOS 5 can't build trunk LLVM due to missing perf counter
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
   # Build LLVM 3.7.0
-  LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
+  CMAKE_VERSION=3.2.3 PYTHON_VERSION=2.7.10 LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
 fi
-
 ################################################################################
 # SASL
 ################################################################################
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
-  $SOURCE_DIR/source/cyrus-sasl/build.sh
+  CYRUS_SASL_VERSION=2.1.23 $SOURCE_DIR/source/cyrus-sasl/build.sh
 else
   CYRUS_SASL_VERSION=2.1.26 $SOURCE_DIR/source/cyrus-sasl/build.sh
 fi
-
 ################################################################################
 # Build libevent
 ################################################################################
-$SOURCE_DIR/source/libevent/build.sh
+LIBEVENT_VERSION=1.4.15 $SOURCE_DIR/source/libevent/build.sh
 
 ################################################################################
 # Build OpenSSL - this is not intended for production use of Impala.
@@ -92,16 +88,31 @@ $SOURCE_DIR/source/libevent/build.sh
 OPENSSL_VERSION=1.0.1p $SOURCE_DIR/source/openssl/build.sh
 
 ################################################################################
+# Build ZLib
+################################################################################
+ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
+
+################################################################################
 # Thrift
 #  * depends on boost
 #  * depends on libevent
 ################################################################################
+export LIBEVENT_VERSION=1.4.15
+export BOOST_VERSION=1.57.0
+export ZLIB_VERSION=1.2.8
+export OPENSSL_VERSION=1.0.1p
+
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
   THRIFT_VERSION=0.9.0-p2 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.9.0-p4 $SOURCE_DIR/source/thrift/build.sh
 else
-  THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
+  BOOST_VERSION=1.57.0 THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
 fi
+
+export -n LIBEVENT_VERSION
+export -n BOOST_VERSION
+export -n ZLIB_VERSION
+export -n OPENSSL_VERSION
 
 ################################################################################
 # gflags
@@ -117,7 +128,7 @@ GPERFTOOLS_VERSION=2.0-p1 $SOURCE_DIR/source/gperftools/build.sh
 ################################################################################
 # Build glog
 ################################################################################
-GLOG_VERSION=0.3.2-p1 $SOURCE_DIR/source/glog/build.sh
+GFLAGS_VERSION=2.0 GLOG_VERSION=0.3.2-p1 $SOURCE_DIR/source/glog/build.sh
 
 ################################################################################
 # Build gtest
@@ -154,11 +165,6 @@ AVRO_VERSION=1.7.4-p3 $SOURCE_DIR/source/avro/build.sh
 # Build Rapidjson
 ################################################################################
 RAPIDJSON_VERSION=0.11 $SOURCE_DIR/source/rapidjson/build.sh
-
-################################################################################
-# Build ZLib
-################################################################################
-ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
 
 ################################################################################
 # Build BZip2
