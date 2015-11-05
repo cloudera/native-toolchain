@@ -47,7 +47,10 @@ BOOST_VERSION=1.57.0 $SOURCE_DIR/source/boost/build.sh
 # Build Python
 ################################################################################
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
+  PYTHON_VERSION=2.7.11 build_fake_package "python"
   PYTHON_VERSION=2.7.10 $SOURCE_DIR/source/python/build.sh
+else
+  PYTHON_VERSION=2.7.10 build_fake_package "python"pp
 fi
 
 ################################################################################
@@ -55,6 +58,8 @@ fi
 ################################################################################
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
   CMAKE_VERSION=3.2.3 $SOURCE_DIR/source/cmake/build.sh
+else
+  CMAKE_VERSION=3.2.3 build_fake_package "cmake"
 fi
 ################################################################################
 # LLVM
@@ -67,6 +72,8 @@ LLVM_VERSION=3.3-p1 $SOURCE_DIR/source/llvm/build.sh
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
   # Build LLVM 3.7.0
   CMAKE_VERSION=3.2.3 PYTHON_VERSION=2.7.10 LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
+else
+  LLVM_VERSION=3.7.0 build_fake_package "llvm"
 fi
 ################################################################################
 # SASL
@@ -176,6 +183,8 @@ BZIP2_VERSION=1.0.6-p1 $SOURCE_DIR/source/bzip2/build.sh
 ################################################################################
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
   GDB_VERSION=7.9.1 $SOURCE_DIR/source/gdb/build.sh
+else
+  GDB_VERSION=7.9.1 build_fake_package "gdb"
 fi
 
 ################################################################################

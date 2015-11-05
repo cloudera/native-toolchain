@@ -73,6 +73,11 @@ function prepare() {
   fi
 
   PACKAGE_STRING="$PACKAGE-$PACKAGE_VERSION"
+  # Package name might be upper case
+  export LPACKAGE=`echo "${PACKAGE}" | awk '{print tolower($0)}'`
+
+  # Build name
+  export LPACKAGE_VERSION=$LPACKAGE-$PACKAGE_VERSION
 }
 
 # Build helper function that sets the necessary environment variables
@@ -81,12 +86,7 @@ function header() {
   echo "#######################################################################"
   echo "# Building: ${1}-${2}${PATCH_VERSION}"
 
-  # Package name might be upper case
-  LPACKAGE=`echo "${1}" | awk '{print tolower($0)}'`
   cd $SOURCE_DIR/source/$LPACKAGE
-
-  # Build name
-  LPACKAGE_VERSION=$LPACKAGE-$2
 
   LOCAL_INSTALL=$BUILD_DIR/$LPACKAGE-$2${PATCH_VERSION}
   BUILD_LOG=$SOURCE_DIR/check/$LPACKAGE-${2}${PATCH_VERSION}.log
@@ -214,6 +214,22 @@ function apply_patches() {
         return 0
       fi
     done
+  fi
+}
+
+
+# Build a fake package
+function build_fake_package() {
+  prepare  $1
+
+  if needs_build_package; then
+    DESTDIR="${BUILD_DIR}/${LPACKAGE_VERSION}${PATCH_VERSION}"
+    mkdir -p ${DESTDIR}
+    echo "Package not built for $OSTYPE $RELEASE_NAME." >> ${DESTDIR}/README
+
+    # Package and upload the fake dir
+    build_dist_package
+    touch $SOURCE_DIR/check/${PACKAGE}-${PACKAGE_VERSION}${PATCH_VERSION}
   fi
 }
 
