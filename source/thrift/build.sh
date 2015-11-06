@@ -35,7 +35,7 @@ if needs_build_package ; then
   LIBEVENT_ROOT=$BUILD_DIR/libevent-$LIBEVENT_VERSION
 
   # If we build in local dev mode, use the bundled OpenSSL
-  if [[ "$PRODUCTION" -eq "0" ]]; then
+  if [[ "$PRODUCTION" -eq "0" || "$OSTYPE" == "darwin"* ]]; then
     OPENSSL_ROOT=$BUILD_DIR/openssl-$OPENSSL_VERSION
     OPENSSL_ARGS=--with-openssl=$OPENSSL_ROOT
   else
