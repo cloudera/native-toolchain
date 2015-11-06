@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2012 Cloudera Inc.
+# Copyright 2015 Cloudera Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,27 @@ set -u
 
 set -o pipefail
 
+# Prepend command with timestamp
+alias ts="sed \"s;^;`date '+%D %T'` ;\""
+
+# Checks if the existing build artifacts need to be removed and verifies
+# that all required directories exist.
+function prepare_build_dir() {
+  if [ $CLEAN -eq 1 ]; then
+    echo "Cleaning.."
+    git clean -fdx $SOURCE_DIR
+  fi
+
+  # Destination directory for build
+  mkdir -p $SOURCE_DIR/build
+  export BUILD_DIR=$SOURCE_DIR/build
+
+  # Create a check directory containing a sentry file for each package
+  mkdir -p $SOURCE_DIR/check
+}
+
+# Wraps the passed in command to either output it to a log file or tee the
+# output to stdout and write it to a logfile.
 function wrap() {
   if [[ $DEBUG -eq 0 ]]; then
     "$@" >> $BUILD_LOG 2>&1
@@ -52,6 +73,11 @@ function prepare() {
   fi
 
   PACKAGE_STRING="$PACKAGE-$PACKAGE_VERSION"
+  # Package name might be upper case
+  export LPACKAGE=`echo "${PACKAGE}" | awk '{print tolower($0)}'`
+
+  # Build name
+  export LPACKAGE_VERSION=$LPACKAGE-$PACKAGE_VERSION
 }
 
 # Build helper function that sets the necessary environment variables
@@ -60,12 +86,7 @@ function header() {
   echo "#######################################################################"
   echo "# Building: ${1}-${2}${PATCH_VERSION}"
 
-  # Package name might be upper case
-  LPACKAGE=`echo "${1}" | awk '{print tolower($0)}'`
   cd $SOURCE_DIR/source/$LPACKAGE
-
-  # Build name
-  LPACKAGE_VERSION=$LPACKAGE-$2
 
   LOCAL_INSTALL=$BUILD_DIR/$LPACKAGE-$2${PATCH_VERSION}
   BUILD_LOG=$SOURCE_DIR/check/$LPACKAGE-${2}${PATCH_VERSION}.log
@@ -193,6 +214,22 @@ function apply_patches() {
         return 0
       fi
     done
+  fi
+}
+
+
+# Build a fake package
+function build_fake_package() {
+  prepare  $1
+
+  if needs_build_package; then
+    DESTDIR="${BUILD_DIR}/${LPACKAGE_VERSION}${PATCH_VERSION}"
+    mkdir -p ${DESTDIR}
+    echo "Package not built for $OSTYPE $RELEASE_NAME." >> ${DESTDIR}/README
+
+    # Package and upload the fake dir
+    build_dist_package
+    touch $SOURCE_DIR/check/${PACKAGE}-${PACKAGE_VERSION}${PATCH_VERSION}
   fi
 }
 
