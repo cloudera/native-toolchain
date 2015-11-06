@@ -50,7 +50,7 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
   PYTHON_VERSION=2.7.11 build_fake_package "python"
   PYTHON_VERSION=2.7.10 $SOURCE_DIR/source/python/build.sh
 else
-  PYTHON_VERSION=2.7.10 build_fake_package "python"pp
+  PYTHON_VERSION=2.7.10 build_fake_package "python"
 fi
 
 ################################################################################

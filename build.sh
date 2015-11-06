@@ -29,7 +29,10 @@ function build() {
   echo "Requesting build of $1 $2"
   PACKAGE=`echo "$1" | awk '{print toupper($0)}'`
   VAR_NAME="${PACKAGE}_VERSION"
+  VAR_PACKAGE="BUILD_${PACKAGE}"
   export $VAR_NAME=$2
+  export BUILD_ALL=0
+  export $VAR_PACKAGE=1
   $SOURCE_DIR/source/$1/build.sh
 }
 

@@ -46,7 +46,7 @@ export PUBLISH_DEPENDENCIES
 
 # A flag that can be used to trigger particular behavior. PRODUCTION=1 is how
 # the toolchain is used for packaging native products.
-: ${PRODUCTION=0}
+: ${PRODUCTION=1}
 export PRODUCTION
 
 # Clean the complete build

@@ -1,6 +1,6 @@
 # Building Dependencies
 
-Running `./build.sh` in the toplevel directory should be enough to
+Running `./buildall.sh` in the toplevel directory should be enough to
 produce the binaries.
 
 
@@ -8,9 +8,17 @@ produce the binaries.
 
 To build a specific package run:
 
-   BUILD_ALL=0 BUILD_XXX=1 ./buildall.sh
+    ./build.sh package package.version
 
-where `XXX` is one of the packages from source.
+ for example:
+
+    ./build.sh python 2.7.10
+
+ Its possible as well to build several packages at once.
+
+    ./build.sh python 2.7.10 llvm 3.3-p1
+
+Here, the arguments are package version pairs.
 
 # Mac OS X
 
