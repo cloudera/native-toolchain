@@ -137,14 +137,14 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
   LDFLAGS="$ARCH_FLAGS $FULL_RPATH $FULL_LPATH"
-  CXXFLAGS="$ARCH_FLAGS -static-libstdc++ -fPIC -O3 -m64 -mtune=generic"
+  CXXFLAGS="$ARCH_FLAGS -static-libstdc++ -fPIC -O3 -m64"
 else
   CXX="g++ -stdlib=libstdc++"
   LDFLAGS="$ARCH_FLAGS"
-  CXXFLAGS="$ARCH_FLAGS -fPIC -O3 -m64 -mtune=generic"
+  CXXFLAGS="$ARCH_FLAGS -fPIC -O3 -m64"
 fi
 
-CFLAGS="-fPIC -O3 -m64 -mtune=generic -mno-avx2"
+CFLAGS="-fPIC -O3 -m64"
 
 
 # List of export variables
