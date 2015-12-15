@@ -82,6 +82,10 @@ if needs_build_package ; then
 
     if [[ ! "$OSTYPE" == "darwin"* ]]; then
       EXTRA_CONFIG_ARG="$EXTRA_CONFIG_ARG --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION"
+    else
+      # Reset compile flags on OS X to avoid configuration errors.
+      export CXXFLAGS=
+      export LDFLAGS=
     fi
 
     echo "$EXTRA_CONFIG_ARG"
