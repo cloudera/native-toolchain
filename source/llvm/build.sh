@@ -18,6 +18,19 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
+if [[ "$PACKAGE_VERSION" =~ "3.7" ]]; then
+    download_dependency $LPACKAGE "cfe-${PACKAGE_VERSION}.src.tar.xz" $THIS_DIR
+    download_dependency $LPACKAGE "clang-tools-extra-${PACKAGE_VERSION}.src.tar.xz" $THIS_DIR
+    download_dependency $LPACKAGE "compiler-rt-${PACKAGE_VERSION}.src.tar.xz" $THIS_DIR
+    download_dependency $LPACKAGE "llvm-${PACKAGE_VERSION}.src.tar.xz" $THIS_DIR
+else
+    download_dependency $LPACKAGE "cfe-${PACKAGE_VERSION}.src.tar.gz" $THIS_DIR
+    download_dependency $LPACKAGE "clang-tools-extra-${PACKAGE_VERSION}.src.tar.gz" $THIS_DIR
+    download_dependency $LPACKAGE "compiler-rt-${PACKAGE_VERSION}.src.tar.gz" $THIS_DIR
+    download_dependency $LPACKAGE "llvm-${PACKAGE_VERSION}.src.tar.gz" $THIS_DIR
+fi
+
+
 if needs_build_package ; then
 
   if [[ $PACKAGE_VERSION = "trunk" ]]; then

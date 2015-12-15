@@ -19,6 +19,8 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
+# Download the dependency from S3
+download_dependency $LPACKAGE "${LPACKAGE_VERSION}.tar.gz" $THIS_DIR
 
 if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   header $PACKAGE $PACKAGE_VERSION

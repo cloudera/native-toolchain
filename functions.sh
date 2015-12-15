@@ -26,6 +26,17 @@ set -o pipefail
 # Prepend command with timestamp
 alias ts="sed \"s;^;`date '+%D %T'` ;\""
 
+
+# Downloads a given package from S3, aruments to this function are the package and
+# package-filename and the target download folder
+function download_dependency() {
+  # S3 Base URL
+  S3_BASE_PREFIX="https://s3-us-west-1.amazonaws.com/native-toolchain/source"
+  if [[ ! -f "${3}/${2}" ]]; then
+    wget -q -O "${3}/${2}" "${S3_BASE_PREFIX}/${1}/${2}"
+  fi
+}
+
 # Checks if the existing build artifacts need to be removed and verifies
 # that all required directories exist.
 function prepare_build_dir() {
