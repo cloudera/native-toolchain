@@ -1,8 +1,13 @@
 # Building Dependencies
 
 Running `./buildall.sh` in the toplevel directory should be enough to
-produce the binaries.
+produce the binaries. The sources for the different packages are downloaded
+from an S3 bucket provided by Cloudera. If desired, it's possible to dowload 
+the exact version of the package and simply move it to the source directory.
 
+For example, if you want to download the gcc source manually, find the 
+gcc-4.9.2.tar.gz archive and copy it to source/gcc. If the file is present it 
+will not be downloaded again.
 
 # Specific Package
 
