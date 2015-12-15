@@ -31,7 +31,7 @@ alias ts="sed \"s;^;`date '+%D %T'` ;\""
 # package-filename and the target download folder
 function download_dependency() {
   # S3 Base URL
-  S3_BASE_PREFIX="https://s3-us-west-1.amazonaws.com/native-toolchain/source"
+  S3_BASE_PREFIX="https://native-toolchain.s3.amazonaws.com/source"
   if [[ ! -f "${3}/${2}" ]]; then
     ARGS=
     if [[ $DEBUG -eq 0 ]]; then
