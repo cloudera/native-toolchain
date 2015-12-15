@@ -33,7 +33,11 @@ function download_dependency() {
   # S3 Base URL
   S3_BASE_PREFIX="https://s3-us-west-1.amazonaws.com/native-toolchain/source"
   if [[ ! -f "${3}/${2}" ]]; then
-    wget -q -O "${3}/${2}" "${S3_BASE_PREFIX}/${1}/${2}"
+    ARGS=
+    if [[ $DEBUG -eq 0 ]]; then
+      ARGS=-q
+    fi
+    wget $ARGS -O "${3}/${2}" "${S3_BASE_PREFIX}/${1}/${2}"
   fi
 }
 
