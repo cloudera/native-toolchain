@@ -30,4 +30,4 @@ Here, the arguments are package version pairs.
 To build on Mac we cannot use a custom GCC, so we have to use
 the system compiler:
 
-    SYSYTEM_GCC=1 DEBUG=1 ./buildall.sh
+    SYSTEM_GCC=1 DEBUG=1 ./buildall.sh
