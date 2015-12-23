@@ -139,7 +139,9 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   LDFLAGS="$ARCH_FLAGS $FULL_RPATH $FULL_LPATH"
   CXXFLAGS="$ARCH_FLAGS -static-libstdc++ -fPIC -O3 -m64"
 else
-  CXX="g++ -stdlib=libstdc++"
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    CXX="g++ -stdlib=libstdc++"
+  fi
   LDFLAGS=""
   CXXFLAGS="-fPIC -O3 -m64"
 fi
