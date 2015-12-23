@@ -140,8 +140,8 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   CXXFLAGS="$ARCH_FLAGS -static-libstdc++ -fPIC -O3 -m64"
 else
   CXX="g++ -stdlib=libstdc++"
-  LDFLAGS="$ARCH_FLAGS"
-  CXXFLAGS="$ARCH_FLAGS -fPIC -O3 -m64"
+  LDFLAGS="${LDFLAGS}"
+  CXXFLAGS="${CXXFLAGS} -fPIC -O3 -m64"
 fi
 
 CFLAGS="-fPIC -O3 -m64"
