@@ -36,7 +36,7 @@ if needs_build_package ; then
   pushd ..
   mkdir -p build-googletest-$GOOGLETEST_VERSION
   pushd build-googletest-$GOOGLETEST_VERSION
-  wrap cmake -DCMAKE_CXX_FLAGS=$CXXFLAGS -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL ../googletest-$GOOGLETEST_VERSION
+  wrap cmake -DCMAKE_CXX_FLAGS="${CXXFLAGS}" -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL ../googletest-$GOOGLETEST_VERSION
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
 
