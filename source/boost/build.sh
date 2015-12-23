@@ -33,7 +33,7 @@ download_dependency $LPACKAGE "${LPACKAGE_VERSION}.tar.gz" $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  if [[ ! "$OSTYPE" == "darwin"* ]]; then
+  if [[ ! "$OSTYPE" == "darwin"* && $SYSTEM_GCC -eq 0 ]]; then
     echo "using gcc : $GCC_VERSION : $BUILD_DIR/gcc-$GCC_VERSION/bin/g++ ;" > tools/build/src/user-config.jam
     TOOLSET=--toolset=gcc-$GCC_VERSION
   else
