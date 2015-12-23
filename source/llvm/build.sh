@@ -80,7 +80,7 @@ if needs_build_package ; then
       EXTRA_CONFIG_ARG=--with-python=`which python26`
     fi
 
-    if [[ ! "$OSTYPE" == "darwin"* ]]; then
+    if [[ ! "$OSTYPE" == "darwin"* && $SYSTEM_GCC -eq 0 ]]; then
       EXTRA_CONFIG_ARG="$EXTRA_CONFIG_ARG --with-gcc-toolchain=$BUILD_DIR/gcc-$GCC_VERSION"
     else
       # Reset compile flags on OS X to avoid configuration errors.
