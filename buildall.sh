@@ -136,11 +136,15 @@ GPERFTOOLS_VERSION=2.0-p1 $SOURCE_DIR/source/gperftools/build.sh
 # Build glog
 ################################################################################
 GFLAGS_VERSION=2.0 GLOG_VERSION=0.3.2-p1 $SOURCE_DIR/source/glog/build.sh
+GFLAGS_VERSION=2.0 GLOG_VERSION=0.3.3-p1 $SOURCE_DIR/source/glog/build.sh
 
 ################################################################################
 # Build gtest
 ################################################################################
 GTEST_VERSION=1.6.0 $SOURCE_DIR/source/gtest/build.sh
+
+# New versions of are named googletest
+GOOGLETEST_VERSION=20151222 $SOURCE_DIR/source/googletest/build.sh
 
 ################################################################################
 # Build Snappy
@@ -186,6 +190,11 @@ if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
 else
   GDB_VERSION=7.9.1 build_fake_package "gdb"
 fi
+
+################################################################################
+# Build Libunwind
+################################################################################
+LIBUNWIND_VERSION=1.1 $SOURCE_DIR/source/libunwind/build.sh
 
 ################################################################################
 # Build Breakpad
