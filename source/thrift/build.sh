@@ -48,8 +48,10 @@ if needs_build_package ; then
   if [ -d "${PIC_LIB_PATH:-}" ]; then
     PIC_LIB_OPTIONS="--with-zlib=${PIC_LIB_PATH} "
   fi
+
   JAVA_PREFIX=${LOCAL_INSTALL}/java PY_PREFIX=${LOCAL_INSTALL}/python \
     wrap ./configure --with-pic --prefix=${LOCAL_INSTALL} \
+    --with-c_glib=no \
     --with-php=no --with-java=no --with-perl=no --with-erlang=no --with-csharp=no \
     --with-ruby=no --with-haskell=no --with-erlang=no --with-d=no \
     --with-boost=${BOOST_ROOT} \
