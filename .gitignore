@@ -1,3 +1,6 @@
 build
 check
 source
+
+# python stuff
+*.py[ocd]
