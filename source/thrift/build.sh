@@ -49,6 +49,11 @@ if needs_build_package ; then
     PIC_LIB_OPTIONS="--with-zlib=${PIC_LIB_PATH} "
   fi
 
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    wrap aclocal -I ./aclocal
+    wrap glibtoolize --copy
+    wrap autoconf
+  fi
   JAVA_PREFIX=${LOCAL_INSTALL}/java PY_PREFIX=${LOCAL_INSTALL}/python \
     wrap ./configure --with-pic --prefix=${LOCAL_INSTALL} \
     --with-c_glib=no \

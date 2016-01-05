@@ -159,6 +159,18 @@ function header() {
     # Once the patches are applied, move the directory to the correct name
     # with the patch level in the name
     popd
+    if [[ -d $FINAL_DIR$PATCH_VERSION ]]; then
+      # Move away old directory from previous run
+      i=0
+      while true; do
+        if [[ -d $FINAL_DIR$PATCH_VERSION.bak$i ]]; then
+          ((++i))
+          continue
+        fi
+        mv $FINAL_DIR$PATCH_VERSION $FINAL_DIR$PATCH_VERSION.bak$i
+        break
+      done
+    fi
     mv $FINAL_DIR $FINAL_DIR$PATCH_VERSION
     pushd $FINAL_DIR$PATCH_VERSION
   fi
