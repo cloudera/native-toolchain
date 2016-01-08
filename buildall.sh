@@ -79,7 +79,10 @@ fi
 # SASL
 ################################################################################
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
-  CYRUS_SASL_VERSION=2.1.23 $SOURCE_DIR/source/cyrus-sasl/build.sh
+  if [[ "$GCC_VERSION" != "5.3.0" ]]; then
+    CYRUS_SASL_VERSION=2.1.23 $SOURCE_DIR/source/cyrus-sasl/build.sh
+  fi
+  CYRUS_SASL_VERSION=2.1.26 $SOURCE_DIR/source/cyrus-sasl/build.sh
 else
   CYRUS_SASL_VERSION=2.1.26 $SOURCE_DIR/source/cyrus-sasl/build.sh
 fi
@@ -114,6 +117,7 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
   THRIFT_VERSION=0.9.0-p4 $SOURCE_DIR/source/thrift/build.sh
 else
   BOOST_VERSION=1.57.0 THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
+  BOOST_VERSION=1.57.0 THRIFT_VERSION=0.9.3 $SOURCE_DIR/source/thrift/build.sh
 fi
 
 export -n LIBEVENT_VERSION
