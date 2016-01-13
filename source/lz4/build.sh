@@ -27,11 +27,26 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
+function download_lz4() {
+  # S3 Base URL
+  LZ4_URL="https://github.com/Cyan4973/lz4/archive/${LZ4_VERSION}.tar.gz"
+  if [[ ! -f "${2}/${1}" ]]; then
+    ARGS=
+    if [[ $DEBUG -eq 0 ]]; then
+      ARGS=-q
+    fi
+    wget $ARGS -O "${2}/${1}" "${LZ4_URL}"
+  fi
+}
+
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
-
+  if [ "${LZ4_VERSION}" != "svn" ]; then
+    download_lz4 "${LPACKAGE_VERSION}.tar.gz" $THIS_DIR
+    CFLAGS=-fPIC
+	cd cmake_unofficial
+  fi
   wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL .
   wrap make -j${BUILD_THREADS:-4} install
-
   footer $PACKAGE $PACKAGE_VERSION
 fi
