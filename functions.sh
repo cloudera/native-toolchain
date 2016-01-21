@@ -150,6 +150,7 @@ function header() {
   else
     FINAL_DIR=$LPACKAGE
   fi
+
   pushd $FINAL_DIR
 
   # Apply patches for this package

@@ -40,11 +40,13 @@ function download_lz4() {
 }
 
 if needs_build_package ; then
-  header $PACKAGE $PACKAGE_VERSION
   if [ "${LZ4_VERSION}" != "svn" ]; then
     download_lz4 "${LPACKAGE_VERSION}.tar.gz" $THIS_DIR
     CFLAGS=-fPIC
+    header $PACKAGE $PACKAGE_VERSION
     cd cmake_unofficial
+  else
+    header $PACKAGE $PACKAGE_VERSION
   fi
   wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL .
   wrap make -j${BUILD_THREADS:-4} install
