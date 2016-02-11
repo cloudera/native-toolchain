@@ -65,8 +65,9 @@ fi
 # LLVM
 ################################################################################
 
-# Build Default LLVM
+# Build Default LLVM with and without asserts
 LLVM_VERSION=3.3-p1 $SOURCE_DIR/source/llvm/build.sh
+LLVM_VERSION=3.3-no-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
 
 # CentOS 5 can't build trunk LLVM due to missing perf counter
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then

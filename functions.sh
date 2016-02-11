@@ -96,18 +96,38 @@ function prepare() {
 }
 
 # Build helper function that sets the necessary environment variables
-# that can be used per build
+# that can be used per build.
+# Assumes that LPACKAGE is set to the lower case package name and LPACKAGE_VERSION is
+# set to the lower case package name plus version string.
+# If <archive file> is specified, extract that archive, otherwise attempt to
+# find based on the package name and version.
+# If <extracted archive dir> and <target dir> are both provided, assume that the
+# archive unpacks to the first directory and move it to <target dir>.
+# Usage: header <package name> <package version> [<archive file>
+#               [<extracted archive dir> <target dir>]]
 function header() {
+  local PKG_NAME=$1
+  local PKG_VERSION=$2
+  local ARCHIVE=${3-}
+  local EXTRACTED_DIR=${4-}
+  local TARGET_DIR=${5-}
+
   echo "#######################################################################"
-  echo "# Building: ${1}-${2}${PATCH_VERSION}"
+  echo "# Building: ${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}"
 
   cd $SOURCE_DIR/source/$LPACKAGE
 
-  LOCAL_INSTALL=$BUILD_DIR/$LPACKAGE-$2${PATCH_VERSION}
-  BUILD_LOG=$SOURCE_DIR/check/$LPACKAGE-${2}${PATCH_VERSION}.log
+  LOCAL_INSTALL=$BUILD_DIR/$LPACKAGE-${PKG_VERSION}${PATCH_VERSION}
+  BUILD_LOG=$SOURCE_DIR/check/$LPACKAGE-${PKG_VERSION}${PATCH_VERSION}.log
 
   # Extract the sources
-  if [ -f $LPACKAGE_VERSION.tar.gz ]; then
+  if [ ! -z "$ARCHIVE" ]; then
+    tar xf $ARCHIVE
+    if [ "$EXTRACTED_DIR" != "$TARGET_DIR" ]; then
+      mv "$EXTRACTED_DIR" "$TARGET_DIR"
+    fi
+    DIR=$TARGET_DIR
+  elif [ -f $LPACKAGE_VERSION.tar.gz ]; then
     tar xzf $LPACKAGE_VERSION.tar.gz
     DIR=$LPACKAGE_VERSION
   elif [ -f $LPACKAGE_VERSION.tgz ]; then
@@ -116,9 +136,9 @@ function header() {
   elif [ -f $LPACKAGE_VERSION.src.tar.gz ]; then
     tar xzf $LPACKAGE_VERSION.src.tar.gz
     DIR=$LPACKAGE_VERSION.src
-  elif [ -f $LPACKAGE-src-$2.tar.gz ]; then
-    tar xzf $LPACKAGE-src-$2.tar.gz
-    DIR=$LPACKAGE-src-$2
+  elif [ -f $LPACKAGE-src-${PKG_VERSION}.tar.gz ]; then
+    tar xzf $LPACKAGE-src-${PKG_VERSION}.tar.gz
+    DIR=$LPACKAGE-src-${PKG_VERSION}
   elif [ -f $LPACKAGE_VERSION.tar.xz ]; then
     tar xJf $LPACKAGE_VERSION.tar.xz
     DIR=$LPACKAGE_VERSION
@@ -128,9 +148,9 @@ function header() {
   elif [ -f $LPACKAGE_VERSION.src.tar.xz ]; then
     tar xJf $LPACKAGE_VERSION.src.tar.xz
     DIR=$LPACKAGE_VERSION.src
-  elif [ -f $LPACKAGE-src-$2.tar.xz ]; then
-    tar xJf $LPACKAGE-src-$2.tar.xz
-    DIR=$LPACKAGE-src-$2
+  elif [ -f $LPACKAGE-src-${PKG_VERSION}.tar.xz ]; then
+    tar xJf $LPACKAGE-src-${PKG_VERSION}.tar.xz
+    DIR=$LPACKAGE-src-${PKG_VERSION}
   elif [ -f $LPACKAGE_VERSION.zip ]; then
     unzip -o $LPACKAGE_VERSION.zip
     DIR=$LPACKAGE_VERSION
@@ -177,7 +197,10 @@ function header() {
   fi
 }
 
+# Usage: footer <package name> <package version>
 function footer() {
+  local PKG_NAME=$1
+  local PKG_VERSION=$2
 
   # Build Package
   build_dist_package >> $BUILD_LOG 2>&1
@@ -190,8 +213,8 @@ function footer() {
     done
   fi
 
-  touch $SOURCE_DIR/check/${1}-${2}${PATCH_VERSION}
-  echo "# Build Complete ${1}-${2}${PATCH_VERSION}"
+  touch $SOURCE_DIR/check/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}
+  echo "# Build Complete ${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}"
   echo "#######################################################################"
 }
 
