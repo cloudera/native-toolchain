@@ -18,18 +18,22 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-if [[ "$PACKAGE_VERSION" =~ "3.7" ]]; then
-    download_dependency $LPACKAGE "cfe-${PACKAGE_VERSION}.src.tar.xz" $THIS_DIR
-    download_dependency $LPACKAGE "clang-tools-extra-${PACKAGE_VERSION}.src.tar.xz" $THIS_DIR
-    download_dependency $LPACKAGE "compiler-rt-${PACKAGE_VERSION}.src.tar.xz" $THIS_DIR
-    download_dependency $LPACKAGE "llvm-${PACKAGE_VERSION}.src.tar.xz" $THIS_DIR
-else
-    download_dependency $LPACKAGE "cfe-${PACKAGE_VERSION}.src.tar.gz" $THIS_DIR
-    download_dependency $LPACKAGE "clang-tools-extra-${PACKAGE_VERSION}.src.tar.gz" $THIS_DIR
-    download_dependency $LPACKAGE "compiler-rt-${PACKAGE_VERSION}.src.tar.gz" $THIS_DIR
-    download_dependency $LPACKAGE "llvm-${PACKAGE_VERSION}.src.tar.gz" $THIS_DIR
+
+SOURCE_VERSION=${PACKAGE_VERSION}
+if [[ $PACKAGE_VERSION =~ "-no-asserts" ]]; then
+  SOURCE_VERSION=${PACKAGE_VERSION%-no-asserts}
 fi
 
+ARCHIVE_EXT="tar.gz"
+if [[ "$PACKAGE_VERSION" =~ "3.7" ]]; then
+  # Use the .xz archives when available.
+  ARCHIVE_EXT="tar.xz"
+fi
+
+download_dependency $LPACKAGE "cfe-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
+download_dependency $LPACKAGE "clang-tools-extra-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
+download_dependency $LPACKAGE "compiler-rt-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
+download_dependency $LPACKAGE "llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
 
 if needs_build_package ; then
 
@@ -42,7 +46,9 @@ if needs_build_package ; then
     cd $SOURCE_DIR/source/llvm
     build_llvm
   else
-    header $PACKAGE $PACKAGE_VERSION
+    header $PACKAGE $PACKAGE_VERSION \
+        "$THIS_DIR/llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" \
+        "llvm-${SOURCE_VERSION}.src" "llvm-${PACKAGE_VERSION}.src"
     LLVM=llvm-$LLVM_VERSION
 
     # Cleanup possible leftovers
@@ -52,19 +58,19 @@ if needs_build_package ; then
     # Crappy CentOS 5.6 doesnt like us to build Clang, so skip it
     cd tools
     # CLANG
-    tar zxf ../../cfe-$PACKAGE_VERSION.src.tar.gz
-    mv cfe-$PACKAGE_VERSION.src clang
+    tar zxf ../../cfe-$SOURCE_VERSION.src.tar.gz
+    mv cfe-$SOURCE_VERSION.src clang
 
     # CLANG Extras
     cd clang/tools
-    tar zxf ../../../../clang-tools-extra-$PACKAGE_VERSION.src.tar.gz
-    mv clang-tools-extra-$PACKAGE_VERSION.src extra
+    tar zxf ../../../../clang-tools-extra-$SOURCE_VERSION.src.tar.gz
+    mv clang-tools-extra-$SOURCE_VERSION.src extra
     cd ../../
 
     # COMPILER RT
     cd ../projects
-    tar zxf ../../compiler-rt-$PACKAGE_VERSION.src.tar.gz
-    mv compiler-rt-$PACKAGE_VERSION.src compiler-rt
+    tar zxf ../../compiler-rt-$SOURCE_VERSION.src.tar.gz
+    mv compiler-rt-$SOURCE_VERSION.src compiler-rt
     cd ../../
 
     mkdir -p build-$LLVM
@@ -88,8 +94,21 @@ if needs_build_package ; then
       export LDFLAGS=
     fi
 
+    if [[ "$PACKAGE_VERSION" == "3.3" ]]; then
+      # Release-asserts build is the default.
+      EXTRA_CONFIG_ARG="$EXTRA_CONFIG_ARG --enable-optimized"
+    elif [[ "$PACKAGE_VERSION" == "3.3-no-asserts" ]]; then
+      EXTRA_CONFIG_ARG="$EXTRA_CONFIG_ARG --enable-optimized --disable-assertions"
+    else
+      echo "Unexpected LLVM package version ${PACKAGE_VERSION}"
+      exit 1
+    fi
+
     echo "$EXTRA_CONFIG_ARG"
-    wrap ../llvm-$PACKAGE_VERSION.src$PATCH_VERSION/configure --enable-targets=x86_64,cpp --enable-optimized --enable-terminfo=no --prefix=$LOCAL_INSTALL --with-pic $EXTRA_CONFIG_ARG --with-extra-ld-options="$LDFLAGS"
+    wrap ../llvm-$PACKAGE_VERSION.src$PATCH_VERSION/configure \
+        --enable-targets=x86_64,cpp --enable-terminfo=no \
+        --prefix=$LOCAL_INSTALL --with-pic $EXTRA_CONFIG_ARG \
+        --with-extra-ld-options="$LDFLAGS"
 
     wrap make -j${BUILD_THREADS:-4} REQUIRES_RTTI=1 install
 
