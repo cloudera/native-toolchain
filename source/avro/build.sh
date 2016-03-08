@@ -26,7 +26,7 @@ THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
 # Download the dependency from S3
-download_dependency $LPACKAGE "avro-src-${PACKAGE_VERSION}.tar.gz" $THIS_DIR
+download_dependency $PACKAGE "avro-src-${PACKAGE_VERSION}.tar.gz" $THIS_DIR
 
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION

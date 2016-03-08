@@ -22,6 +22,10 @@ prepare $THIS_DIR
 SOURCE_VERSION=${PACKAGE_VERSION}
 if [[ $PACKAGE_VERSION =~ "-no-asserts" ]]; then
   SOURCE_VERSION=${PACKAGE_VERSION%-no-asserts}
+elif [[ $PACKAGE_VERSION =~ "-asserts" ]]; then
+  SOURCE_VERSION=${PACKAGE_VERSION%-asserts}
+elif [[ $PACKAGE_VERSION =~ "-debug" ]]; then
+  SOURCE_VERSION=${PACKAGE_VERSION%-debug}
 fi
 
 ARCHIVE_EXT="tar.xz"
@@ -30,10 +34,10 @@ if [[ "$PACKAGE_VERSION" =~ "3.3" ]]; then
   ARCHIVE_EXT="tar.gz"
 fi
 
-download_dependency $LPACKAGE "cfe-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
-download_dependency $LPACKAGE "clang-tools-extra-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
-download_dependency $LPACKAGE "compiler-rt-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
-download_dependency $LPACKAGE "llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
+download_dependency $PACKAGE "cfe-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
+download_dependency $PACKAGE "clang-tools-extra-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
+download_dependency $PACKAGE "compiler-rt-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
+download_dependency $PACKAGE "llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
 
 if needs_build_package ; then
   if [[ $PACKAGE_VERSION = "trunk" ]]; then

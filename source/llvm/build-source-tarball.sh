@@ -20,23 +20,25 @@ set -o pipefail
 
 function build_llvm() {
   # Cleanup possible leftovers
-  rm -Rf "$THIS_DIR/llvm-${PACKAGE_VERSION}.src"
-  rm -Rf "$THIS_DIR/build-llvm-${PACKAGE_VERSION}"
+  rm -Rf "$THIS_DIR/${PACKAGE_STRING}.src"
+  rm -Rf "$THIS_DIR/build-${PACKAGE_STRING}"
 
-  header $PACKAGE $PACKAGE_VERSION
-  LLVM=llvm-$LLVM_VERSION
+  # Patches are based on source version. Pass to header function with this var.
+  PATCH_DIR=${THIS_DIR}/llvm-${SOURCE_VERSION}-patches
 
-  rm -Rf $LLVM.src
+  header $PACKAGE $PACKAGE_VERSION \
+      "$THIS_DIR/llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" \
+      "llvm-${SOURCE_VERSION}.src" "$PACKAGE_STRING.src"
 
   pushd tools
   # CLANG
-  untar_xz ${THIS_DIR}/cfe-$PACKAGE_VERSION.src.tar.xz
-  mv cfe-$PACKAGE_VERSION.src clang
+  untar_xz ${THIS_DIR}/cfe-$SOURCE_VERSION.src.tar.xz
+  mv cfe-$SOURCE_VERSION.src clang
 
   # CLANG Extras
   pushd clang/tools
-  untar_xz ${THIS_DIR}/clang-tools-extra-$PACKAGE_VERSION.src.tar.xz
-  mv clang-tools-extra-$PACKAGE_VERSION.src extra
+  untar_xz ${THIS_DIR}/clang-tools-extra-$SOURCE_VERSION.src.tar.xz
+  mv clang-tools-extra-$SOURCE_VERSION.src extra
   popd
 
   # COMPILER RT
@@ -45,8 +47,8 @@ function build_llvm() {
   # As a result, we can use clang to cross-compile but not for sanitizers.
   if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
     pushd ../projects
-    untar_xz ${THIS_DIR}/compiler-rt-$PACKAGE_VERSION.src.tar.xz
-    mv compiler-rt-$PACKAGE_VERSION.src compiler-rt
+    untar_xz ${THIS_DIR}/compiler-rt-$SOURCE_VERSION.src.tar.xz
+    mv compiler-rt-$SOURCE_VERSION.src compiler-rt
     popd
   fi
 
@@ -61,22 +63,33 @@ function build_llvm() {
     export LDFLAGS=
   fi
 
-  mkdir -p ${THIS_DIR}/build-$LLVM
-  pushd ${THIS_DIR}/build-$LLVM
+  mkdir -p ${THIS_DIR}/build-$PACKAGE_STRING
+  pushd ${THIS_DIR}/build-$PACKAGE_STRING
+
+  local EXTRA_CMAKE_ARGS=
+  local LLVM_BUILD_TYPE=Release
+  if [[ "$PACKAGE_VERSION" =~ "-asserts" ]]; then
+    LLVM_BUILD_TYPE=Release
+    EXTRA_CMAKE_ARGS+="-DLLVM_ENABLE_ASSERTIONS=true"
+  elif [[ "$PACKAGE_VERSION" =~ "-debug" ]]; then
+    LLVM_BUILD_TYPE=Debug
+  fi
 
   # Invoke CMake with the correct configuration
-  wrap cmake ${THIS_DIR}/$LLVM.src \
-      -DCMAKE_BUILD_TYPE=Release \
+  wrap cmake ${THIS_DIR}/$PACKAGE_STRING.src${PATCH_VERSION} \
+      -DCMAKE_BUILD_TYPE=${LLVM_BUILD_TYPE} \
       -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
       -DLLVM_TARGETS_TO_BUILD=X86 \
       -DLLVM_ENABLE_RTTI=ON \
       -DLLVM_PARALLEL_COMPILE_JOBS=${BUILD_THREADS:-4} \
       -DLLVM_PARALLEL_LINK_JOBS=${BUILD_THREADS:-4} \
-      -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE
+      -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE \
+      ${EXTRA_CMAKE_ARGS}
+
   wrap make -j${BUILD_THREADS:-4} install
   popd
 
-  pushd ${THIS_DIR}/build-$LLVM/tools/clang
+  pushd ${THIS_DIR}/build-$PACKAGE_STRING/tools/clang
   wrap make -j${BUILD_THREADS:-4} install
   popd
 

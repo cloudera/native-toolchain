@@ -19,7 +19,7 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$(cd "$(dirname "$0")" && pwd)"
 prepare $THIS_DIR
 
-download_dependency $LPACKAGE "${LPACKAGE_VERSION}.tar.gz" $THIS_DIR
+download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
 
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION

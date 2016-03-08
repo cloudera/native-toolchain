@@ -95,41 +95,42 @@ function wrap() {
 }
 
 function prepare() {
-  PACKAGE="$(basename $1)"; PACKAGE=`echo "${PACKAGE}" | awk '{print toupper($0)}'`
-  PACKAGE_VERSION="${PACKAGE}_VERSION"
+  PACKAGE="$(basename $1)"; PACKAGE=`echo "${PACKAGE}" | awk '{print tolower($0)}'`
+  local UPPER_PACKAGE=`echo "${PACKAGE}" | awk '{print toupper($0)}'`
+  PACKAGE_VERSION_VAR="${UPPER_PACKAGE}_VERSION"
   # Replace potential - with _
-  PACKAGE_VERSION="${PACKAGE_VERSION//-/_}"
-  PACKAGE_VERSION="${!PACKAGE_VERSION}"
+  PACKAGE_VERSION_VAR="${PACKAGE_VERSION_VAR//-/_}"
+  PACKAGE_VERSION="${!PACKAGE_VERSION_VAR}"
 
   # Regex to match patch level
-  regex="(.*)-p([[:digit:]]+)$"
+  patch_regex="(.*)-p([[:digit:]]+)$"
 
   # Extract the patch level
-  if [[ $PACKAGE_VERSION =~ $regex ]]; then
-    export PATCH_LEVEL="${BASH_REMATCH[2]}"
-    export PATCH_VERSION="-p${PATCH_LEVEL}"
-    export PACKAGE_VERSION="${BASH_REMATCH[1]}"
+  if [[ $PACKAGE_VERSION =~ $patch_regex ]]; then
+    PATCH_LEVEL="${BASH_REMATCH[2]}"
+    PATCH_VERSION="-p${PATCH_LEVEL}"
+    PACKAGE_VERSION="${BASH_REMATCH[1]}"
   else
-    export PATCH_LEVEL=
-    export PATCH_VERSION=
+    PATCH_LEVEL=
+    PATCH_VERSION=
   fi
 
   PACKAGE_STRING="$PACKAGE-$PACKAGE_VERSION"
-  # Package name might be upper case
-  export LPACKAGE=`echo "${PACKAGE}" | awk '{print tolower($0)}'`
 
-  # Build name
-  export LPACKAGE_VERSION=$LPACKAGE-$PACKAGE_VERSION
+  # Export these variables so that they are accessible to build scripts.
+  export PACKAGE PACKAGE_VERSION PACKAGE_STRING PATCH_LEVEL PATCH_VERSION
 }
+
+
 
 # Build helper function that sets the necessary environment variables
 # that can be used per build.
-# Assumes that LPACKAGE is set to the lower case package name and LPACKAGE_VERSION is
-# set to the lower case package name plus version string.
 # If <archive file> is specified, extract that archive, otherwise attempt to
 # find based on the package name and version.
 # If <extracted archive dir> and <target dir> are both provided, assume that the
 # archive unpacks to the first directory and move it to <target dir>.
+# If PATCH_DIR is set, look in that directory for patches. Otherwise look in
+# "<package name>-<package version>-patches"
 # Usage: header <package name> <package version> [<archive file>
 #               [<extracted archive dir> <target dir>]]
 function header() {
@@ -142,47 +143,47 @@ function header() {
   echo "#######################################################################"
   echo "# Building: ${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}"
 
-  cd $SOURCE_DIR/source/$LPACKAGE
+  cd $SOURCE_DIR/source/$PKG_NAME
 
-  LOCAL_INSTALL=$BUILD_DIR/$LPACKAGE-${PKG_VERSION}${PATCH_VERSION}
-  BUILD_LOG=$SOURCE_DIR/check/$LPACKAGE-${PKG_VERSION}${PATCH_VERSION}.log
+  LOCAL_INSTALL=$BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}
+  BUILD_LOG=$SOURCE_DIR/check/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}.log
 
   # Extract the sources
   if [ ! -z "$ARCHIVE" ]; then
-    tar xf $ARCHIVE
+    extract_archive $ARCHIVE
     if [ "$EXTRACTED_DIR" != "$TARGET_DIR" ]; then
       mv "$EXTRACTED_DIR" "$TARGET_DIR"
     fi
     DIR=$TARGET_DIR
-  elif [ -f $LPACKAGE_VERSION.tar.gz ]; then
-    tar xzf $LPACKAGE_VERSION.tar.gz
-    DIR=$LPACKAGE_VERSION
-  elif [ -f $LPACKAGE_VERSION.tgz ]; then
-    tar xzf $LPACKAGE_VERSION.tgz
-    DIR=$LPACKAGE_VERSION
-  elif [ -f $LPACKAGE_VERSION.src.tar.gz ]; then
-    tar xzf $LPACKAGE_VERSION.src.tar.gz
-    DIR=$LPACKAGE_VERSION.src
-  elif [ -f $LPACKAGE-src-${PKG_VERSION}.tar.gz ]; then
-    tar xzf $LPACKAGE-src-${PKG_VERSION}.tar.gz
-    DIR=$LPACKAGE-src-${PKG_VERSION}
-  elif [ -f $LPACKAGE_VERSION.tar.xz ]; then
-    untar_xz $LPACKAGE_VERSION.tar.xz
-    DIR=$LPACKAGE_VERSION
-  elif [ -f $LPACKAGE_VERSION.xz ]; then
-    untar_xz $LPACKAGE_VERSION.xz
-    DIR=$LPACKAGE_VERSION
-  elif [ -f $LPACKAGE_VERSION.src.tar.xz ]; then
-    untar_xz $LPACKAGE_VERSION.src.tar.xz
-    DIR=$LPACKAGE_VERSION.src
-  elif [ -f $LPACKAGE-src-${PKG_VERSION}.tar.xz ]; then
-    untar_xz $LPACKAGE-src-${PKG_VERSION}.tar.xz
-    DIR=$LPACKAGE-src-${PKG_VERSION}
-  elif [ -f $LPACKAGE_VERSION.zip ]; then
-    unzip -o $LPACKAGE_VERSION.zip
-    DIR=$LPACKAGE_VERSION
+  elif [ -f ${PKG_NAME}-${PKG_VERSION}.tar.gz ]; then
+    extract_archive ${PKG_NAME}-${PKG_VERSION}.tar.gz
+    DIR=${PKG_NAME}-${PKG_VERSION}
+  elif [ -f ${PKG_NAME}-${PKG_VERSION}.tgz ]; then
+    extract_archive ${PKG_NAME}-${PKG_VERSION}.tgz
+    DIR=${PKG_NAME}-${PKG_VERSION}
+  elif [ -f ${PKG_NAME}-${PKG_VERSION}.src.tar.gz ]; then
+    extract_archive ${PKG_NAME}-${PKG_VERSION}.src.tar.gz
+    DIR=${PKG_NAME}-${PKG_VERSION}.src
+  elif [ -f $PKG_NAME-src-${PKG_VERSION}.tar.gz ]; then
+    extract_archive $PKG_NAME-src-${PKG_VERSION}.tar.gz
+    DIR=$PKG_NAME-src-${PKG_VERSION}
+  elif [ -f ${PKG_NAME}-${PKG_VERSION}.tar.xz ]; then
+    extract_archive ${PKG_NAME}-${PKG_VERSION}.tar.xz
+    DIR=${PKG_NAME}-${PKG_VERSION}
+  elif [ -f ${PKG_NAME}-${PKG_VERSION}.xz ]; then
+    extract_archive ${PKG_NAME}-${PKG_VERSION}.xz
+    DIR=${PKG_NAME}-${PKG_VERSION}
+  elif [ -f ${PKG_NAME}-${PKG_VERSION}.src.tar.xz ]; then
+    extract_archive ${PKG_NAME}-${PKG_VERSION}.src.tar.xz
+    DIR=${PKG_NAME}-${PKG_VERSION}.src
+  elif [ -f $PKG_NAME-src-${PKG_VERSION}.tar.xz ]; then
+    extract_archive $PKG_NAME-src-${PKG_VERSION}.tar.xz
+    DIR=$PKG_NAME-src-${PKG_VERSION}
+  elif [ -f ${PKG_NAME}-${PKG_VERSION}.zip ]; then
+    extract_archive ${PKG_NAME}-${PKG_VERSION}.zip
+    DIR=${PKG_NAME}-${PKG_VERSION}
   else
-    DIR=$LPACKAGE_VERSION
+    DIR=${PKG_NAME}-${PKG_VERSION}
   fi
 
 
@@ -195,14 +196,16 @@ function header() {
   elif [ -d "${RDIR}" ]; then
     FINAL_DIR=$RDIR
   else
-    FINAL_DIR=$LPACKAGE
+    FINAL_DIR=$PKG_NAME
   fi
 
   pushd $FINAL_DIR
 
   # Apply patches for this package
   if [[ -n "$PATCH_VERSION" ]]; then
-    apply_patches
+    : ${PATCH_DIR="$SOURCE_DIR/source/${PKG_NAME}/${PKG_NAME}-${PKG_VERSION}-patches"}
+
+    apply_patches ${PATCH_LEVEL} ${PATCH_DIR}
 
     # Once the patches are applied, move the directory to the correct name
     # with the patch level in the name
@@ -233,10 +236,10 @@ function footer() {
   build_dist_package >> $BUILD_LOG 2>&1
 
   # For all binaries of the package symlink to bin
-  if [[ -d $BUILD_DIR/${LPACKAGE_VERSION}${PATCH_VERSION}/bin ]]; then
+  if [[ -d $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin ]]; then
     mkdir -p $BUILD_DIR/bin
-    for p in `ls $BUILD_DIR/$LPACKAGE_VERSION$PATCH_VERSION/bin`; do
-      ln -f -s $BUILD_DIR/${LPACKAGE_VERSION}${PATCH_VERSION}/bin/$p $BUILD_DIR/bin/$p
+    for p in `ls $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin`; do
+      ln -f -s $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin/$p $BUILD_DIR/bin/$p
     done
   fi
 
@@ -258,7 +261,8 @@ function needs_build_package() {
     return 0
   fi
 
-  ENV_NAME="BUILD_${PACKAGE}"
+  local UPPER_PACKAGE=`echo "${PACKAGE}" | awk '{print toupper($0)}'`
+  ENV_NAME="BUILD_${UPPER_PACKAGE}"
   ENV_NAME=${!ENV_NAME=0}
 
   if [ $BUILD_ALL -eq 0 ] && [ $ENV_NAME -eq 1 ]; then
@@ -272,12 +276,15 @@ function needs_build_package() {
 # depending on patch-level. Patches must be prepared that they can be
 # applied directly on the extracted source tree from within the source
 # (-p2 / -p1).
+# Usage: apply_patches <patch level> <directory with patches>
 function apply_patches() {
-  if [[ -d $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches ]]; then
-    echo "Apply patches up to ${PATCH_LEVEL}"
-    INIT_VAL=1
-    for p in `find $SOURCE_DIR/source/$LPACKAGE/$LPACKAGE_VERSION-patches -type f | sort`; do
-      echo "Applying patch ${INIT_VAL}...${p}"
+  local PATCH_LEVEL=$1
+  local PATCH_DIR=$2
+  echo "Apply patches up to ${PATCH_LEVEL}"
+  PATCH_NUM=1
+  if [[ -d "$PATCH_DIR" ]]; then
+    for p in `find -L "$PATCH_DIR" -type f | sort`; do
+      echo "Applying patch ${PATCH_NUM}...${p}"
       set +e
       # Check if patch can be applied at -p2 first, then p1
       patch -p2 < $p >> $BUILD_LOG 2>&1
@@ -286,12 +293,17 @@ function apply_patches() {
       if [[ $RET_VAL -ne 0 ]]; then
         patch -p1 < $p >> $BUILD_LOG 2>&1
       fi
-      INIT_VAL=$(($INIT_VAL + 1))
-      if [[ $INIT_VAL -gt $PATCH_LEVEL ]]; then
+      PATCH_NUM=$(($PATCH_NUM + 1))
+      if [[ $PATCH_NUM -gt $PATCH_LEVEL ]]; then
         echo "All required patches applied."
         return 0
       fi
     done
+  fi
+  if [[ $PATCH_NUM -le $PATCH_LEVEL ]]; then
+    echo "Expected to find at least $PATCH_LEVEL patches in directory $PATCH_DIR but" \
+         "only found $(($PATCH_NUM - 1))"
+    return 1
   fi
 }
 
@@ -301,13 +313,13 @@ function build_fake_package() {
   prepare  $1
 
   if needs_build_package; then
-    DESTDIR="${BUILD_DIR}/${LPACKAGE_VERSION}${PATCH_VERSION}"
+    DESTDIR="${BUILD_DIR}/${PACKAGE_STRING}${PATCH_VERSION}"
     mkdir -p ${DESTDIR}
     echo "Package not built for $OSTYPE $RELEASE_NAME." >> ${DESTDIR}/README
 
     # Package and upload the fake dir
     build_dist_package
-    touch $SOURCE_DIR/check/${PACKAGE}-${PACKAGE_VERSION}${PATCH_VERSION}
+    touch $SOURCE_DIR/check/${PACKAGE_STRING}${PATCH_VERSION}
   fi
 }
 
@@ -318,12 +330,12 @@ function build_dist_package() {
   SOURCE_TYPE="dir"
 
   # Produce a tar.gz for the binary product for easier bootstrapping
-  FULL_TAR_NAME="${LPACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}"
+  FULL_TAR_NAME="${PACKAGE_STRING}${PATCH_VERSION}-${COMPILER}"
   FULL_TAR_NAME+="-${COMPILER_VERSION}"
 
   tar zcf ${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz\
     --directory=${BUILD_DIR} \
-    ${LPACKAGE_VERSION}${PATCH_VERSION}
+    ${PACKAGE_STRING}${PATCH_VERSION}
 
   # Set generic
   : ${label-"generic"}
@@ -337,8 +349,8 @@ function build_dist_package() {
   # Package and upload the archive to the artifactory
   if [[ "PUBLISH_DEPENDENCIES" -eq "1" ]]; then
     mvn deploy:deploy-file -DgroupId=com.cloudera.toolchain\
-      -DartifactId="${LPACKAGE}"\
-      -Dversion="${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"\
+      -DartifactId="${PACKAGE}"\
+      -Dversion="${PACKAGE_STRING}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"\
       -Dfile="${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz"\
       -Durl="http://maven.jenkins.cloudera.com:8081/artifactory/cdh-staging-local/"\
       -DrepositoryId=cdh.releases.repo -Dpackaging=tar.gz -Dclassifier=${label} || $RET_VAL
@@ -346,7 +358,7 @@ function build_dist_package() {
     # Publish to S3 as well
     if [[ -n "${AWS_ACCESS_KEY_ID}" && -n "${AWS_SECRET_ACCESS_KEY}" && -n "${S3_BUCKET}" ]]; then
       aws s3 cp "${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz" \
-        s3://${S3_BUCKET}/build/${LPACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${label}.tar.gz \
+        s3://${S3_BUCKET}/build/${PACKAGE}/${PACKAGE_STRING}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${label}.tar.gz \
         --region=us-west-1 || $RET_VAL
     fi
 
@@ -376,6 +388,26 @@ function build_meta_package() {
   fpm -f -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX -s $SOURCE_TYPE \
     ${DEPENDENCIES} -t $TARGET -n "${NAME}" \
     -v "${NAME}-${PLATFORM_VERSION}"
+}
+
+# Helper to extract archives of various types into current directory.
+function extract_archive() {
+  local ARCHIVE=$1
+  case "$ARCHIVE" in
+    *.tar.gz | *.tgz | *.parcel)
+      tar xzf "$ARCHIVE"
+      ;;
+    *.xz)
+      untar_xz "$ARCHIVE"
+      ;;
+    *.zip)
+      unzip -o "$ARCHIVE"
+      ;;
+    *)
+      echo "Did not recognise archive extension: $ARCHIVE"
+      return 1
+      ;;
+  esac
 }
 
 # Helper to portable extract tar.xz archive.

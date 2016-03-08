@@ -19,6 +19,9 @@ set -eu
 set -o pipefail
 
 function build_llvm_33() {
+  # Patches are based on source version. Pass to header function with this var.
+  PATCH_DIR=${THIS_DIR}/llvm-${SOURCE_VERSION}-patches
+
   header $PACKAGE $PACKAGE_VERSION \
       "$THIS_DIR/llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" \
       "llvm-${SOURCE_VERSION}.src" "llvm-${PACKAGE_VERSION}.src"
@@ -77,7 +80,6 @@ function build_llvm_33() {
     exit 1
   fi
 
-  echo "$EXTRA_CONFIG_ARG"
   wrap ../llvm-$PACKAGE_VERSION.src$PATCH_VERSION/configure \
       --enable-targets=x86_64,cpp --enable-terminfo=no \
       --prefix=$LOCAL_INSTALL --with-pic $EXTRA_CONFIG_ARG \

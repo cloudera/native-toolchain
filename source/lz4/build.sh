@@ -41,7 +41,7 @@ function download_lz4() {
 
 if needs_build_package ; then
   if [ "${LZ4_VERSION}" != "svn" ]; then
-    download_lz4 "${LPACKAGE_VERSION}.tar.gz" $THIS_DIR
+    download_lz4 "${PACKAGE_STRING}.tar.gz" $THIS_DIR
     CFLAGS=-fPIC
     header $PACKAGE $PACKAGE_VERSION
     cd cmake_unofficial

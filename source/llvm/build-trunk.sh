@@ -19,8 +19,8 @@ function build_trunk() {
   echo "#######################################################################"
   echo "# Building: LLVM-trunk"
 
-  LPACKAGE_VERSION=llvm-trunk
-  LPACKAGE=llvm
+  PACKAGE_STRING=llvm-trunk
+  PACKAGE=llvm
   BUILD_LOG=$SOURCE_DIR/check/llvm-trunk.log
   PATCH_VERSION=
 
