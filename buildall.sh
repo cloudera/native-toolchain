@@ -185,6 +185,7 @@ RAPIDJSON_VERSION=0.11 $SOURCE_DIR/source/rapidjson/build.sh
 # Build BZip2
 ################################################################################
 BZIP2_VERSION=1.0.6-p1 $SOURCE_DIR/source/bzip2/build.sh
+BZIP2_VERSION=1.0.6-p2 $SOURCE_DIR/source/bzip2/build.sh
 
 ################################################################################
 # Build GDB
