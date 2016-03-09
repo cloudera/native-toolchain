@@ -130,6 +130,7 @@ GFLAGS_VERSION=2.0 $SOURCE_DIR/source/gflags/build.sh
 ################################################################################
 # Build pprof
 ################################################################################
+GPERFTOOLS_VERSION=2.4 $SOURCE_DIR/source/gperftools/build.sh
 GPERFTOOLS_VERSION=2.3 $SOURCE_DIR/source/gperftools/build.sh
 GPERFTOOLS_VERSION=2.0-p1 $SOURCE_DIR/source/gperftools/build.sh
 
