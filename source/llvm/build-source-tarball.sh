@@ -12,10 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Builds LLVM 3.7 and later from source tarballs.
+
 set -eu
 set -o pipefail
 
 function build_llvm() {
+  rm -Rf "$THIS_DIR/llvm-${PACKAGE_VERSION}.src"
   header $PACKAGE $PACKAGE_VERSION
   LLVM=llvm-$LLVM_VERSION
 
