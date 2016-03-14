@@ -128,9 +128,9 @@ export -n OPENSSL_VERSION
 GFLAGS_VERSION=2.0 $SOURCE_DIR/source/gflags/build.sh
 
 ################################################################################
-# Build pprof
+# Build gperftools
 ################################################################################
-GPERFTOOLS_VERSION=2.4 $SOURCE_DIR/source/gperftools/build.sh
+GPERFTOOLS_VERSION=2.5 $SOURCE_DIR/source/gperftools/build.sh
 GPERFTOOLS_VERSION=2.3 $SOURCE_DIR/source/gperftools/build.sh
 GPERFTOOLS_VERSION=2.0-p1 $SOURCE_DIR/source/gperftools/build.sh
 
