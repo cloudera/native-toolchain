@@ -22,15 +22,42 @@ prepare $THIS_DIR
 # Download the dependency from S3
 download_dependency $LPACKAGE "${LPACKAGE_VERSION}.tar.gz" $THIS_DIR
 
+# Download the same dependencies that would have been downloaded by
+# gcc's ./contrib/download_prerequisites script.
+MPFR_VERSION=2.4.2
+GMP_VERSION=4.3.2
+MPC_VERSION=0.8.1
+ISL_VERSION=0.12.2
+CLOOG_VERSION=0.18.1
+function download_gcc_prerequisites() {
+  download_dependency $LPACKAGE "mpfr-${MPFR_VERSION}.tar.bz2" .
+  tar xjf "mpfr-${MPFR_VERSION}.tar.bz2"
+  ln -s mpfr-${MPFR_VERSION} mpfr
+
+  download_dependency $LPACKAGE "gmp-${GMP_VERSION}.tar.bz2" .
+  tar xjf "gmp-${GMP_VERSION}.tar.bz2"
+  ln -s gmp-${GMP_VERSION} gmp
+
+  download_dependency $LPACKAGE "mpc-${MPC_VERSION}.tar.gz" .
+  tar xzf "mpc-${MPC_VERSION}.tar.gz"
+  ln -s mpc-${MPC_VERSION} mpc
+
+  download_dependency $LPACKAGE "isl-${ISL_VERSION}.tar.bz2" .
+  tar xjf "isl-${ISL_VERSION}.tar.bz2"
+  ln -s isl-${ISL_VERSION} isl
+
+  download_dependency $LPACKAGE "cloog-${CLOOG_VERSION}.tar.gz" .
+  tar xzf "cloog-${CLOOG_VERSION}.tar.gz"
+  ln -s cloog-${CLOOG_VERSION} cloog
+}
+
 if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   header $PACKAGE $PACKAGE_VERSION
-
-  ./contrib/download_prerequisites
-
+  download_gcc_prerequisites
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # Patch GMP
-    pushd gmp-4.3.2
+    pushd gmp-${GMP_VERSION}
     patch -p1 < ../../manual_patches_gcc-4.9.2/gmp.patch
     popd
   fi
