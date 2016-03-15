@@ -19,31 +19,39 @@ set -eu
 set -o pipefail
 
 function build_llvm() {
+  # Cleanup possible leftovers
   rm -Rf "$THIS_DIR/llvm-${PACKAGE_VERSION}.src"
+  rm -Rf "$THIS_DIR/build-llvm-${PACKAGE_VERSION}"
+
   header $PACKAGE $PACKAGE_VERSION
   LLVM=llvm-$LLVM_VERSION
 
-  # Cleanup possible leftovers
-  rm -Rf build-$LLVM
   rm -Rf $LLVM.src
 
-  # Crappy CentOS 5.6 doesnt like us to build Clang, so skip it
-  cd tools
+  pushd tools
   # CLANG
-  tar xJf ../../cfe-$PACKAGE_VERSION.src.tar.xz
+  # tar on Centos 5.8 doesn't support -J flag, so specify xzcat manually.
+  tar xf ../../cfe-$PACKAGE_VERSION.src.tar.xz --use-compress-program xzcat
   mv cfe-$PACKAGE_VERSION.src clang
 
   # CLANG Extras
-  cd clang/tools
-  tar xJf ../../../../clang-tools-extra-$PACKAGE_VERSION.src.tar.xz
+  pushd clang/tools
+  tar xf ../../../../clang-tools-extra-$PACKAGE_VERSION.src.tar.xz --use-compress-program xzcat
   mv clang-tools-extra-$PACKAGE_VERSION.src extra
-  cd ../../
+  popd
 
   # COMPILER RT
-  cd ../projects
-  tar xJf ../../compiler-rt-$PACKAGE_VERSION.src.tar.xz
-  mv compiler-rt-$PACKAGE_VERSION.src compiler-rt
-  cd ../../
+  # Required for *Sanitizers and for using Clang's own C/C++ runtime.
+  # Skip this on Centos 5.8 since it depends on perf_event.h.
+  if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
+    pushd ../projects
+    tar xf ../../compiler-rt-$PACKAGE_VERSION.src.tar.xz --use-compress-program xzcat
+    mv compiler-rt-$PACKAGE_VERSION.src compiler-rt
+    popd
+  fi
+
+  popd
+  cd ..
 
   mkdir -p build-$LLVM
   cd build-$LLVM
