@@ -65,12 +65,12 @@ if needs_build_package ; then
     --with-nodejs=no \
     --with-lua=no \
     --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} $OPENSSL_ARGS
-  wrap make
+  wrap make   # Build fails with -j${BUILD_THREADS}
   wrap make install
   cd contrib/fb303
   rm -f config.cache
   chmod 755 ./bootstrap.sh
-  wrap ./bootstrap.sh
+  wrap ./bootstrap.sh --with-boost=${BOOST_ROOT}
   wrap chmod 755 configure
   CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX=${LOCAL_INSTALL}/python wrap ./configure \
     --with-boost=${BOOST_ROOT} \

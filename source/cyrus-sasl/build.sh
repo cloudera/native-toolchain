@@ -38,10 +38,20 @@ if needs_build_package ; then
     WITH_FRAMEWORKS=--disable-macos-framework
   fi
 
+  CONFIGURE_FLAGS=
+  # If libdb5 is installed, it would be used by default and would lead to a failure.
+  # If libdb4 appears to be installed, use that instead. The location below was found
+  # on a CentOS 7 machine.
+  if [[ -e /usr/include/libdb4 && -e /usr/lib64/libdb4 ]]; then
+    CONFIGURE_FLAGS+=" --with-bdb-incdir=/usr/include/libdb4"
+    CONFIGURE_FLAGS+=" --with-bdb-libdir=/usr/lib64/libdb4"
+  fi
+
   # Disable everything except those protocols needed -- currently just Kerberos.
   # Sasl does not have a --with-pic configuration.
   CFLAGS="$CFLAGS -fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" wrap ./configure \
     --disable-sql --disable-otp --disable-ldap --disable-digest --with-saslauthd=no \
+    $CONFIGURE_FLAGS \
     --prefix=$LOCAL_INSTALL --enable-static --enable-staticdlopen $WITH_FRAMEWORKS
   # the first time you do a make it fails, build again.
   wrap make || /bin/true
