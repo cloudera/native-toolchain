@@ -57,19 +57,17 @@ fi
 # LLVM
 ################################################################################
 
-# Build Default LLVM with and without asserts
+# Build LLVM 3.3 with and without asserts.
+# For LLVM 3.3, the default is a release build with assertions. The assertions
+# are disabled by including "no-asserts" in the version string.
 LLVM_VERSION=3.3-p1 $SOURCE_DIR/source/llvm/build.sh
 LLVM_VERSION=3.3-no-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
 
-# CentOS 5 can't build trunk LLVM due to missing perf counter
-if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
-  # Build LLVM 3.7.0 and 3.8.0
-  PYTHON_VERSION=2.7.10 LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
-  PYTHON_VERSION=2.7.10 LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
-else
-  LLVM_VERSION=3.7.0 build_fake_package "llvm"
-  LLVM_VERSION=3.8.0 build_fake_package "llvm"
-fi
+# Build LLVM 3.7.0 and 3.8.0 without assertions. For LLVM 3.7+, the default is a
+# release build with no assertions.
+PYTHON_VERSION=2.7.10 LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
+PYTHON_VERSION=2.7.10 LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
+
 ################################################################################
 # SASL
 ################################################################################

@@ -26,6 +26,21 @@ set -o pipefail
 # Prepend command with timestamp
 alias ts="sed \"s;^;`date '+%D %T'` ;\""
 
+# Pushd and popd print the directory stack by default. Silence this or produce more helpful
+# output depending on debug mode.
+function pushd() {
+  if [[ $DEBUG -ne 0 ]]; then
+    echo "Entering directory $1"
+  fi
+  command pushd $1 > /dev/null
+}
+
+function popd() {
+  if [[ $DEBUG -ne 0 ]]; then
+    echo "Returning to directory $(dirs -1)"
+  fi
+  command popd > /dev/null
+}
 
 # Downloads a given package from S3, aruments to this function are the package and
 # package-filename and the target download folder
@@ -140,16 +155,16 @@ function header() {
     tar xzf $LPACKAGE-src-${PKG_VERSION}.tar.gz
     DIR=$LPACKAGE-src-${PKG_VERSION}
   elif [ -f $LPACKAGE_VERSION.tar.xz ]; then
-    tar xJf $LPACKAGE_VERSION.tar.xz
+    untar_xz $LPACKAGE_VERSION.tar.xz
     DIR=$LPACKAGE_VERSION
   elif [ -f $LPACKAGE_VERSION.xz ]; then
-    tar xJf $LPACKAGE_VERSION.xz
+    untar_xz $LPACKAGE_VERSION.xz
     DIR=$LPACKAGE_VERSION
   elif [ -f $LPACKAGE_VERSION.src.tar.xz ]; then
-    tar xJf $LPACKAGE_VERSION.src.tar.xz
+    untar_xz $LPACKAGE_VERSION.src.tar.xz
     DIR=$LPACKAGE_VERSION.src
   elif [ -f $LPACKAGE-src-${PKG_VERSION}.tar.xz ]; then
-    tar xJf $LPACKAGE-src-${PKG_VERSION}.tar.xz
+    untar_xz $LPACKAGE-src-${PKG_VERSION}.tar.xz
     DIR=$LPACKAGE-src-${PKG_VERSION}
   elif [ -f $LPACKAGE_VERSION.zip ]; then
     unzip -o $LPACKAGE_VERSION.zip
@@ -349,4 +364,14 @@ function build_meta_package() {
   fpm -f -p $BUILD_DIR --prefix $TOOLCHAIN_PREFIX -s $SOURCE_TYPE \
     ${DEPENDENCIES} -t $TARGET -n "${NAME}" \
     -v "${NAME}-${PLATFORM_VERSION}"
+}
+
+# Helper to portable extract tar.xz archive.
+function untar_xz() {
+  if [[ "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
+    # tar on Centos 5.8 doesn't support -J flag, so specify xzcat manually.
+    tar xf "$1" --use-compress-program xzcat
+  else
+    tar xJf "$1"
+  fi
 }

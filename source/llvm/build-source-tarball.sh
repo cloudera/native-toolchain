@@ -19,34 +19,38 @@ set -eu
 set -o pipefail
 
 function build_llvm() {
+  # Cleanup possible leftovers
   rm -Rf "$THIS_DIR/llvm-${PACKAGE_VERSION}.src"
+  rm -Rf "$THIS_DIR/build-llvm-${PACKAGE_VERSION}"
+
   header $PACKAGE $PACKAGE_VERSION
   LLVM=llvm-$LLVM_VERSION
 
-  # Cleanup possible leftovers
-  rm -Rf build-$LLVM
   rm -Rf $LLVM.src
 
-  # Crappy CentOS 5.6 doesnt like us to build Clang, so skip it
-  cd tools
+  pushd tools
   # CLANG
-  tar xJf ../../cfe-$PACKAGE_VERSION.src.tar.xz
+  untar_xz ${THIS_DIR}/cfe-$PACKAGE_VERSION.src.tar.xz
   mv cfe-$PACKAGE_VERSION.src clang
 
   # CLANG Extras
-  cd clang/tools
-  tar xJf ../../../../clang-tools-extra-$PACKAGE_VERSION.src.tar.xz
+  pushd clang/tools
+  untar_xz ${THIS_DIR}/clang-tools-extra-$PACKAGE_VERSION.src.tar.xz
   mv clang-tools-extra-$PACKAGE_VERSION.src extra
-  cd ../../
+  popd
 
   # COMPILER RT
-  cd ../projects
-  tar xJf ../../compiler-rt-$PACKAGE_VERSION.src.tar.xz
-  mv compiler-rt-$PACKAGE_VERSION.src compiler-rt
-  cd ../../
+  # Required for *Sanitizers and for using Clang's own C/C++ runtime.
+  # Skip this on CentOS 5.8 since it depends on perf_event.h.
+  # As a result, we can use clang to cross-compile but not for sanitizers.
+  if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
+    pushd ../projects
+    untar_xz ${THIS_DIR}/compiler-rt-$PACKAGE_VERSION.src.tar.xz
+    mv compiler-rt-$PACKAGE_VERSION.src compiler-rt
+    popd
+  fi
 
-  mkdir -p build-$LLVM
-  cd build-$LLVM
+  popd
 
   PYTHON_EXECUTABLE=$BUILD_DIR/python-$PYTHON_VERSION/bin/python
   if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -57,8 +61,11 @@ function build_llvm() {
     export LDFLAGS=
   fi
 
+  mkdir -p ${THIS_DIR}/build-$LLVM
+  pushd ${THIS_DIR}/build-$LLVM
+
   # Invoke CMake with the correct configuration
-  wrap cmake ../$LLVM.src \
+  wrap cmake ${THIS_DIR}/$LLVM.src \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
       -DLLVM_TARGETS_TO_BUILD=X86 \
@@ -66,10 +73,12 @@ function build_llvm() {
       -DLLVM_PARALLEL_COMPILE_JOBS=${BUILD_THREADS:-4} \
       -DLLVM_PARALLEL_LINK_JOBS=${BUILD_THREADS:-4} \
       -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE
+  wrap make -j${BUILD_THREADS:-4} install
+  popd
 
+  pushd ${THIS_DIR}/build-$LLVM/tools/clang
   wrap make -j${BUILD_THREADS:-4} install
-  cd tools/clang
-  wrap make -j${BUILD_THREADS:-4} install
+  popd
 
   footer $PACKAGE $PACKAGE_VERSION
 }
