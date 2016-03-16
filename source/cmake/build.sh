@@ -33,7 +33,7 @@ download_dependency $LPACKAGE "${LPACKAGE_VERSION}.tar.gz" $THIS_DIR
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
 
-  wrap ./bootstrap --prefix=${LOCAL_INSTALL} --parallel=${BUILD_THREADS}
+  wrap ./bootstrap --prefix=${LOCAL_INSTALL}
   wrap make -j${BUILD_THREADS}
   wrap make install
 
