@@ -51,17 +51,14 @@ function build_llvm() {
   PYTHON_EXECUTABLE=$BUILD_DIR/python-$PYTHON_VERSION/bin/python
   if [[ "$OSTYPE" == "darwin"* ]]; then
     PYTHON_EXECUTABLE=/usr/bin/python
-    CMAKE_EXEC=cmake
     export CXX=
     export CC=
     export CXXFLAGS=
     export LDFLAGS=
-  else
-    CMAKE_EXEC=$BUILD_DIR/cmake-$CMAKE_VERSION/bin/cmake
   fi
 
   # Invoke CMake with the correct configuration
-  wrap $CMAKE_EXEC ../$LLVM.src \
+  wrap cmake ../$LLVM.src \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
       -DLLVM_TARGETS_TO_BUILD=X86 \

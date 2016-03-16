@@ -60,6 +60,12 @@ export SYSTEM_GCC
 : ${GCC_VERSION=4.9.2}
 export GCC_VERSION
 
+: ${SYSTEM_CMAKE=0}
+export SYSTEM_CMAKE
+
+: ${CMAKE_VERSION=3.2.3-p1}
+export CMAKE_VERSION
+
 # Determine the number of build threads
 BUILD_THREADS=$(getconf _NPROCESSORS_ONLN)
 export BUILD_THREADS
@@ -148,8 +154,7 @@ fi
 
 CFLAGS="-fPIC -O3 -m64"
 
-
-# List of export variables
+# List of export variables after configuring gcc
 export CC
 export CFLAGS
 export CLEAN
@@ -160,3 +165,16 @@ export CXXFLAGS
 export DEBUG
 export LDFLAGS
 export RELEASE_NAME
+
+# Build and export toolchain cmake
+if [[ $SYSTEM_CMAKE -eq 0 ]]; then
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    build_fake_package "cmake"
+  else
+    $SOURCE_DIR/source/cmake/build.sh
+    CMAKE_BIN=$BUILD_DIR/cmake-$CMAKE_VERSION/bin/
+    PATH=$CMAKE_BIN:$PATH
+  fi
+fi
+
+export PATH

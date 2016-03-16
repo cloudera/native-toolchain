@@ -54,14 +54,6 @@ else
 fi
 
 ################################################################################
-# Build CMake
-################################################################################
-if [[ ! "$OSTYPE" == "darwin"* ]]; then
-  CMAKE_VERSION=3.2.3 $SOURCE_DIR/source/cmake/build.sh
-else
-  CMAKE_VERSION=3.2.3 build_fake_package "cmake"
-fi
-################################################################################
 # LLVM
 ################################################################################
 
@@ -72,8 +64,8 @@ LLVM_VERSION=3.3-no-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
 # CentOS 5 can't build trunk LLVM due to missing perf counter
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
   # Build LLVM 3.7.0 and 3.8.0
-  CMAKE_VERSION=3.2.3 PYTHON_VERSION=2.7.10 LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
-  CMAKE_VERSION=3.2.3 PYTHON_VERSION=2.7.10 LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
+  PYTHON_VERSION=2.7.10 LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
+  PYTHON_VERSION=2.7.10 LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
 else
   LLVM_VERSION=3.7.0 build_fake_package "llvm"
   LLVM_VERSION=3.8.0 build_fake_package "llvm"
