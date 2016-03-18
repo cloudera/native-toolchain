@@ -53,6 +53,9 @@ export PRODUCTION
 : ${CLEAN=0}
 export CLEAN
 
+: ${BINUTILS_VERSION=2.26}
+export BINUTILS_VERSION
+
 # Flag to determine the system compiler is used
 : ${SYSTEM_GCC=0}
 export SYSTEM_GCC
@@ -164,7 +167,15 @@ export CXX
 export CXXFLAGS
 export DEBUG
 export LDFLAGS
+export PATH
 export RELEASE_NAME
+
+# OS X doesn't use binutils.
+if [[ "$OSTYPE" != "darwin"* ]]; then
+  "$SOURCE_DIR"/source/binutils/build.sh
+  # Add ld from binutils to the path so it'll be used.
+  PATH="$BUILD_DIR/binutils-$BINUTILS_VERSION/bin:$PATH"
+fi
 
 # Build and export toolchain cmake
 if [[ $SYSTEM_CMAKE -eq 0 ]]; then
@@ -176,5 +187,3 @@ if [[ $SYSTEM_CMAKE -eq 0 ]]; then
     PATH=$CMAKE_BIN:$PATH
   fi
 fi
-
-export PATH
