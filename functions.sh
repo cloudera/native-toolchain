@@ -47,12 +47,24 @@ function popd() {
 function download_dependency() {
   # S3 Base URL
   S3_BASE_PREFIX="https://native-toolchain.s3.amazonaws.com/source"
-  if [[ ! -f "${3}/${2}" ]]; then
-    ARGS=
+  download_url "${S3_BASE_PREFIX}/${1}/${2}" "${3}/${2}"
+}
+
+# Downloads a URL (first arg) to a given location (second arg). If a file already exists
+# at the location, the download will not be attempted.
+function download_url() {
+  local URL=$1
+  local OUTPUT_PATH="${2-$(basename $URL)}"
+  if [[ ! -f "$OUTPUT_PATH" ]]; then
+    ARGS=()
     if [[ $DEBUG -eq 0 ]]; then
-      ARGS=-q
+      ARGS+=(-q)
     fi
-    wget $ARGS -O "${3}/${2}" "${S3_BASE_PREFIX}/${1}/${2}"
+    if [[ -n "$OUTPUT_PATH" ]]; then
+      ARGS+=(-O "$OUTPUT_PATH")
+    fi
+    ARGS+=("$URL")
+    wget "${ARGS[@]}"
   fi
 }
 
