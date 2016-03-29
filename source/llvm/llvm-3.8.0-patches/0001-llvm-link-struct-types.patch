@@ -1,0 +1,62 @@
+commit 127e65edb9829f96d3472c4d831a6c16db77687e
+Author: Tim Armstrong <tarmstrong@cloudera.com>
+Date:   Wed Mar 23 22:13:00 2016 -0700
+
+    Fix bug in LLVM linker
+
+diff --git a/include/llvm/Linker/IRMover.h b/include/llvm/Linker/IRMover.h
+index 1675ec5..1f6fe94 100644
+--- a/include/llvm/Linker/IRMover.h
++++ b/include/llvm/Linker/IRMover.h
+@@ -41,8 +41,8 @@ class IRMover {
+ 
+ public:
+   class IdentifiedStructTypeSet {
+-    // The set of opaque types is the composite module.
+-    DenseSet<StructType *> OpaqueStructTypes;
++    // The set of all struct types in the composite module.
++    DenseSet<StructType *> AllStructTypes;
+ 
+     // The set of identified but non opaque structures in the composite module.
+     DenseSet<StructType *, StructTypeKeyInfo> NonOpaqueStructTypes;
+diff --git a/lib/Linker/IRMover.cpp b/lib/Linker/IRMover.cpp
+index 32fa4c7..9c0e16a 100644
+--- a/lib/Linker/IRMover.cpp
++++ b/lib/Linker/IRMover.cpp
+@@ -1661,20 +1661,18 @@ bool IRMover::StructTypeKeyInfo::isEqual(const StructType *LHS,
+ 
+ void IRMover::IdentifiedStructTypeSet::addNonOpaque(StructType *Ty) {
+   assert(!Ty->isOpaque());
++  AllStructTypes.insert(Ty);
+   NonOpaqueStructTypes.insert(Ty);
+ }
+ 
+ void IRMover::IdentifiedStructTypeSet::switchToNonOpaque(StructType *Ty) {
+   assert(!Ty->isOpaque());
+   NonOpaqueStructTypes.insert(Ty);
+-  bool Removed = OpaqueStructTypes.erase(Ty);
+-  (void)Removed;
+-  assert(Removed);
+ }
+ 
+ void IRMover::IdentifiedStructTypeSet::addOpaque(StructType *Ty) {
+   assert(Ty->isOpaque());
+-  OpaqueStructTypes.insert(Ty);
++  AllStructTypes.insert(Ty);
+ }
+ 
+ StructType *
+@@ -1688,12 +1686,7 @@ IRMover::IdentifiedStructTypeSet::findNonOpaque(ArrayRef<Type *> ETypes,
+ }
+ 
+ bool IRMover::IdentifiedStructTypeSet::hasType(StructType *Ty) {
+-  if (Ty->isOpaque())
+-    return OpaqueStructTypes.count(Ty);
+-  auto I = NonOpaqueStructTypes.find(Ty);
+-  if (I == NonOpaqueStructTypes.end())
+-    return false;
+-  return *I == Ty;
++  return AllStructTypes.count(Ty);
+ }
+ 
+ IRMover::IRMover(Module &M) : Composite(M) {
