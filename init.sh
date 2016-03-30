@@ -153,6 +153,7 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   $SOURCE_DIR/source/gcc/build.sh
 
   # Stage one is done, we can upgrade our compiler
+  GCC_INSTALL_PREFIX="$BUILD_DIR/gcc-$GCC_VERSION"
   CC="$BUILD_DIR/gcc-$GCC_VERSION/bin/gcc"
   CXX="$BUILD_DIR/gcc-$GCC_VERSION/bin/g++"
 
@@ -191,6 +192,7 @@ export OS_NAME
 export OS_VERSION
 export PATH
 export RELEASE_NAME
+export GCC_INSTALL_PREFIX
 
 # OS X doesn't use binutils.
 if [[ "$OSTYPE" != "darwin"* ]]; then
