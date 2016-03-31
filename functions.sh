@@ -132,13 +132,13 @@ function prepare() {
 # If PATCH_DIR is set, look in that directory for patches. Otherwise look in
 # "<package name>-<package version>-patches"
 # Usage: header <package name> <package version> [<archive file>
-#               [<extracted archive dir> <target dir>]]
+#               [<extracted archive dir> [<target dir> [<extract command>]]]]
 function header() {
   local PKG_NAME=$1
   local PKG_VERSION=$2
   local ARCHIVE=${3-}
   local EXTRACTED_DIR=${4-}
-  local TARGET_DIR=${5-}
+  local TARGET_DIR=${5-"$EXTRACTED_DIR"}
 
   echo "#######################################################################"
   echo "# Building: ${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}"
@@ -233,7 +233,7 @@ function footer() {
   local PKG_VERSION=$2
 
   # Build Package
-  build_dist_package >> $BUILD_LOG 2>&1
+  build_dist_package 2>&1 | tee -a $BUILD_LOG
 
   # For all binaries of the package symlink to bin
   if [[ -d $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin ]]; then

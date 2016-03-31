@@ -54,14 +54,8 @@ else
 fi
 
 ################################################################################
-# Build Kudu
-################################################################################
-KUDU_VERSION=0.7.0 $SOURCE_DIR/source/kudu/build.sh
-
-################################################################################
 # LLVM
 ################################################################################
-
 # Build LLVM 3.3 with and without asserts.
 # For LLVM 3.3, the default is a release build with assertions. The assertions
 # are disabled by including "no-asserts" in the version string.
@@ -208,3 +202,18 @@ LIBUNWIND_VERSION=1.1 $SOURCE_DIR/source/libunwind/build.sh
 # Build Breakpad
 ################################################################################
 BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
+
+################################################################################
+# Build Kudu
+################################################################################
+(
+  export BOOST_VERSION=1.57.0
+  export KUDU_VERSION=
+  for KUDU_VERSION in 0.8.0-RC1; do
+    if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
+      $SOURCE_DIR/source/kudu/build.sh build
+    else
+      build_fake_package kudu
+    fi
+  done
+)
