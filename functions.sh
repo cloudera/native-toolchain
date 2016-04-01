@@ -262,7 +262,7 @@ function needs_build_package() {
   fi
 
   local UPPER_PACKAGE=`echo "${PACKAGE}" | awk '{print toupper($0)}'`
-  ENV_NAME="BUILD_${UPPER_PACKAGE}"
+  ENV_NAME="BUILD_${UPPER_PACKAGE//-/_}"
   ENV_NAME=${!ENV_NAME=0}
 
   if [ $BUILD_ALL -eq 0 ] && [ $ENV_NAME -eq 1 ]; then
