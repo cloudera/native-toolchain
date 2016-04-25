@@ -40,11 +40,7 @@ download_dependency $PACKAGE "compiler-rt-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" 
 download_dependency $PACKAGE "llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
 
 if needs_build_package ; then
-  if [[ $PACKAGE_VERSION = "trunk" ]]; then
-    . $SOURCE_DIR/source/llvm/build-trunk.sh
-    cd $SOURCE_DIR/source/llvm
-    build_trunk
-  elif [[ "$PACKAGE_VERSION" =~ "3.3" ]]; then
+  if [[ "$PACKAGE_VERSION" =~ "3.3" ]]; then
     . $SOURCE_DIR/source/llvm/build-3.3.sh
     cd $SOURCE_DIR/source/llvm
     build_llvm_33
