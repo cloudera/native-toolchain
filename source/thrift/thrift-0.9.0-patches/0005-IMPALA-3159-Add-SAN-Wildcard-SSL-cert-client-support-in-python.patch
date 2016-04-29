@@ -1,0 +1,276 @@
+From 189ba71618cd5ad2707aed4ce685ab03f4c22086 Mon Sep 17 00:00:00 2001
+From: Henry Robinson <henry@cloudera.com>
+Date: Fri, 29 Apr 2016 11:31:10 -0700
+Subject: [PATCH] 
+ IMPALA-3159-Add-SAN-Wildcard-SSL-cert-client-support-in-python
+
+---
+ lib/py/src/transport/TSSLSocket.py                 |  36 ++----
+ lib/py/src/transport/packages/__init__.py          |  22 ++++
+ .../packages/ssl_match_hostname/__init__.py        |  32 ++++++
+ .../packages/ssl_match_hostname/_implementation.py | 124 +++++++++++++++++++++
+ 4 files changed, 190 insertions(+), 24 deletions(-)
+ create mode 100644 lib/py/src/transport/packages/__init__.py
+ create mode 100644 lib/py/src/transport/packages/ssl_match_hostname/__init__.py
+ create mode 100644 lib/py/src/transport/packages/ssl_match_hostname/_implementation.py
+
+diff --git a/lib/py/src/transport/TSSLSocket.py b/lib/py/src/transport/TSSLSocket.py
+index e0ff4f9..e843e4c 100644
+--- a/lib/py/src/transport/TSSLSocket.py
++++ b/lib/py/src/transport/TSSLSocket.py
+@@ -23,7 +23,7 @@ import ssl
+ 
+ from thrift.transport import TSocket
+ from thrift.transport.TTransport import TTransportException
+-
++from .packages.ssl_match_hostname import match_hostname, CertificateError
+ 
+ class TSSLSocket(TSocket.TSocket):
+   """
+@@ -105,8 +105,7 @@ class TSSLSocket(TSocket.TSocket):
+   def _validate_cert(self):
+     """internal method to validate the peer's SSL certificate, and to check the
+     commonName of the certificate to ensure it matches the hostname we
+-    used to make this connection.  Does not support subjectAltName records
+-    in certificates.
++    used to make this connection.
+ 
+     raises TTransportException if the certificate fails validation.
+     """
+@@ -116,27 +115,16 @@ class TSSLSocket(TSocket.TSocket):
+       raise TTransportException(
+         type=TTransportException.NOT_OPEN,
+         message='No SSL certificate found from %s:%s' % (self.host, self.port))
+-    fields = cert['subject']
+-    for field in fields:
+-      # ensure structure we get back is what we expect
+-      if not isinstance(field, tuple):
+-        continue
+-      cert_pair = field[0]
+-      if len(cert_pair) < 2:
+-        continue
+-      cert_key, cert_value = cert_pair[0:2]
+-      if cert_key != 'commonName':
+-        continue
+-      certhost = cert_value
+-      if certhost == self.host:
+-        # success, cert commonName matches desired hostname
+-        self.is_valid = True
+-        return
+-      else:
+-        raise TTransportException(
+-          type=TTransportException.UNKNOWN,
+-          message='Hostname we connected to "%s" doesn\'t match certificate '
+-                  'provided commonName "%s"' % (self.host, certhost))
++    try:
++      match_hostname(cert, self.host)
++      self.is_valid = True
++      return
++    except CertificateError, ce:
++      raise TTransportException(
++        type=TTransportException.UNKNOWN,
++        message='Hostname we connected to "%s" doesn\'t match certificate '
++                'provided commonName or subjectAltNames' % (self.host))
++
+     raise TTransportException(
+       type=TTransportException.UNKNOWN,
+       message='Could not validate SSL certificate from '
+diff --git a/lib/py/src/transport/packages/__init__.py b/lib/py/src/transport/packages/__init__.py
+new file mode 100644
+index 0000000..03c0333
+--- /dev/null
++++ b/lib/py/src/transport/packages/__init__.py
+@@ -0,0 +1,22 @@
++#
++# Licensed to the Apache Software Foundation (ASF) under one
++# or more contributor license agreements. See the NOTICE file
++# distributed with this work for additional information
++# regarding copyright ownership. The ASF licenses this file
++# to you under the Apache License, Version 2.0 (the
++# "License"); you may not use this file except in compliance
++# with the License. You may obtain a copy of the License at
++#
++#   http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing,
++# software distributed under the License is distributed on an
++# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++# KIND, either express or implied. See the License for the
++# specific language governing permissions and limitations
++# under the License.
++#
++
++from __future__ import absolute_import
++
++from . import ssl_match_hostname
+diff --git a/lib/py/src/transport/packages/ssl_match_hostname/__init__.py b/lib/py/src/transport/packages/ssl_match_hostname/__init__.py
+new file mode 100644
+index 0000000..1d986f6
+--- /dev/null
++++ b/lib/py/src/transport/packages/ssl_match_hostname/__init__.py
+@@ -0,0 +1,32 @@
++#
++# Licensed to the Apache Software Foundation (ASF) under one
++# or more contributor license agreements. See the NOTICE file
++# distributed with this work for additional information
++# regarding copyright ownership. The ASF licenses this file
++# to you under the Apache License, Version 2.0 (the
++# "License"); you may not use this file except in compliance
++# with the License. You may obtain a copy of the License at
++#
++#   http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing,
++# software distributed under the License is distributed on an
++# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++# KIND, either express or implied. See the License for the
++# specific language governing permissions and limitations
++# under the License.
++#
++
++try:
++    # Python 3.2
++    from ssl import CertificateError, match_hostname
++except ImportError:
++    try:
++        # Backport of the function from a pypi module
++        from backports.ssl_match_hostname import CertificateError, match_hostname
++    except ImportError:
++        # Our vendored copy
++        from ._implementation import CertificateError, match_hostname
++
++# Not needed, but documenting what we provide.
++__all__ = ('CertificateError', 'match_hostname')
+diff --git a/lib/py/src/transport/packages/ssl_match_hostname/_implementation.py b/lib/py/src/transport/packages/ssl_match_hostname/_implementation.py
+new file mode 100644
+index 0000000..4de7453
+--- /dev/null
++++ b/lib/py/src/transport/packages/ssl_match_hostname/_implementation.py
+@@ -0,0 +1,124 @@
++#
++# Licensed to the Apache Software Foundation (ASF) under one
++# or more contributor license agreements. See the NOTICE file
++# distributed with this work for additional information
++# regarding copyright ownership. The ASF licenses this file
++# to you under the Apache License, Version 2.0 (the
++# "License"); you may not use this file except in compliance
++# with the License. You may obtain a copy of the License at
++#
++#   http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing,
++# software distributed under the License is distributed on an
++# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++# KIND, either express or implied. See the License for the
++# specific language governing permissions and limitations
++# under the License.
++#
++
++"""The match_hostname() function from Python 3.3.3, essential when using SSL."""
++
++# Note: This file is under the PSF license as the code comes from the python
++# stdlib.   http://docs.python.org/3/license.html
++
++import re
++
++__version__ = '3.4.0.2'
++
++class CertificateError(ValueError):
++    pass
++
++
++def _dnsname_match(dn, hostname, max_wildcards=1):
++    """Matching according to RFC 6125, section 6.4.3
++
++    http://tools.ietf.org/html/rfc6125#section-6.4.3
++    """
++    pats = []
++    if not dn:
++        return False
++
++    # Ported from python3-syntax:
++    # leftmost, *remainder = dn.split(r'.')
++    parts = dn.split(r'.')
++    leftmost = parts[0]
++    remainder = parts[1:]
++
++    wildcards = leftmost.count('*')
++    if wildcards > max_wildcards:
++        # Issue #17980: avoid denials of service by refusing more
++        # than one wildcard per fragment.  A survey of established
++        # policy among SSL implementations showed it to be a
++        # reasonable choice.
++        raise CertificateError(
++            "too many wildcards in certificate DNS name: "  repr(dn))
++
++    # speed up common case w/o wildcards
++    if not wildcards:
++        return dn.lower() == hostname.lower()
++
++    # RFC 6125, section 6.4.3, subitem 1.
++    # The client SHOULD NOT attempt to match a presented identifier in which
++    # the wildcard character comprises a label other than the left-most label.
++    if leftmost == '*':
++        # When '*' is a fragment by itself, it matches a non-empty dotless
++        # fragment.
++        pats.append('[^.]')
++    elif leftmost.startswith('xn--') or hostname.startswith('xn--'):
++        # RFC 6125, section 6.4.3, subitem 3.
++        # The client SHOULD NOT attempt to match a presented identifier
++        # where the wildcard character is embedded within an A-label or
++        # U-label of an internationalized domain name.
++        pats.append(re.escape(leftmost))
++    else:
++        # Otherwise, '*' matches any dotless string, e.g. www*
++        pats.append(re.escape(leftmost).replace(r'\*', '[^.]*'))
++
++    # add the remaining fragments, ignore any wildcards
++    for frag in remainder:
++        pats.append(re.escape(frag))
++
++    pat = re.compile(r'\A'  r'\.'.join(pats)  r'\Z', re.IGNORECASE)
++    return pat.match(hostname)
++
++
++def match_hostname(cert, hostname):
++    """Verify that *cert* (in decoded format as returned by
++    SSLSocket.getpeercert()) matches the *hostname*.  RFC 2818 and RFC 6125
++    rules are followed, but IP addresses are not accepted for *hostname*.
++
++    CertificateError is raised on failure. On success, the function
++    returns nothing.
++    """
++    if not cert:
++        raise ValueError("empty or no certificate")
++    dnsnames = []
++    san = cert.get('subjectAltName', ())
++    for key, value in san:
++        if key == 'DNS':
++            if _dnsname_match(value, hostname):
++                return
++            dnsnames.append(value)
++    if not dnsnames:
++        # The subject is only checked when there is no dNSName entry
++        # in subjectAltName
++        for sub in cert.get('subject', ()):
++            for key, value in sub:
++                # XXX according to RFC 2818, the most specific Common Name
++                # must be used.
++                if key == 'commonName':
++                    if _dnsname_match(value, hostname):
++                        return
++                    dnsnames.append(value)
++    if len(dnsnames) > 1:
++        raise CertificateError("hostname %r "
++            "doesn't match either of %s"
++            % (hostname, ', '.join(map(repr, dnsnames))))
++    elif len(dnsnames) == 1:
++        raise CertificateError("hostname %r "
++            "doesn't match %r"
++            % (hostname, dnsnames[0]))
++    else:
++        raise CertificateError("no appropriate commonName or "
++            "subjectAltName fields were found")
+--
+2.7.1
+
