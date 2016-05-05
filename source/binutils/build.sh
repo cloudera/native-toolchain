@@ -23,7 +23,7 @@ download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
 
 if needs_build_package ; then
   header $PACKAGE $PACKAGE_VERSION
-  wrap ./configure --enable-gold --prefix=$LOCAL_INSTALL
+  wrap ./configure --enable-gold --enable-plugins --prefix=$LOCAL_INSTALL
   wrap make -j$BUILD_THREADS
   wrap make install
   footer $PACKAGE $PACKAGE_VERSION
