@@ -106,6 +106,7 @@ export OPENSSL_VERSION=1.0.1p
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
   THRIFT_VERSION=0.9.0-p2 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.9.0-p4 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.0-p5 $SOURCE_DIR/source/thrift/build.sh
 else
   BOOST_VERSION=1.57.0 THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
 fi
