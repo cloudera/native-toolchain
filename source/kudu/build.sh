@@ -83,8 +83,17 @@ function build {
     return
   fi
 
-  header $PACKAGE $PACKAGE_VERSION kudu-$KUDU_VERSION.tar.gz \
-      incubator-kudu-$KUDU_VERSION incubator-kudu-$KUDU_VERSION "tar xzf"
+  # If the version is a git hash, the name of the root dir in the archive includes the
+  # full hash even if an abbreviated hash was given through the download URL. The
+  # difference would lead to a mismatch in expected vs actual dir name after extraction.
+  # So the extracted root dir name will be found by inspection.
+  EXTRACTED_DIR_NAME=$(tar -tz --exclude='incubator*/*' -f kudu-$KUDU_VERSION.tar.gz)
+  if [[ $(wc -l <<< "$EXTRACTED_DIR_NAME") -ne 1 ]]; then
+    echo Failed to find the name of the root folder in the Kudu tarball. The search \
+        command output was: "'$EXTRACTED_DIR_NAME'".
+    exit 1
+  fi
+  header $PACKAGE $PACKAGE_VERSION kudu-$KUDU_VERSION.tar.gz $EXTRACTED_DIR_NAME
 
   # Kudu's dependencies are not in the toolchain. They could be added later.
   cd thirdparty
@@ -128,6 +137,9 @@ function build {
   wrap make -j$BUILD_THREADS
   install_kudu "$DEBUG_INSTALL_DIR"
   popd
+
+  cd $THIS_DIR
+  rm -rf $EXTRACTED_DIR_NAME kudu-$KUDU_VERSION.tar.gz
 
   footer $PACKAGE $PACKAGE_VERSION
 }
