@@ -107,6 +107,8 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
   THRIFT_VERSION=0.9.0-p2 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.9.0-p4 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.9.0-p5 $SOURCE_DIR/source/thrift/build.sh
+  # 0.9.0-p6 is a revert of -p5 patch. It doesn't need to be built.
+  # It is equivalent to p4 and is needed for subsequent patches.
 else
   BOOST_VERSION=1.57.0 THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
 fi
