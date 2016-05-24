@@ -1,0 +1,69 @@
+diff -u -r a/lib/cpp/src/thrift/protocol/TBinaryProtocol.h b/lib/cpp/src/thrift/protocol/TBinaryProtocol.h
+--- a/lib/cpp/src/thrift/protocol/TBinaryProtocol.h	2012-10-11 17:58:06.000000000 -0700
++++ b/lib/cpp/src/thrift/protocol/TBinaryProtocol.h	2016-05-24 13:31:18.520679315 -0700
+@@ -47,9 +47,7 @@
+     string_limit_(0),
+     container_limit_(0),
+     strict_read_(false),
+-    strict_write_(true),
+-    string_buf_(NULL),
+-    string_buf_size_(0) {}
++    strict_write_(true) {}
+ 
+   TBinaryProtocolT(boost::shared_ptr<Transport_> trans,
+                    int32_t string_limit,
+@@ -61,15 +59,9 @@
+     string_limit_(string_limit),
+     container_limit_(container_limit),
+     strict_read_(strict_read),
+-    strict_write_(strict_write),
+-    string_buf_(NULL),
+-    string_buf_size_(0) {}
++    strict_write_(strict_write) {}
+ 
+   ~TBinaryProtocolT() {
+-    if (string_buf_ != NULL) {
+-      std::free(string_buf_);
+-      string_buf_size_ = 0;
+-    }
+   }
+ 
+   void setStringSizeLimit(int32_t string_limit) {
+@@ -206,11 +198,6 @@
+   bool strict_read_;
+   bool strict_write_;
+ 
+-  // Buffer for reading strings, save for the lifetime of the protocol to
+-  // avoid memory churn allocating memory on every string read
+-  uint8_t* string_buf_;
+-  int32_t string_buf_size_;
+-
+ };
+ 
+ typedef TBinaryProtocolT<TTransport> TBinaryProtocol;
+diff -u -r a/lib/cpp/src/thrift/protocol/TBinaryProtocol.tcc b/lib/cpp/src/thrift/protocol/TBinaryProtocol.tcc
+--- a/lib/cpp/src/thrift/protocol/TBinaryProtocol.tcc	2012-10-11 17:58:06.000000000 -0700
++++ b/lib/cpp/src/thrift/protocol/TBinaryProtocol.tcc	2016-05-24 13:31:52.417254292 -0700
+@@ -446,17 +446,11 @@
+     return size;
+   }
+ 
+-  // Use the heap here to prevent stack overflow for v. large strings
+-  if (size > this->string_buf_size_ || this->string_buf_ == NULL) {
+-    void* new_string_buf = std::realloc(this->string_buf_, (uint32_t)size);
+-    if (new_string_buf == NULL) {
+-      throw std::bad_alloc();
+-    }
+-    this->string_buf_ = (uint8_t*)new_string_buf;
+-    this->string_buf_size_ = size;
+-  }
+-  this->trans_->readAll(this->string_buf_, size);
+-  str.assign((char*)this->string_buf_, size);
++  // In this case we can't borrow buffer memory for the string. We need to allocate more
++  // memory. Let's resize the string and write directly into the string memory to avoid
++  // the extra memcpy().
++  str.resize((uint32_t)size);
++  this->trans_->readAll((uint8_t*)&str[0], size);
+   return (uint32_t)size;
+ }
+ 
