@@ -1,0 +1,86 @@
+commit 500ae28efdfced007e51363ebb4991455977a1c7
+Author: Lars Volker <lv@cloudera.com>
+Date:   Wed Jun 1 15:48:58 2016 +0200
+
+    IMPALA-3656: Backport cda16b34 from glog to 0.3.2
+
+diff --git a/src/glog/logging.h.in b/src/glog/logging.h.in
+index d9aca8a..e00970c 100644
+--- a/src/glog/logging.h.in
++++ b/src/glog/logging.h.in
+@@ -845,6 +845,9 @@ template <bool>
+ struct CompileAssert {
+ };
+ struct CrashReason;
++
++// Returns true if FailureSignalHandler is installed.
++bool IsFailureSignalHandlerInstalled();
+ }  // namespace glog_internal_namespace_
+ 
+ #define GOOGLE_GLOG_COMPILE_ASSERT(expr, msg) \
+diff --git a/src/signalhandler.cc b/src/signalhandler.cc
+index d6c203b..45ec76b 100644
+--- a/src/signalhandler.cc
++++ b/src/signalhandler.cc
+@@ -330,6 +330,20 @@ void FailureSignalHandler(int signal_number,
+ 
+ }  // namespace
+ 
++namespace glog_internal_namespace_ {
++
++bool IsFailureSignalHandlerInstalled() {
++  struct sigaction sig_action;
++  memset(&sig_action, 0, sizeof(sig_action));
++  sigemptyset(&sig_action.sa_mask);
++  sigaction(SIGABRT, NULL, &sig_action);
++  if (sig_action.sa_sigaction == &FailureSignalHandler)
++    return true;
++  return false;
++}
++
++}  // namespace glog_internal_namespace_
++
+ void InstallFailureSignalHandler() {
+   // Build the sigaction struct.
+   struct sigaction sig_action;
+diff --git a/src/utilities.cc b/src/utilities.cc
+index 27b2a90..49e46a9 100644
+--- a/src/utilities.cc
++++ b/src/utilities.cc
+@@ -136,13 +136,15 @@ static void DumpStackTrace(int skip_count, DebugWriter *writerfn, void *arg) {
+ static void DumpStackTraceAndExit() {
+   DumpStackTrace(1, DebugWriteToStderr, NULL);
+ 
+-  // Set the default signal handler for SIGABRT, to avoid invoking our
+-  // own signal handler installed by InstallFailedSignalHandler().
+-  struct sigaction sig_action;
+-  memset(&sig_action, 0, sizeof(sig_action));
+-  sigemptyset(&sig_action.sa_mask);
+-  sig_action.sa_handler = SIG_DFL;
+-  sigaction(SIGABRT, &sig_action, NULL);
++  if (IsFailureSignalHandlerInstalled()) {
++    // Set the default signal handler for SIGABRT, to avoid invoking our
++    // own signal handler installed by InstallFailureSignalHandler().
++    struct sigaction sig_action;
++    memset(&sig_action, 0, sizeof(sig_action));
++    sigemptyset(&sig_action.sa_mask);
++    sig_action.sa_handler = SIG_DFL;
++    sigaction(SIGABRT, &sig_action, NULL);
++  }
+ 
+   abort();
+ }
+diff --git a/src/windows/glog/logging.h b/src/windows/glog/logging.h
+index f854a06..4141338 100755
+--- a/src/windows/glog/logging.h
++++ b/src/windows/glog/logging.h
+@@ -849,6 +849,9 @@ template <bool>
+ struct CompileAssert {
+ };
+ struct CrashReason;
++
++// Returns true if FailureSignalHandler is installed.
++bool IsFailureSignalHandlerInstalled();
+ }  // namespace glog_internal_namespace_
+ 
+ #define GOOGLE_GLOG_COMPILE_ASSERT(expr, msg) \
