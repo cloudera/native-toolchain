@@ -53,7 +53,7 @@ export PRODUCTION
 : ${CLEAN=0}
 export CLEAN
 
-: ${BINUTILS_VERSION=2.26}
+: ${BINUTILS_VERSION=2.26-p1}
 export BINUTILS_VERSION
 
 # Flag to determine the system compiler is used
