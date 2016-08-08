@@ -29,7 +29,7 @@ set +u
 if [[ -z "$KUDU_VERSION" ]]; then
   echo KUDU_VERSION must be set before calling this script. The value should \
       correspond to a git hash or tag available at \
-      https://github.com/apache/incubator-kudu.
+      https://github.com/apache/kudu.
   exit 1
 fi
 set -u
@@ -76,7 +76,7 @@ function build {
   prepare $THIS_DIR
 
   cd $THIS_DIR
-  download_url https://github.com/apache/incubator-kudu/archive/$KUDU_VERSION.tar.gz \
+  download_url https://github.com/apache/kudu/archive/$KUDU_VERSION.tar.gz \
       kudu-$KUDU_VERSION.tar.gz
 
   if ! needs_build_package; then
@@ -87,7 +87,7 @@ function build {
   # full hash even if an abbreviated hash was given through the download URL. The
   # difference would lead to a mismatch in expected vs actual dir name after extraction.
   # So the extracted root dir name will be found by inspection.
-  EXTRACTED_DIR_NAME=$(tar -tz --exclude='incubator*/*' -f kudu-$KUDU_VERSION.tar.gz)
+  EXTRACTED_DIR_NAME=$(tar -tz --exclude='kudu-*/*' -f kudu-$KUDU_VERSION.tar.gz)
   if [[ $(wc -l <<< "$EXTRACTED_DIR_NAME") -ne 1 ]]; then
     echo Failed to find the name of the root folder in the Kudu tarball. The search \
         command output was: "'$EXTRACTED_DIR_NAME'".
