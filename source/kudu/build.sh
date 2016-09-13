@@ -45,11 +45,13 @@ function is_supported_platform {
   fi
   set -u
   case "$OS_NAME" in
+    # RHEL 5 can't build the Kudu toolchain llvm and likely more (very early failure).
+    # Debian 6 and Sles 11 can't build the Kudu toolchain libpmem.
+    # Sles 12 may fail to build the Kudu toolchain cmake (Impala's toolchain had the same
+    # issue previously, IMPALA-3191).
     rhel) [[ "$OS_VERSION" -ge 6 ]];;
-    ubuntu) [[ "$OS_VERSION" -ge 14 ]];;
-
-    # SUSE and Debian are known to fail.
-    suse | debian) false;;
+    debian) [[ "$OS_VERSION" -ge 7 ]];;
+    suse) false;;
 
     # For any other OS just assume it'll work.
     *) true;;
@@ -156,7 +158,7 @@ function install_kudu {
   rm -rf "$INSTALL_DIR/bin"
   mkdir -p "$INSTALL_DIR/bin"
   pushd bin
-  for F in kudu-* cfile-dump log-dump; do
+  for F in kudu-* ; do
     cp $F "$INSTALL_DIR/bin"
   done
   popd
