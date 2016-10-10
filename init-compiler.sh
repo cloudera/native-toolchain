@@ -41,6 +41,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   ARCH_FLAGS="-stdlib=libstdc++"
 fi
 
+export SYSTEM_GCC_VERSION=$(gcc -dumpversion)
 if [[ $SYSTEM_GCC -eq 0 ]]; then
   if [[ $USE_CCACHE -ne 0 ]]; then
     CC=$(setup_ccache $(which gcc))
@@ -54,13 +55,18 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   CC="$BUILD_DIR/gcc-$GCC_VERSION/bin/gcc"
   CXX="$BUILD_DIR/gcc-$GCC_VERSION/bin/g++"
 
-  # Upgrade rpath variable to catch current library location and possible future location
+  # Add rpath to all binaries we produce that points to the ../lib/ subdirectory relative
+  # to the output binaries or libraries. Need to include versions with both $ORIGIN and
+  # $$ORIGIN to work around autotools and CMake projects inconsistently escaping LDFLAGS
+  # values. We always get the expected "$ORIGIN/" rpaths in produced binaries, but we also
+  # get a bad rpath in each binary: either starting with "$$ORIGIN/" or "RIGIN/". The bad
+  # rpaths are ignored by the dynamic linker and are harmless.
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib,-rpath,'\$ORIGIN/../lib'"
+    FULL_RPATH="-Wl,-rpath,'\$ORIGIN/../lib',-rpath,'\$\$ORIGIN/../lib'"
   else
-    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64'"
+    FULL_RPATH="-Wl,-rpath,'\$ORIGIN/../lib64',-rpath,'\$\$ORIGIN/../lib64'"
   fi
-  FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
+  FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib',-rpath,'\$\$ORIGIN/../lib'"
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
   LDFLAGS="$ARCH_FLAGS $FULL_RPATH $FULL_LPATH"

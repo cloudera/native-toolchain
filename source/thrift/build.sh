@@ -104,6 +104,7 @@ if needs_build_package ; then
     echo "Thrift python lib configuration failed."
     exit 1
   fi
+  add_gcc_to_ld_library_path
   wrap make install # Thrift 0.9.0 doesn't build with -j${BUILD_THREADS}
   cd contrib/fb303
   rm -f config.cache

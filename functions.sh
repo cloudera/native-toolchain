@@ -263,15 +263,26 @@ function finalize_package_build() {
   local PKG_NAME=$1
   local PKG_VERSION=$2
 
+  local PKG_BUILD_DIRNAME=${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}
+  local PKG_BUILD_DIR="$BUILD_DIR/$PKG_BUILD_DIRNAME"
+
+  if [ $PKG_NAME != gcc ]; then
+    pushd "$BUILD_DIR"
+    # Add symlinks to required libraries.
+    # Make sure that libstdc++ and libgcc are linked where they will be on the RPATH.
+    # We need to use relative paths here to get relative symlinks.
+    symlink_required_libs gcc-${GCC_VERSION}/lib64 "$PKG_BUILD_DIRNAME"
+    popd
+  fi
+
   # Build Package
   build_dist_package 2>&1 | tee -a $BUILD_LOG
 
   # For all binaries of the package symlink to bin
-  if [[ -d $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin ]]; then
+  if [[ -d "$PKG_BUILD_DIR"/bin ]]; then
     mkdir -p $BUILD_DIR/bin
-    for p in `ls $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin`; do
-      ln -f -s $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin/$p \
-          $BUILD_DIR/bin/$p
+    for p in `ls "$PKG_BUILD_DIR"/bin`; do
+      ln -f -s "$PKG_BUILD_DIR"/bin/$p $BUILD_DIR/bin/$p
     done
   fi
 
@@ -482,6 +493,34 @@ function enable_toolchain_autotools() {
     export ACLOCAL_PATH
 }
 
+# Adds the toolchain gcc library directory to LD_LIBRARY_PATH if the toolchain gcc
+# version is newer than the system gcc version.
+#
+# This should be called by the build of the various components - cmake, flatbuffers,
+# kudu, etc - that invoke binaries they built during their builds. The dynamic linker
+# needs to be able to find the correct versions of libgcc.so, libstdc++.so, etc. We
+# usually rely on setting the rpath in the binary and symlinking those libraries, but
+# in this case the libraries are not symlinked until after the component build
+# completes, so the dynamic linker needs LD_LIBRARY_PATH to locate them.
+#
+# GCC's libraries are backwards compatible, so we need the version check to pick
+# the library version that will work for both toolchain binaries and any system binaries
+# that are invoked during builds.
+function add_gcc_to_ld_library_path() {
+  local gcc_version=$(gcc -dumpversion)
+  local older_version=$(echo -e "$gcc_version\n$SYSTEM_GCC_VERSION" |
+                        sort --version-sort | head -n1)
+  if [[ "$older_version" == "$SYSTEM_GCC_VERSION" ]]
+  then
+    if [[ -z "${LD_LIBRARY_PATH:-}" ]]; then
+      LD_LIBRARY_PATH=""
+    else
+      LD_LIBRARY_PATH=":${LD_LIBRARY_PATH}"
+    fi
+    export LD_LIBRARY_PATH="$BUILD_DIR/gcc-$GCC_VERSION/lib64${LD_LIBRARY_PATH}"
+  fi
+}
+
 # Wrap the given compiler in a script that executes ccache. Return the
 # wrapped script.
 #
@@ -556,6 +595,82 @@ function upload_ccache() {
         --expected-size $EXPECTED_SIZE \
         --region=$REGION - $S3_PREFIX/ccache.tar
   ccache -s | aws s3 cp --region="$REGION" - "$S3_PREFIX/stats.$TOOLCHAIN_BUILD_ID"
+}
+
+# Usage: symlink_required_libs <src build dir> <dst build dir>
+# Finds all shared objects under the src build dir required by shared objects or
+# executables in the dst build dir and add symlinks to the required libraries in
+# the ../lib/ directory relative to the binary that requires the library, where
+# it will on the rpath for the binary. Both paths provided must be relative paths.
+# The symlink constructed will be a relative symlink, so will work when the build
+# directory is placed in a different location.
+function symlink_required_libs() {
+  local src_dir=$1
+  local dst_dir=$2
+  local src_libs=$(find "$src_dir" -name '*.so*')
+
+  local executables=$(find "$dst_dir" -perm '/u=x,g=x,o=x' -type f)
+  local shared_libs=$(find "$dst_dir" -name '*.so*')
+
+  local file
+  for file in $executables $shared_libs; do
+    # Get the required libraries. If this is not a binary executable, this command fails
+    # and we can skip over the file.
+    if ! local required_libs=$(objdump -p "$file" 2>/dev/null | grep NEEDED | awk '{print $2}')
+    then
+      continue
+    fi
+
+    # Check for matches using the naive N^2 algorithm.
+    local required_lib
+    local src_lib
+    for required_lib in $required_libs; do
+      for src_lib in $src_libs; do
+        if [[ "$(basename $src_lib)" = "$required_lib" ]]; then
+          # We found a dependency.
+          symlink_lib "$src_lib" "$file"
+        fi
+      done
+    done
+  done
+}
+
+# Usage: calc_relpath <src> <dst>
+# Calculate and print to stdout the relative path from <src> to <dst>.
+function calc_relpath() {
+  local src=$1
+  local dst=$2
+  python -c "import os.path; print(os.path.relpath('${src}', '${dst}'))"
+}
+
+# Usage: symlink_lib <src lib> <binary>
+# Create a relative symlink to <src lib> where it will on the rpath of <binary>.
+# <src lib> and <binary> must be relative paths from the current directory.
+function symlink_lib() {
+  local src_lib=$1
+  local binary=$2
+  local binary_dir="$(dirname "$binary")"
+
+  # The lib/ subfolder is on the rpath of all binaries. Add a symlink there.
+  if [[ "$(basename "$binary_dir")" == "lib" ]]; then
+    # Don't insert extraneous ../lib
+    local dst_lib_dir="$binary_dir"
+  else
+    local dst_lib_dir="$binary_dir/../lib"
+  fi
+  local src_lib_rel_path=$(calc_relpath "$src_lib" "$dst_lib_dir")
+
+  # Add the symlink if not already present.
+  mkdir -p "$dst_lib_dir"
+  pushd "$dst_lib_dir"
+  local lib_name="$(basename "$src_lib")"
+  # Create a symlink if the library (or a symlink to it) is not present.
+  [[ -e "$lib_name" ]] || ln -s "${src_lib_rel_path}" "$lib_name"
+  if [[ ! -e "$lib_name" ]]; then
+    echo "Broken symlink $lib_name in $(pwd)"
+    return 1
+  fi
+  popd
 }
 
 # Print a message to standard error and exit with a non-zero status.

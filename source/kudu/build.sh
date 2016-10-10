@@ -85,6 +85,7 @@ function build {
   fi
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
+  add_gcc_to_ld_library_path
 
   # Kudu's dependencies are not in the toolchain. They could be added later.
   cd thirdparty

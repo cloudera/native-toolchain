@@ -40,6 +40,7 @@ if needs_build_package ; then
   download_dependency $PACKAGE "compiler-rt-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
   download_dependency $PACKAGE "llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
 
+  add_gcc_to_ld_library_path
   if [[ "$PACKAGE_VERSION" =~ "3.3" ]]; then
     . $SOURCE_DIR/source/llvm/build-3.3.sh
     cd $SOURCE_DIR/source/llvm

@@ -27,8 +27,8 @@ prepare $THIS_DIR
 if needs_build_package ; then
   # Download the dependency from S3
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
-
   setup_package_build $PACKAGE $PACKAGE_VERSION
+  add_gcc_to_ld_library_path
 
   CXXFLAGS=
   GCC_MAJOR_VERSION=$(echo $GCC_VERSION | cut -d . -f1)
