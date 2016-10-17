@@ -59,15 +59,22 @@ fi
 # Build LLVM 3.3 with and without asserts.
 # For LLVM 3.3, the default is a release build with assertions. The assertions
 # are disabled by including "no-asserts" in the version string.
-LLVM_VERSION=3.3-p1 $SOURCE_DIR/source/llvm/build.sh
-LLVM_VERSION=3.3-no-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
+if (( BUILD_HISTORICAL )) ; then
+  LLVM_VERSION=3.3-p1 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=3.3-no-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
+fi
 
 # Build LLVM 3.7.0 and 3.8.0 without assertions. For LLVM 3.7+, the default is a
 # release build with no assertions.
-PYTHON_VERSION=2.7.10 LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
-PYTHON_VERSION=2.7.10 LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
-PYTHON_VERSION=2.7.10 LLVM_VERSION=3.8.0-p1 $SOURCE_DIR/source/llvm/build.sh
-PYTHON_VERSION=2.7.10 LLVM_VERSION=3.8.0-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
+(
+  export PYTHON_VERSION=2.7.10
+  if (( BUILD_HISTORICAL )) ; then
+    LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
+    LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
+  fi
+  LLVM_VERSION=3.8.0-p1 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=3.8.0-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
+)
 
 ################################################################################
 # SASL
@@ -104,12 +111,14 @@ export ZLIB_VERSION=1.2.8
 export OPENSSL_VERSION=1.0.1p
 
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
-  THRIFT_VERSION=0.9.0-p2 $SOURCE_DIR/source/thrift/build.sh
-  THRIFT_VERSION=0.9.0-p4 $SOURCE_DIR/source/thrift/build.sh
-  THRIFT_VERSION=0.9.0-p5 $SOURCE_DIR/source/thrift/build.sh
-  # 0.9.0-p6 is a revert of -p5 patch. It doesn't need to be built.
-  # It is equivalent to p4 and is needed for subsequent patches.
-  THRIFT_VERSION=0.9.0-p7 $SOURCE_DIR/source/thrift/build.sh
+  if (( BUILD_HISTORICAL )); then
+    THRIFT_VERSION=0.9.0-p2 $SOURCE_DIR/source/thrift/build.sh
+    THRIFT_VERSION=0.9.0-p4 $SOURCE_DIR/source/thrift/build.sh
+    THRIFT_VERSION=0.9.0-p5 $SOURCE_DIR/source/thrift/build.sh
+    # 0.9.0-p6 is a revert of -p5 patch. It doesn't need to be built.
+    # It is equivalent to p4 and is needed for subsequent patches.
+    THRIFT_VERSION=0.9.0-p7 $SOURCE_DIR/source/thrift/build.sh
+  fi
   THRIFT_VERSION=0.9.0-p8 $SOURCE_DIR/source/thrift/build.sh
 else
   BOOST_VERSION=1.57.0 THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
@@ -128,14 +137,18 @@ GFLAGS_VERSION=2.0 $SOURCE_DIR/source/gflags/build.sh
 ################################################################################
 # Build gperftools
 ################################################################################
+if (( BUILD_HISTORICAL )); then
+  GPERFTOOLS_VERSION=2.0-p1 $SOURCE_DIR/source/gperftools/build.sh
+  GPERFTOOLS_VERSION=2.3 $SOURCE_DIR/source/gperftools/build.sh
+fi
 GPERFTOOLS_VERSION=2.5 $SOURCE_DIR/source/gperftools/build.sh
-GPERFTOOLS_VERSION=2.3 $SOURCE_DIR/source/gperftools/build.sh
-GPERFTOOLS_VERSION=2.0-p1 $SOURCE_DIR/source/gperftools/build.sh
 
 ################################################################################
 # Build glog
 ################################################################################
-GFLAGS_VERSION=2.0 GLOG_VERSION=0.3.2-p1 $SOURCE_DIR/source/glog/build.sh
+if (( BUILD_HISTORICAL )) ; then
+  GFLAGS_VERSION=2.0 GLOG_VERSION=0.3.2-p1 $SOURCE_DIR/source/glog/build.sh
+fi
 GFLAGS_VERSION=2.0 GLOG_VERSION=0.3.2-p2 $SOURCE_DIR/source/glog/build.sh
 
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
@@ -154,7 +167,9 @@ GOOGLETEST_VERSION=20151222 $SOURCE_DIR/source/googletest/build.sh
 ################################################################################
 # Build Snappy
 ################################################################################
-SNAPPY_VERSION=1.0.5 $SOURCE_DIR/source/snappy/build.sh
+if (( BUILD_HISTORICAL )); then
+  SNAPPY_VERSION=1.0.5 $SOURCE_DIR/source/snappy/build.sh
+fi
 SNAPPY_VERSION=1.1.3 $SOURCE_DIR/source/snappy/build.sh
 
 ################################################################################
@@ -165,7 +180,9 @@ LZ4_VERSION=svn $SOURCE_DIR/source/lz4/build.sh
 ################################################################################
 # Build re2
 ################################################################################
-RE2_VERSION=20130115 $SOURCE_DIR/source/re2/build.sh
+if (( BUILD_HISTORICAL )); then
+  RE2_VERSION=20130115 $SOURCE_DIR/source/re2/build.sh
+fi
 RE2_VERSION=20130115-p1 $SOURCE_DIR/source/re2/build.sh
 
 ################################################################################
@@ -176,7 +193,9 @@ OPENLDAP_VERSION=2.4.25 $SOURCE_DIR/source/openldap/build.sh
 ################################################################################
 # Build Avro
 ################################################################################
-AVRO_VERSION=1.7.4-p3 $SOURCE_DIR/source/avro/build.sh
+if (( BUILD_HISTORICAL )); then
+  AVRO_VERSION=1.7.4-p3 $SOURCE_DIR/source/avro/build.sh
+fi
 AVRO_VERSION=1.7.4-p4 $SOURCE_DIR/source/avro/build.sh
 
 ################################################################################
@@ -187,7 +206,9 @@ RAPIDJSON_VERSION=0.11 $SOURCE_DIR/source/rapidjson/build.sh
 ################################################################################
 # Build BZip2
 ################################################################################
-BZIP2_VERSION=1.0.6-p1 $SOURCE_DIR/source/bzip2/build.sh
+if (( BUILD_HISTORICAL )); then
+  BZIP2_VERSION=1.0.6-p1 $SOURCE_DIR/source/bzip2/build.sh
+fi
 BZIP2_VERSION=1.0.6-p2 $SOURCE_DIR/source/bzip2/build.sh
 
 ################################################################################
@@ -215,7 +236,11 @@ BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
 (
   export BOOST_VERSION=1.57.0
   export KUDU_VERSION=
-  for KUDU_VERSION in 0.8.0-RC1 0.9.0-RC1 0.10.0-RC1 1.0.0-RC1
+  if (( BUILD_HISTORICAL )); then
+    KUDU_VERSIONS="0.8.0-RC1 0.9.0-RC1 0.10.0-RC1 "
+  fi
+  KUDU_VERSIONS+="1.0.0-RC1"
+  for KUDU_VERSION in $KUDU_VERSIONS
   do
     if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
       $SOURCE_DIR/source/kudu/build.sh build

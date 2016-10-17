@@ -323,9 +323,9 @@ function build_fake_package() {
   fi
 }
 
-# Build the RPM or DEB package depending on the operating system
-# Depends on the LOCAL_INSTALL variable containing the target
-# directory
+# Build the RPM or DEB package depending on the operating system.
+# Depends on the LOCAL_INSTALL variable containing the target directory and the
+# TOOLCHAIN_BUILD_ID variable containing a unique string.
 function build_dist_package() {
   SOURCE_TYPE="dir"
 
@@ -350,7 +350,7 @@ function build_dist_package() {
   if [[ "PUBLISH_DEPENDENCIES" -eq "1" ]]; then
     mvn deploy:deploy-file -DgroupId=com.cloudera.toolchain\
       -DartifactId="${PACKAGE}"\
-      -Dversion="${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"\
+      -Dversion="${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}-${TOOLCHAIN_BUILD_ID}"\
       -Dfile="${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz"\
       -Durl="http://maven.jenkins.cloudera.com:8081/artifactory/cdh-staging-local/"\
       -DrepositoryId=cdh.releases.repo -Dpackaging=tar.gz -Dclassifier=${label} || $RET_VAL
@@ -358,7 +358,7 @@ function build_dist_package() {
     # Publish to S3 as well
     if [[ -n "${AWS_ACCESS_KEY_ID}" && -n "${AWS_SECRET_ACCESS_KEY}" && -n "${S3_BUCKET}" ]]; then
       aws s3 cp "${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz" \
-        s3://${S3_BUCKET}/build/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${label}.tar.gz \
+        s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${label}.tar.gz \
         --region=us-west-1 || $RET_VAL
     fi
 
@@ -418,4 +418,12 @@ function untar_xz() {
   else
     tar xJf "$1"
   fi
+}
+
+# Generate a unique build ID that includes a prefix of the git hash.
+function generate_build_id() {
+  local GIT_HASH=$(git rev-parse --short=10 HEAD)
+  # Get Jenkins build number or a unique id if we're not in jenkins.
+  local UNIQUE_ID=${BUILD_NUMBER:-$(cat /proc/sys/kernel/random/uuid)}
+  echo "${UNIQUE_ID}-${GIT_HASH}"
 }

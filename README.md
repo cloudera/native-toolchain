@@ -1,15 +1,27 @@
 # Building Dependencies
 
-Running `./buildall.sh` in the toplevel directory should be enough to
-produce the binaries. The sources for the different packages are downloaded
-from an S3 bucket provided by Cloudera. If desired, it's possible to dowload 
-the exact version of the package and simply move it to the source directory.
+Running `./buildall.sh` in the top level directory produces the binaries for
+the current versions of all packages. This will likely take several hours the
+first time you run it. If you rerun the script, it checks the `build` and
+`check` directories for preexisting artifacts and only regenerates them
+if not present.
 
-For example, if you want to download the gcc source manually, find the 
-gcc-4.9.2.tar.gz archive and copy it to source/gcc. If the file is present it 
+If you want to build all versions of all packages, you can set the
+environment variable `BUILD_HISTORICAL=1`. Be warned this will take a
+long time.
+
+  BUILD_HISTORICAL=1 buildall.sh
+
+# Sources
+By default, the sources for the different packages are downloaded from an S3
+bucket provided by Cloudera. If desired, it's possible to download the exact
+version of the package and simply move it to the source directory.
+
+For example, if you want to download the gcc source manually, find the
+gcc-4.9.2.tar.gz archive and copy it to source/gcc. If the file is present it
 will not be downloaded again.
 
-# Specific Package
+# Building a Specific Package
 
 To build a specific package run:
 
