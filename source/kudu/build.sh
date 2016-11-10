@@ -103,10 +103,13 @@ function build {
   # not really needed since the toolchain provides python 2.7. To skip the thirdparty
   # build, "python2.7" needs to be in the PATH.
   OLD_PATH="$PATH"
-  PATH="$BUILD_DIR/python-2.7.10/bin:$PATH"
+  PATH="$BUILD_DIR/python-2.7.10/bin:$OLD_PATH"
   wrap ./build-if-necessary.sh
-  PATH="$OLD_PATH"
   cd ..
+
+  # Update the PATH to include Kudu's toolchain binaries (after our toolchain's Python).
+  KUDU_TP_PATH="`pwd`/thirdparty/installed/common/bin"
+  PATH="$BUILD_DIR/python-2.7.10/bin:$KUDU_TP_PATH:$OLD_PATH"
 
   # The line below configures clang to find gcc from the toolchain. Without this the
   # build will still work on some systems but there will be strange crashes at runtime.
