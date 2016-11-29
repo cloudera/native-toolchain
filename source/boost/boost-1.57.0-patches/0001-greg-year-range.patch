@@ -1,0 +1,27 @@
+diff -ur a/boost/date_time/gregorian/greg_year.hpp b/boost/date_time/gregorian/greg_year.hpp
+--- a/boost/date_time/gregorian/greg_year.hpp	2014-05-09 19:36:27.000000000 -0700
++++ b/boost/date_time/gregorian/greg_year.hpp	2016-11-29 13:04:35.915884028 -0800
+@@ -20,19 +20,19 @@
+   struct bad_year : public std::out_of_range
+   {
+     bad_year() : 
+-      std::out_of_range(std::string("Year is out of valid range: 1400..10000")) 
++      std::out_of_range(std::string("Year is out of valid range: 1400..9999")) 
+     {}
+   };
+   //! Policy class that declares error handling gregorian year type
+-  typedef CV::simple_exception_policy<unsigned short, 1400, 10000, bad_year> greg_year_policies;
++  typedef CV::simple_exception_policy<unsigned short, 1400, 9999, bad_year> greg_year_policies;
+ 
+   //! Generated representation for gregorian year
+   typedef CV::constrained_value<greg_year_policies> greg_year_rep;
+ 
+-  //! Represent a day of the month (range 1900 - 10000) 
++  //! Represent a day of the month (range 1900 - 9999) 
+   /*! This small class allows for simple conversion an integer value into
+       a year for the gregorian calendar.  This currently only allows a
+-      range of 1900 to 10000.  Both ends of the range are a bit arbitrary
++      range of 1900 to 9999.  Both ends of the range are a bit arbitrary
+       at the moment, but they are the limits of current testing of the 
+       library.  As such they may be increased in the future.
+   */

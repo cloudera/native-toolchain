@@ -38,7 +38,10 @@ source ./init.sh
 ################################################################################
 # Boost
 ################################################################################
-BOOST_VERSION=1.57.0 $SOURCE_DIR/source/boost/build.sh
+if (( BUILD_HISTORICAL )) ; then
+  BOOST_VERSION=1.57.0 $SOURCE_DIR/source/boost/build.sh
+fi
+BOOST_VERSION=1.57.0-p1 $SOURCE_DIR/source/boost/build.sh
 
 ################################################################################
 # Build Python
@@ -119,7 +122,7 @@ ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
 #  * depends on libevent
 ################################################################################
 export LIBEVENT_VERSION=1.4.15
-export BOOST_VERSION=1.57.0
+export BOOST_VERSION=1.57.0-p1
 export ZLIB_VERSION=1.2.8
 export OPENSSL_VERSION=1.0.1p
 
@@ -134,7 +137,7 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
   fi
   THRIFT_VERSION=0.9.0-p8 $SOURCE_DIR/source/thrift/build.sh
 else
-  BOOST_VERSION=1.57.0 THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
 fi
 
 export -n LIBEVENT_VERSION
@@ -247,7 +250,7 @@ BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
 # Build Kudu
 ################################################################################
 (
-  export BOOST_VERSION=1.57.0
+  export BOOST_VERSION=1.57.0-p1
   export KUDU_VERSION=
   if (( BUILD_HISTORICAL )); then
     # The Kudu git hashes that are referenced here should not be changed because
