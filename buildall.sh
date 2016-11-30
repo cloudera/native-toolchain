@@ -237,9 +237,9 @@ BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
   export BOOST_VERSION=1.57.0
   export KUDU_VERSION=
   if (( BUILD_HISTORICAL )); then
-    KUDU_VERSIONS="0.8.0-RC1 0.9.0-RC1 0.10.0-RC1 1.0.0-RC1"
+    KUDU_VERSIONS="0.8.0-RC1 0.9.0-RC1 0.10.0-RC1 1.0.0-RC1 f2aeba"
   fi
-  KUDU_VERSIONS+=" f2aeba"
+  KUDU_VERSIONS+=" 60aa54e"
   for KUDU_VERSION in $KUDU_VERSIONS
   do
     if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then

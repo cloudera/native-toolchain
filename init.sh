@@ -208,10 +208,8 @@ export RELEASE_NAME
 # OS X doesn't use binutils.
 if [[ "$OSTYPE" != "darwin"* ]]; then
   "$SOURCE_DIR"/source/binutils/build.sh
-  # Don't add binutils to the path. If it were added, consumers of toolchain artifacts
-  # might also need to use binutils from the toolchain if their system linker is too
-  # old. This way consumers have a choice of which linker to use. Maybe eventually
-  # consumers will be required to use the toolchain linker (or newer), but not yet.
+  # Add ld from binutils to the path so it'll be used.
+  PATH="$BUILD_DIR/binutils-$BINUTILS_VERSION/bin:$PATH"
 fi
 
 # Build and export toolchain cmake
