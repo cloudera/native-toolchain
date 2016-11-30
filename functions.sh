@@ -73,12 +73,15 @@ function download_url() {
 function prepare_build_dir() {
   if [ $CLEAN -eq 1 ]; then
     echo "Cleaning.."
-    git clean -fdx $SOURCE_DIR
+    # git clean fails on some versions when provided absolute path of current directory.
+    pushd "$SOURCE_DIR"
+    git clean -fdx .
+    popd
   fi
 
   # Destination directory for build
-  mkdir -p $SOURCE_DIR/build
   export BUILD_DIR=$SOURCE_DIR/build
+  mkdir -p "$BUILD_DIR"
 
   # Create a check directory containing a sentry file for each package
   mkdir -p $SOURCE_DIR/check
