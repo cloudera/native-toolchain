@@ -68,15 +68,22 @@ function download_url() {
   fi
 }
 
+# Usage: clean_dir <directory path>
+# Cleans the specified directory of non-versioned files.
+function clean_dir() {
+  local DIR=$1
+  echo "Cleaning $DIR ..."
+  # git clean fails on some versions when provided absolute path of current directory.
+  pushd "$DIR"
+  git clean -fdx .
+  popd
+}
+
 # Checks if the existing build artifacts need to be removed and verifies
 # that all required directories exist.
 function prepare_build_dir() {
   if [ $CLEAN -eq 1 ]; then
-    echo "Cleaning.."
-    # git clean fails on some versions when provided absolute path of current directory.
-    pushd "$SOURCE_DIR"
-    git clean -fdx .
-    popd
+    clean_dir "$SOURCE_DIR"
   fi
 
   # Destination directory for build
@@ -247,6 +254,12 @@ function footer() {
   fi
 
   touch $SOURCE_DIR/check/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}
+
+  if [ $CLEAN_TMP_AFTER_BUILD -eq 1 ]; then
+    # The current directory may be a build directory that we're about to remove.
+    cd $SOURCE_DIR
+    clean_dir "$SOURCE_DIR/source/${PKG_NAME}"
+  fi
   echo "# Build Complete ${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}"
   echo "#######################################################################"
 }

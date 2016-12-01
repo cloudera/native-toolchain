@@ -27,6 +27,7 @@ set -o pipefail
 #  - PRODUCTION
 #  - SYSTEM_GCC
 #  - CLEAN
+#  - CLEAN_TMP_AFTER_BUILD
 #  - RELEASE_NAME
 #  - MACOSX_DEPLOYMENT_TARGET -- only on Mac OS X
 #  - ARCH_FLAGS
@@ -49,9 +50,14 @@ export PUBLISH_DEPENDENCIES
 : ${PRODUCTION=1}
 export PRODUCTION
 
-# Clean the complete build
+# Clean the entire native-toolchain git repo before building.
 : ${CLEAN=0}
 export CLEAN
+
+# Clean the source/<package> directory after building each package
+# This significantly reduces the disk space required for the build.
+: ${CLEAN_TMP_AFTER_BUILD=0}
+export CLEAN_TMP_AFTER_BUILD
 
 : ${BINUTILS_VERSION=2.26-p1}
 export BINUTILS_VERSION
