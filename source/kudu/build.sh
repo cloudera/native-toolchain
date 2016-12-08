@@ -78,8 +78,10 @@ function build {
   prepare $THIS_DIR
 
   cd $THIS_DIR
-  download_url https://github.com/apache/kudu/archive/$KUDU_VERSION.tar.gz \
-      kudu-$KUDU_VERSION.tar.gz
+  # Allow overriding of the github URL from the environment - e.g. if we want to build
+  # a hash from a forked repo.
+  KUDU_GITHUB_URL=${KUDU_GITHUB_URL:-https://github.com/apache/kudu}
+  download_url ${KUDU_GITHUB_URL}/archive/$KUDU_VERSION.tar.gz kudu-$KUDU_VERSION.tar.gz
 
   if ! needs_build_package; then
     return
