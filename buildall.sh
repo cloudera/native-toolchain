@@ -235,19 +235,13 @@ BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
 ################################################################################
 (
   export BOOST_VERSION=1.57.0
-  export KUDU_VERSION=
-  if (( BUILD_HISTORICAL )); then
-    KUDU_VERSIONS="0.8.0-RC1 0.9.0-RC1 0.10.0-RC1 1.0.0-RC1 f2aeba 60aa54e"
+  export KUDU_VERSION=cdh5-1.2.0_5.10.0-rc1-p1
+  export KUDU_GITHUB_URL=http://github.mtv.cloudera.com/CDH/kudu/
+  if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
+    $SOURCE_DIR/source/kudu/build.sh build
+  else
+    build_fake_package kudu
   fi
-  KUDU_VERSIONS+=" a70c905006"
-  for KUDU_VERSION in $KUDU_VERSIONS
-  do
-    if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
-      $SOURCE_DIR/source/kudu/build.sh build
-    else
-      build_fake_package kudu
-    fi
-  done
 )
 
 ################################################################################
