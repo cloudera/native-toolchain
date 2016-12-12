@@ -87,6 +87,11 @@ fi
 LIBEVENT_VERSION=1.4.15 $SOURCE_DIR/source/libevent/build.sh
 
 ################################################################################
+# Build protobuf
+################################################################################
+PROTOBUF_VERSION=2.6.1 $SOURCE_DIR/source/protobuf/build.sh
+
+################################################################################
 # Build OpenSSL - this is not intended for production use of Impala.
 # Libraries that depend on OpenSSL will only use it if PRODUCTION=1.
 ################################################################################
