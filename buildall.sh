@@ -97,6 +97,12 @@ PROTOBUF_VERSION=2.6.1 $SOURCE_DIR/source/protobuf/build.sh
 LIBEV_VERSION=4.20 $SOURCE_DIR/source/libev/build.sh
 
 ################################################################################
+# Build crcutil
+################################################################################
+CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e\
+  $SOURCE_DIR/source/crcutil/build.sh
+
+################################################################################
 # Build OpenSSL - this is not intended for production use of Impala.
 # Libraries that depend on OpenSSL will only use it if PRODUCTION=1.
 ################################################################################
