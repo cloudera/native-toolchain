@@ -244,9 +244,12 @@ BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
   export BOOST_VERSION=1.57.0
   export KUDU_VERSION=
   if (( BUILD_HISTORICAL )); then
-    KUDU_VERSIONS="0.8.0-RC1 0.9.0-RC1 0.10.0-RC1 1.0.0-RC1 f2aeba 60aa54e"
+    # The Kudu git hashes that are referenced here should not be changed because
+    # they end up in the output file names and are referenced by these 'versions'.
+    # Moving forward, we should stick to using 7-character prefixes when necessary.
+    KUDU_VERSIONS="0.8.0-RC1 0.9.0-RC1 0.10.0-RC1 1.0.0-RC1 f2aeba 60aa54e a70c905006"
   fi
-  KUDU_VERSIONS+=" a70c905006"
+  KUDU_VERSIONS+=" e018a83"
   for KUDU_VERSION in $KUDU_VERSIONS
   do
     if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
