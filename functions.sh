@@ -440,3 +440,11 @@ function generate_build_id() {
   local UNIQUE_ID=${BUILD_NUMBER:-$(cat /proc/sys/kernel/random/uuid)}
   echo "${UNIQUE_ID}-${GIT_HASH}"
 }
+
+function enable_toolchain_autotools() {
+    PATH=${BUILD_DIR}/autoconf-${AUTOCONF_VERSION}/bin/:$PATH
+    PATH=${BUILD_DIR}/automake-${AUTOMAKE_VERSION}/bin/:$PATH
+    PATH=${BUILD_DIR}/libtool-${LIBTOOL_VERSION}/bin/:$PATH
+    ACLOCAL_PATH=${BUILD_DIR}/libtool-${LIBTOOL_VERSION}/share/aclocal:${ACLOCAL_PATH:-}
+    export ACLOCAL_PATH
+}

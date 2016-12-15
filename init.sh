@@ -75,6 +75,18 @@ export SYSTEM_CMAKE
 : ${CMAKE_VERSION=3.2.3-p1}
 export CMAKE_VERSION
 
+: ${SYSTEM_AUTOTOOLS=0}
+export SYSTEM_AUTOTOOLS
+
+: ${AUTOCONF_VERSION=2.69}
+export AUTOCONF_VERSION
+
+: ${AUTOMAKE_VERSION=1.14.1}
+export AUTOMAKE_VERSION
+
+: ${LIBTOOL_VERSION=2.4.2}
+export LIBTOOL_VERSION
+
 # Determine the number of build threads
 BUILD_THREADS=$(getconf _NPROCESSORS_ONLN)
 export BUILD_THREADS
@@ -221,4 +233,10 @@ if [[ $SYSTEM_CMAKE -eq 0 ]]; then
     CMAKE_BIN=$BUILD_DIR/cmake-$CMAKE_VERSION/bin/
     PATH=$CMAKE_BIN:$PATH
   fi
+fi
+
+if [[ ${SYSTEM_AUTOTOOLS} -eq 0 ]]; then
+  ${SOURCE_DIR}/source/autoconf/build.sh
+  ${SOURCE_DIR}/source/automake/build.sh
+  ${SOURCE_DIR}/source/libtool/build.sh
 fi
