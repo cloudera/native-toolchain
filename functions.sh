@@ -355,9 +355,6 @@ function build_dist_package() {
     --directory=${BUILD_DIR} \
     ${PACKAGE_STRING}${PATCH_VERSION}
 
-  # Set generic
-  : ${label-"generic"}
-
   # If desired break on failure to publish the artifact
   RET_VAL=true
   if [[ $FAIL_ON_PUBLISH -eq 1 ]]; then
@@ -371,12 +368,12 @@ function build_dist_package() {
       -Dversion="${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}-${TOOLCHAIN_BUILD_ID}"\
       -Dfile="${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz"\
       -Durl="http://maven.jenkins.cloudera.com:8081/artifactory/cdh-staging-local/"\
-      -DrepositoryId=cdh.releases.repo -Dpackaging=tar.gz -Dclassifier=${label} || $RET_VAL
+      -DrepositoryId=cdh.releases.repo -Dpackaging=tar.gz -Dclassifier=${BUILD_LABEL} || $RET_VAL
 
     # Publish to S3 as well
     if [[ -n "${AWS_ACCESS_KEY_ID}" && -n "${AWS_SECRET_ACCESS_KEY}" && -n "${S3_BUCKET}" ]]; then
       aws s3 cp "${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz" \
-        s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${label}.tar.gz \
+        s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${BUILD_LABEL}.tar.gz \
         --region=us-west-1 || $RET_VAL
     fi
 

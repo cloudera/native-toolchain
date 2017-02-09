@@ -19,10 +19,10 @@ set -e
 set -u
 set -o pipefail
 
-# The init.sh script contains all the necessary logic to setup the environment
-# for the build process. This includes setting the right compiler and linker
-# flags.
+# Set up the environment configuration.
 source ./init.sh
+# Configure the compiler/linker flags, bootstrapping tools if necessary.
+source ./init-compiler.sh
 
 ################################################################################
 # How to add new versions to the toolchain:
