@@ -191,7 +191,10 @@ SNAPPY_VERSION=1.1.3 $SOURCE_DIR/source/snappy/build.sh
 ################################################################################
 # Build Lz4
 ################################################################################
-LZ4_VERSION=svn $SOURCE_DIR/source/lz4/build.sh
+if (( BUILD_HISTORICAL )); then
+    LZ4_VERSION=svn $SOURCE_DIR/source/lz4/build.sh
+fi
+LZ4_VERSION=1.7.5 $SOURCE_DIR/source/lz4/build.sh
 
 ################################################################################
 # Build re2
