@@ -32,7 +32,7 @@ if needs_build_package ; then
       CFLAGS=-fPIC
       cd contrib/cmake_unofficial
   fi
-  wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL .
+  wrap cmake -DBUILD_STATIC_LIBS=ON -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL .
   wrap make -j${BUILD_THREADS:-4} install
   footer $PACKAGE $PACKAGE_VERSION
 fi
