@@ -250,6 +250,11 @@ LIBUNWIND_VERSION=1.1 $SOURCE_DIR/source/libunwind/build.sh
 BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
 
 ################################################################################
+# Build Flatbuffers
+################################################################################
+FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
+
+################################################################################
 # Build Kudu
 ################################################################################
 (
