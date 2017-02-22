@@ -261,7 +261,7 @@ BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
     # Moving forward, we should stick to using 7-character prefixes when necessary.
     KUDU_VERSIONS="0.8.0-RC1 0.9.0-RC1 0.10.0-RC1 1.0.0-RC1 f2aeba 60aa54e a70c905006 e018a83 cd7b0dd"
   fi
-  KUDU_VERSIONS+=" b73a714"
+  KUDU_VERSIONS+=" 2b0edbe"
   for KUDU_VERSION in $KUDU_VERSIONS
   do
     if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
