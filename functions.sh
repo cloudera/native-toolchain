@@ -346,6 +346,11 @@ function build_dist_package() {
   FULL_TAR_NAME="${PACKAGE_STRING}${PATCH_VERSION}-${COMPILER}"
   FULL_TAR_NAME+="-${COMPILER_VERSION}"
 
+  # Add the toolchain git hash to the tarball so the compiled package can be traced
+  # back to the set of build scripts/flags used to compile it.
+  git rev-parse HEAD > \
+    ${BUILD_DIR}/${PACKAGE_STRING}${PATCH_VERSION}/toolchain-build-hash.txt
+
   tar zcf ${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz\
     --directory=${BUILD_DIR} \
     ${PACKAGE_STRING}${PATCH_VERSION}
