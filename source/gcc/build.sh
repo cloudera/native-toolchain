@@ -19,9 +19,6 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-# Download the dependency from S3
-download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
-
 # Download the same dependencies that would have been downloaded by
 # gcc's ./contrib/download_prerequisites script.
 MPFR_VERSION=2.4.2
@@ -52,8 +49,10 @@ function download_gcc_prerequisites() {
 }
 
 if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
-  header $PACKAGE $PACKAGE_VERSION
+  download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
   download_gcc_prerequisites
+
+  header $PACKAGE $PACKAGE_VERSION
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # Patch GMP

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2015 Cloudera Inc.
+# Copyright 2017 Cloudera Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,20 +17,36 @@ set -e
 set -u
 set -o pipefail
 
-# This script exports the following variables:
-#
-#  - CC, CXX, CXXFLAGS, CFLAGS, LDFLAGS
-#  - COMPILER / COMPILER_VERSION
-#  - FAIL_ON_PUBLISH
-#  - PUBLISH_DEPENDENCIES
-#  - DEBUG
-#  - PRODUCTION
-#  - SYSTEM_GCC
+# This script exports the following environment variables:
+#  - AUTOCONF_VERSION
+#  - AUTOMAKE_VERSION
+#  - BINUTILS_VERSION
+#  - BUILD_LABEL
+#  - BUILD_THREADS
 #  - CLEAN
 #  - CLEAN_TMP_AFTER_BUILD
+#  - CMAKE_VERSION
+#  - COMPILER
+#  - COMPILER_VERSION
+#  - DEBUG
+#  - FAIL_ON_PUBLISH
+#  - GCC_VERSION
+#  - LIBTOOL_VERSION
+#  - MACOSX_DEPLOYMENT_TARGET
+#  - OS_NAME
+#  - OS_VERSION
+#  - PATH
+#  - PRODUCTION
+#  - PUBLISH_DEPENDENCIES
 #  - RELEASE_NAME
-#  - MACOSX_DEPLOYMENT_TARGET -- only on Mac OS X
-#  - ARCH_FLAGS
+#  - SOURCE_DIR
+#  - SYSTEM_AUTOTOOLS
+#  - SYSTEM_CMAKE
+#  - SYSTEM_GCC
+#  - TOOLCHAIN_BUILD_ID
+#
+# Also see init-compiler.sh which initializes the compiler environment, including
+# bootstrapping the compiler if necessary.
 
 # If set to 1 will use -x flag in bash and print the output to stdout and write
 # it to the log file. If set to 0 only writes to the log file.
@@ -87,6 +103,12 @@ export AUTOMAKE_VERSION
 : ${LIBTOOL_VERSION=2.4.2}
 export LIBTOOL_VERSION
 
+# Set the build label from the Jenkins envirment if it was not already set, or fall
+# back to 'generic'.
+: ${label="generic"}
+: ${BUILD_LABEL=$label}
+export BUILD_LABEL
+
 # Determine the number of build threads
 BUILD_THREADS=$(getconf _NPROCESSORS_ONLN)
 export BUILD_THREADS
@@ -105,36 +127,13 @@ fi
 
 # Load functions
 source $SOURCE_DIR/functions.sh
-export TOOLCHAIN_BUILD_ID=$(generate_build_id)
+
+: ${TOOLCHAIN_BUILD_ID=$(generate_build_id)}
+export TOOLCHAIN_BUILD_ID
 echo "Build ID is $TOOLCHAIN_BUILD_ID"
 
 # Make sure the necessary file system layout exists
 prepare_build_dir
-
-if [[ $SYSTEM_GCC -eq 0 ]]; then
-  COMPILER="gcc"
-  COMPILER_VERSION=$GCC_VERSION
-else
-  COMPILER="gcc"
-  COMPILER_VERSION="system"
-fi
-
-export COMPILER
-export COMPILER_VERSION
-
-################################################################################
-# Prepare compiler and linker commands. This will set the typical environment
-# variables. In this case these are:
-#
-#  - CFLAGS
-#  - CXXFLAGS
-#  - LDFLAGS
-#
-################################################################################
-
-# ARCH_FLAGS are used to convey architectur dependent flags that should
-# be obbeyed by libraries explicitly needing this information.
-ARCH_FLAGS="-mno-avx2"
 
 # Check Platform and build the correct release name. The RELEASE_NAME is used
 # when publishing the artifacts to the artifactory.
@@ -167,76 +166,21 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   # The deployment target environment variable is needed to silence warning and
   # errors on OS X wrt rpath settings and libary dependencies.
   export MACOSX_DEPLOYMENT_TARGET=$(echo $OS_VERSION | sed -E 's/(10.[0-9]+).*/\1/')
-
-  # Setting the C++ stlib to libstdc++ on Mac instead of the default libc++
-  ARCH_FLAGS="${ARCH_FLAGS} -stdlib=libstdc++"
 fi
 
-export ARCH_FLAGS
 if [[ $SYSTEM_GCC -eq 0 ]]; then
-  # Build GCC that is used to build LLVM
-  $SOURCE_DIR/source/gcc/build.sh
-
-  # Stage one is done, we can upgrade our compiler
-  CC="$BUILD_DIR/gcc-$GCC_VERSION/bin/gcc"
-  CXX="$BUILD_DIR/gcc-$GCC_VERSION/bin/g++"
-
-  # Upgrade rpath variable to catch current library location and possible future location
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib,-rpath,'\$ORIGIN/../lib'"
-  else
-    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64'"
-  fi
-  FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
-
-  FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
-  LDFLAGS="$ARCH_FLAGS $FULL_RPATH $FULL_LPATH"
-  CXXFLAGS="$ARCH_FLAGS -static-libstdc++ -fPIC -O3 -m64"
+  COMPILER="gcc"
+  COMPILER_VERSION=$GCC_VERSION
 else
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    CXX="g++ -stdlib=libstdc++"
-  fi
-  LDFLAGS=""
-  CXXFLAGS="-fPIC -O3 -m64"
+  COMPILER="gcc"
+  COMPILER_VERSION="system"
 fi
 
-CFLAGS="-fPIC -O3 -m64"
-
-# List of export variables after configuring gcc
-export CC
-export CFLAGS
-export CLEAN
 export COMPILER
 export COMPILER_VERSION
-export CXX
-export CXXFLAGS
+export CLEAN
 export DEBUG
-export LDFLAGS
 export OS_NAME
 export OS_VERSION
 export PATH
 export RELEASE_NAME
-
-# OS X doesn't use binutils.
-if [[ "$OSTYPE" != "darwin"* ]]; then
-  "$SOURCE_DIR"/source/binutils/build.sh
-  # Add ld from binutils to the path so it'll be used.
-  PATH="$BUILD_DIR/binutils-$BINUTILS_VERSION/bin:$PATH"
-fi
-
-# Build and export toolchain cmake
-if [[ $SYSTEM_CMAKE -eq 0 ]]; then
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    build_fake_package "cmake"
-  else
-    $SOURCE_DIR/source/cmake/build.sh
-    CMAKE_BIN=$BUILD_DIR/cmake-$CMAKE_VERSION/bin/
-    PATH=$CMAKE_BIN:$PATH
-  fi
-fi
-
-if [[ ${SYSTEM_AUTOTOOLS} -eq 0 ]]; then
-  ${SOURCE_DIR}/source/autoconf/build.sh
-  ${SOURCE_DIR}/source/automake/build.sh
-  ${SOURCE_DIR}/source/libtool/build.sh
-fi
