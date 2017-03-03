@@ -24,7 +24,13 @@ if needs_build_package ; then
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
-  wrap ./configure --enable-gold --enable-plugins --prefix=$LOCAL_INSTALL
+  # --disable-x86-relax-relocations: prevent assembler from emitting relocations like
+  #   R_X86_64_GOTPCRELX, which are not supported by pre-2.26 binutils (e.g. system
+  #   linkers and utilities on various Linux distributions). This can be reenabled with
+  #   the assembler flag -mrelax-relocations=yes if desired.
+  #   see https://sourceware.org/bugzilla/show_bug.cgi?id=19520 and IMPALA-5025.
+  wrap ./configure --enable-gold --enable-plugins --disable-x86-relax-relocations \
+      --prefix=$LOCAL_INSTALL
   wrap make -j$BUILD_THREADS
   wrap make install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
