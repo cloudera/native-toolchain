@@ -24,11 +24,11 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-# Download the dependency from S3
-download_dependency $PACKAGE "${PACKAGE_STRING}.zip" $THIS_DIR
-
 if needs_build_package ; then
-  header $PACKAGE $PACKAGE_VERSION
+  # Download the dependency from S3
+  download_dependency $PACKAGE "${PACKAGE_STRING}.zip" $THIS_DIR
+
+  setup_package_build $PACKAGE $PACKAGE_VERSION
 
   wrap cmake -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} .
   wrap make -j${BUILD_THREADS:-4}
@@ -39,5 +39,5 @@ if needs_build_package ; then
   install libgtest.a libgtest_main.a $LOCAL_INSTALL/lib
   cp -R include/gtest $LOCAL_INSTALL/include
 
-  footer $PACKAGE $PACKAGE_VERSION
+  finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

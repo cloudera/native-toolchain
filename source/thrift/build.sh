@@ -24,11 +24,11 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-# Download the dependency from S3
-download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
-
 if needs_build_package ; then
-  header $PACKAGE $PACKAGE_VERSION
+  # Download the dependency from S3
+  download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
+
+  setup_package_build $PACKAGE $PACKAGE_VERSION
 
   BOOST_ROOT=$BUILD_DIR/boost-$BOOST_VERSION
   ZLIB_ROOT=$BUILD_DIR/zlib-$ZLIB_VERSION
@@ -62,7 +62,7 @@ if needs_build_package ; then
     --with-nodejs=no \
     --with-lua=no \
     --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} $OPENSSL_ARGS
-  wrap make   # Build fails with -j${BUILD_THREADS}
+  MAKEFLAGS="" wrap make   # Build fails with -j${BUILD_THREADS}
   wrap make install
   cd contrib/fb303
   rm -f config.cache
@@ -76,5 +76,5 @@ if needs_build_package ; then
   wrap make -j${BUILD_THREADS}
   wrap make install
 
-  footer $PACKAGE $PACKAGE_VERSION
+  finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

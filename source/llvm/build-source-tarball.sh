@@ -23,10 +23,11 @@ function build_llvm() {
   rm -Rf "$THIS_DIR/${PACKAGE_STRING}.src"
   rm -Rf "$THIS_DIR/build-${PACKAGE_STRING}"
 
-  # Patches are based on source version. Pass to header function with this var.
+  # Patches are based on source version. Pass to setup_package_build function
+  # with this var.
   PATCH_DIR=${THIS_DIR}/llvm-${SOURCE_VERSION}-patches
 
-  header $PACKAGE $PACKAGE_VERSION \
+  setup_package_build $PACKAGE $PACKAGE_VERSION \
       "$THIS_DIR/llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" \
       "llvm-${SOURCE_VERSION}.src" "$PACKAGE_STRING.src"
 
@@ -94,5 +95,5 @@ function build_llvm() {
   wrap make -j${BUILD_THREADS:-4} install
   popd
 
-  footer $PACKAGE $PACKAGE_VERSION
+  finalize_package_build $PACKAGE $PACKAGE_VERSION
 }

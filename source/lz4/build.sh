@@ -24,15 +24,15 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
-
 if needs_build_package ; then
-  header $PACKAGE $PACKAGE_VERSION
+  download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
+
+  setup_package_build $PACKAGE $PACKAGE_VERSION
   if [ "${LZ4_VERSION}" != "svn" ]; then
       CFLAGS=-fPIC
       cd contrib/cmake_unofficial
   fi
   wrap cmake -DBUILD_STATIC_LIBS=ON -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE .
   wrap make -j${BUILD_THREADS:-4} install
-  footer $PACKAGE $PACKAGE_VERSION
+  finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

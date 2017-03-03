@@ -50,9 +50,11 @@ function download_gcc_prerequisites() {
 
 if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
-  download_gcc_prerequisites
 
-  header $PACKAGE $PACKAGE_VERSION
+  # The call to setup_package_build() changes into the right directory, so it
+  # needs to happen before downloading the remaining prerequisites.
+  setup_package_build $PACKAGE $PACKAGE_VERSION
+  download_gcc_prerequisites
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # Patch GMP
@@ -70,5 +72,5 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
     --with-build-config=bootstrap-debug
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
-  footer $PACKAGE $PACKAGE_VERSION
+  finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

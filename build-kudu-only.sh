@@ -123,8 +123,8 @@ do
 
   # The version number for boost (and only boost) needs to be extracted so it can be
   # passed to the Kudu build.
-  if [[ $pkg_name == "boost"* ]]; then
-    export BOOST_VERSION=${pkg_name##boost-}
+  if [[ $pkg_string == "boost"* ]]; then
+    export BOOST_VERSION=${pkg_string##boost-}
     echo "Using BOOST_VERSION=$BOOST_VERSION"
   fi
 done

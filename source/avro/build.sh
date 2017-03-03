@@ -22,11 +22,11 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-# Download the dependency from S3
-download_dependency $PACKAGE "avro-src-${PACKAGE_VERSION}.tar.gz" $THIS_DIR
-
 if needs_build_package ; then
-  header $PACKAGE $PACKAGE_VERSION
+  # Download the dependency from S3
+  download_dependency $PACKAGE "avro-src-${PACKAGE_VERSION}.tar.gz" $THIS_DIR
+
+  setup_package_build $PACKAGE $PACKAGE_VERSION
 
   cd lang/c
 
@@ -41,5 +41,5 @@ if needs_build_package ; then
   fi
 
   wrap make -C . -j${BUILD_THREADS:-4} install
-  footer $PACKAGE $PACKAGE_VERSION
+  finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

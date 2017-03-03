@@ -24,11 +24,11 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-# Download the dependency from S3
-download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
-
 if needs_build_package ; then
-  header $PACKAGE $PACKAGE_VERSION
+  # Download the dependency from S3
+  download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
+
+  setup_package_build $PACKAGE $PACKAGE_VERSION
 
   if [[ ! "$OSTYPE" == "darwin"* && $SYSTEM_GCC -eq 0 ]]; then
     echo "using gcc : $GCC_VERSION : $BUILD_DIR/gcc-$GCC_VERSION/bin/g++ ;" > tools/build/src/user-config.jam
@@ -39,5 +39,5 @@ if needs_build_package ; then
   # Update compilers to use our toolchain
   wrap ./bootstrap.sh --without-libraries=python --prefix=$LOCAL_INSTALL cxxflags="$CXXFLAGS"
   wrap ./b2 -s"NO_BZIP2=1" $TOOLSET cxxflags="$CXXFLAGS" linkflags="$CXXFLAGS" --prefix=$LOCAL_INSTALL -j4 install
-  footer $PACKAGE $PACKAGE_VERSION
+  finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

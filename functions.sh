@@ -138,9 +138,10 @@ function prepare() {
 # archive unpacks to the first directory and move it to <target dir>.
 # If PATCH_DIR is set, look in that directory for patches. Otherwise look in
 # "<package name>-<package version>-patches"
-# Usage: header <package name> <package version> [<archive file>
-#               [<extracted archive dir> [<target dir> [<extract command>]]]]
-function header() {
+# Usage: setup_package_build <package name> <package version> [<archive file>
+#                            [<extracted archive dir> [<target dir>
+#                            [<extract command>]]]]
+function setup_package_build() {
   local PKG_NAME=$1
   local PKG_VERSION=$2
   local ARCHIVE=${3-}
@@ -234,8 +235,11 @@ function header() {
   fi
 }
 
-# Usage: footer <package name> <package version>
-function footer() {
+# Build helper function that packages the build result, creates symbolic links
+# to the package's binaries, creates a check-point file to signal a successful
+# build, and optionally cleans up the build directory to free space.
+# Usage: finalize_package_build <package name> <package version>
+function finalize_package_build() {
   local PKG_NAME=$1
   local PKG_VERSION=$2
 
@@ -246,7 +250,8 @@ function footer() {
   if [[ -d $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin ]]; then
     mkdir -p $BUILD_DIR/bin
     for p in `ls $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin`; do
-      ln -f -s $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin/$p $BUILD_DIR/bin/$p
+      ln -f -s $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin/$p \
+          $BUILD_DIR/bin/$p
     done
   fi
 

@@ -19,11 +19,11 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-download_dependency $PACKAGE "${PACKAGE_STRING}.zip" $THIS_DIR
-
 if needs_build_package; then
-  header $PACKAGE $PACKAGE_VERSION ${PACKAGE_STRING}.zip tpch_${PACKAGE_VERSION//./_} \
-      tpch_${PACKAGE_VERSION//./_}
+  download_dependency $PACKAGE "${PACKAGE_STRING}.zip" $THIS_DIR
+
+  setup_package_build $PACKAGE $PACKAGE_VERSION ${PACKAGE_STRING}.zip \
+      tpch_${PACKAGE_VERSION//./_} tpch_${PACKAGE_VERSION//./_}
   cd dbgen
 
   # TCP provides a "makefile.suite" which is a sort of template. They expect people to
@@ -84,5 +84,5 @@ exec "$DIR"/../libexec/qgen -b "$DIR"/../share/tpc-h/dists.dss "$@"
 EOF
     chmod +x "$LOCAL_INSTALL"/bin/qgen
 
-  footer $PACKAGE $PACKAGE_VERSION
+    finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

@@ -24,14 +24,14 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-# Download the dependency from S3
-download_dependency $PACKAGE "${PACKAGE_STRING}.zip" $THIS_DIR
-
 if needs_build_package ; then
-  header $PACKAGE $PACKAGE_VERSION
+  # Download the dependency from S3
+  download_dependency $PACKAGE "${PACKAGE_STRING}.zip" $THIS_DIR
+
+  setup_package_build $PACKAGE $PACKAGE_VERSION
 
   mkdir -p $LOCAL_INSTALL/include
   wrap cp -R include/rapidjson $LOCAL_INSTALL/include
 
-  footer $PACKAGE $PACKAGE_VERSION
+  finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
