@@ -247,6 +247,9 @@ LIBUNWIND_VERSION=1.1 $SOURCE_DIR/source/libunwind/build.sh
 ################################################################################
 # Build Breakpad
 ################################################################################
+if (( BUILD_HISTORICAL )); then
+  BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
+fi
 BREAKPAD_VERSION=88e5b2c8806bac3f2c80d2fe80094be5bd371601 $SOURCE_DIR/source/breakpad/build.sh
 
 ################################################################################
