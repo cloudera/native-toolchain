@@ -185,8 +185,9 @@ GOOGLETEST_VERSION=20151222 $SOURCE_DIR/source/googletest/build.sh
 ################################################################################
 if (( BUILD_HISTORICAL )); then
   SNAPPY_VERSION=1.0.5 $SOURCE_DIR/source/snappy/build.sh
+  SNAPPY_VERSION=1.1.3 $SOURCE_DIR/source/snappy/build.sh
 fi
-SNAPPY_VERSION=1.1.3 $SOURCE_DIR/source/snappy/build.sh
+SNAPPY_VERSION=1.1.4 $SOURCE_DIR/source/snappy/build.sh
 
 ################################################################################
 # Build Lz4
