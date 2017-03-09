@@ -148,7 +148,10 @@ export -n OPENSSL_VERSION
 ################################################################################
 # gflags
 ################################################################################
-GFLAGS_VERSION=2.0 $SOURCE_DIR/source/gflags/build.sh
+if (( BUILD_HISTORICAL )); then
+    GFLAGS_VERSION=2.0 $SOURCE_DIR/source/gflags/build.sh
+fi
+GFLAGS_VERSION=2.2.0 $SOURCE_DIR/source/gflags/build.sh
 
 ################################################################################
 # Build gperftools
@@ -164,13 +167,14 @@ GPERFTOOLS_VERSION=2.5 $SOURCE_DIR/source/gperftools/build.sh
 ################################################################################
 if (( BUILD_HISTORICAL )) ; then
   GFLAGS_VERSION=2.0 GLOG_VERSION=0.3.2-p1 $SOURCE_DIR/source/glog/build.sh
+  GFLAGS_VERSION=2.0 GLOG_VERSION=0.3.2-p2 $SOURCE_DIR/source/glog/build.sh
+  if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
+      # CentOS 5 has issues with the glog patch, probably autotools is too old.
+      GFLAGS_VERSION=2.2.0 GLOG_VERSION=0.3.3-p1 $SOURCE_DIR/source/glog/build.sh
+  fi
 fi
-GFLAGS_VERSION=2.0 GLOG_VERSION=0.3.2-p2 $SOURCE_DIR/source/glog/build.sh
 
-if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
-  # CentOS 5 has issues with the glog patch, probably autotools is too old.
-  GFLAGS_VERSION=2.0 GLOG_VERSION=0.3.3-p1 $SOURCE_DIR/source/glog/build.sh
-fi
+GFLAGS_VERSION=2.2.0 GLOG_VERSION=0.3.4-p2 $SOURCE_DIR/source/glog/build.sh
 
 ################################################################################
 # Build gtest

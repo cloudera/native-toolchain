@@ -33,7 +33,7 @@ if needs_build_package ; then
   GFLAGS_BUILD=$BUILD_DIR/gflags-$GFLAGS_VERSION
 
   wrap ./configure --with-gflags=$GFLAGS_BUILD --with-pic --prefix=$LOCAL_INSTALL
-  wrap make -j${BUILD_THREADS:-4} install
+  CFLAGS="-fPIC -DPIC" wrap make -j${BUILD_THREADS:-4} install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
