@@ -267,22 +267,12 @@ FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
 ################################################################################
 (
   export BOOST_VERSION=1.57.0-p1
-  export KUDU_VERSION=
-  if (( BUILD_HISTORICAL )); then
-    # The Kudu git hashes that are referenced here should not be changed because
-    # they end up in the output file names and are referenced by these 'versions'.
-    # Moving forward, we should stick to using 7-character prefixes when necessary.
-    KUDU_VERSIONS="0.8.0-RC1 0.9.0-RC1 0.10.0-RC1 1.0.0-RC1 f2aeba 60aa54e a70c905006 e018a83 cd7b0dd"
+  export KUDU_VERSION=16dd6e4
+  if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
+    $SOURCE_DIR/source/kudu/build.sh build
+  else
+    build_fake_package kudu
   fi
-  KUDU_VERSIONS+=" 2b0edbe"
-  for KUDU_VERSION in $KUDU_VERSIONS
-  do
-    if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
-      $SOURCE_DIR/source/kudu/build.sh build
-    else
-      build_fake_package kudu
-    fi
-  done
 )
 
 ################################################################################
