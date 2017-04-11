@@ -21,11 +21,28 @@ prepare $THIS_DIR
 
 # Download the same dependencies that would have been downloaded by
 # gcc's ./contrib/download_prerequisites script.
-MPFR_VERSION=2.4.2
-GMP_VERSION=4.3.2
-MPC_VERSION=0.8.1
-ISL_VERSION=0.12.2
-CLOOG_VERSION=0.18.1
+if [[ $GCC_VERSION = '4.9.2' ]]; then
+  MPFR_VERSION=2.4.2
+  GMP_VERSION=4.3.2
+  MPC_VERSION=0.8.1
+  ISL_VERSION=0.12.2
+  CLOOG_VERSION=0.18.1
+elif [[ $GCC_VERSION = '6.3.0' ]]; then
+  MPFR_VERSION=2.4.2
+  GMP_VERSION=4.3.2
+  MPC_VERSION=0.8.1
+  ISL_VERSION=0.15
+  CLOOG_VERSION=0.18.1
+elif [[ $GCC_VERSION = '7.1.0' ]]; then
+  MPFR_VERSION=3.1.4
+  GMP_VERSION=6.1.0
+  MPC_VERSION=1.0.3
+  ISL_VERSION=0.16.1
+  CLOOG_VERSION=0.18.1
+else
+  echo "Unknown gcc version $GCC_VERSION - don't know which dependencies to download"
+  exit 1
+fi
 function download_gcc_prerequisites() {
   download_dependency $PACKAGE "mpfr-${MPFR_VERSION}.tar.bz2" .
   tar xjf "mpfr-${MPFR_VERSION}.tar.bz2"
@@ -64,8 +81,8 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   fi
 
   cd ..
-  mkdir -p build
-  cd build
+  mkdir -p build-${GCC_VERSION}
+  cd build-${GCC_VERSION}
 
   wrap ../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL \
     --enable-languages=c,c++ --disable-multilib \

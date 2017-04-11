@@ -1,0 +1,43 @@
+From 836d95f9f00be73c6936d407977796181d1a506c Mon Sep 17 00:00:00 2001
+From: Ben Craig <bencraig@apache.org>
+Date: Mon, 23 Sep 2013 11:53:47 -0500
+Subject: [PATCH] THRIFT-2201: Ternary operator returns different types (build
+ error for some compilers) Client: java compiler, ruby compiler Patch: Randy
+ Abernathy
+
+---
+ compiler/cpp/src/generate/t_java_generator.cc | 3 +--
+ compiler/cpp/src/generate/t_rb_generator.cc   | 6 ++----
+ 2 files changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/compiler/cpp/src/generate/t_rb_generator.cc b/compiler/cpp/src/generate/t_rb_generator.cc
+index 082f316..2a6a472 100644
+--- a/compiler/cpp/src/generate/t_rb_generator.cc
++++ b/compiler/cpp/src/generate/t_rb_generator.cc
+@@ -359,21 +359,19 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
+   
+   // Create a hash mapping values back to their names (as strings) since ruby has no native enum type
+   f_types_.indent() << "VALUE_MAP = {";
+-  bool first = true;
+   for(c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+     // Populate the hash
+     int value = (*c_iter)->get_value();
+-    first ? first = false : f_types_ << ", ";
++    if (c_iter != constants.begin()) f_types_ << ", ";
+     f_types_ << value << " => \"" << capitalize((*c_iter)->get_name()) << "\"";
+   }
+   f_types_ << "}" << endl;
+   
+   // Create a set with valid values for this enum
+   f_types_.indent() << "VALID_VALUES = Set.new([";
+-  first = true;
+   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+     // Populate the set
+-    first ? first = false : f_types_ << ", ";
++    if (c_iter != constants.begin()) f_types_ << ", ";
+     f_types_ << capitalize((*c_iter)->get_name());
+   }
+   f_types_ << "]).freeze" << endl;
+-- 
+2.7.4
+
