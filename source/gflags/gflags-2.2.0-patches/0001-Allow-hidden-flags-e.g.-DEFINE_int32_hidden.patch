@@ -1,0 +1,344 @@
+From 9ae8eae9a1b6162026854a5266d4ee1427c6d168 Mon Sep 17 00:00:00 2001
+From: Henry Robinson <henry@cloudera.com>
+Date: Mon, 17 Apr 2017 17:49:25 -0700
+Subject: [PATCH] Allow hidden flags, e.g. DEFINE_int32_hidden()
+
+Hidden flags are not returned by GetAllFlags(). This means they don't
+show up in --help.
+---
+ src/gflags.cc           | 24 +++++++-----
+ src/gflags.h.in         | 97 ++++++++++++++++++++++++++++++++++++-------------
+ test/gflags_unittest.cc | 21 ++++++++---
+ 3 files changed, 103 insertions(+), 39 deletions(-)
+
+diff --git a/src/gflags.cc b/src/gflags.cc
+index bc62227..5fd707a 100644
+--- a/src/gflags.cc
++++ b/src/gflags.cc
+@@ -517,7 +517,7 @@ class CommandLineFlag {
+  public:
+   // Note: we take over memory-ownership of current_val and default_val.
+   CommandLineFlag(const char* name, const char* help, const char* filename,
+-                  FlagValue* current_val, FlagValue* default_val);
++      FlagValue* current_val, FlagValue* default_val, bool is_hidden);
+   ~CommandLineFlag();
+ 
+   const char* name() const { return name_; }
+@@ -538,6 +538,7 @@ class CommandLineFlag {
+   bool Validate(const FlagValue& value) const;
+   bool ValidateCurrent() const { return Validate(*current_); }
+   bool Modified() const { return modified_; }
++  bool Hidden() const { return hidden_; }
+ 
+  private:
+   // for SetFlagLocked() and setting flags_by_ptr_
+@@ -557,6 +558,7 @@ class CommandLineFlag {
+   bool modified_;              // Set after default assignment?
+   FlagValue* defvalue_;        // Default value for flag
+   FlagValue* current_;         // Current value for flag
++  bool hidden_;                // True if suppress this from GetAllFlags()
+   // This is a casted, 'generic' version of validate_fn, which actually
+   // takes a flag-value as an arg (void (*validate_fn)(bool), say).
+   // When we pass this to current_->Validate(), it will cast it back to
+@@ -569,9 +571,10 @@ class CommandLineFlag {
+ 
+ CommandLineFlag::CommandLineFlag(const char* name, const char* help,
+                                  const char* filename,
+-                                 FlagValue* current_val, FlagValue* default_val)
++    FlagValue* current_val, FlagValue* default_val,
++    bool is_hidden)
+     : name_(name), help_(help), file_(filename), modified_(false),
+-      defvalue_(default_val), current_(current_val), validate_fn_proto_(NULL) {
++      defvalue_(default_val), current_(current_val), validate_fn_proto_(NULL), hidden_(is_hidden) {
+ }
+ 
+ CommandLineFlag::~CommandLineFlag() {
+@@ -1463,12 +1466,13 @@ void RegisterCommandLineFlag(const char* name,
+                              const char* help,
+                              const char* filename,
+                              FlagValue* current,
+-                             FlagValue* defvalue) {
++    FlagValue* defvalue,
++                             bool hidden) {
+   if (help == NULL)
+     help = "";
+   // Importantly, flag_ will never be deleted, so storage is always good.
+   CommandLineFlag* flag =
+-      new CommandLineFlag(name, help, filename, current, defvalue);
++      new CommandLineFlag(name, help, filename, current, defvalue, hidden);
+   FlagRegistry::GlobalRegistry()->RegisterFlag(flag);  // default registry
+ }
+ }
+@@ -1478,17 +1482,18 @@ FlagRegisterer::FlagRegisterer(const char* name,
+                                const char* help,
+                                const char* filename,
+                                FlagType* current_storage,
+-                               FlagType* defvalue_storage) {
++    FlagType* defvalue_storage,
++                               bool hidden) {
+   FlagValue* const current = new FlagValue(current_storage, false);
+   FlagValue* const defvalue = new FlagValue(defvalue_storage, false);
+-  RegisterCommandLineFlag(name, help, filename, current, defvalue);
++  RegisterCommandLineFlag(name, help, filename, current, defvalue, hidden);
+ }
+ 
+ // Force compiler to generate code for the given template specialization.
+ #define INSTANTIATE_FLAG_REGISTERER_CTOR(type)                  \
+   template GFLAGS_DLL_DECL FlagRegisterer::FlagRegisterer(      \
+       const char* name, const char* help, const char* filename, \
+-      type* current_storage, type* defvalue_storage)
++      type* current_storage, type* defvalue_storage, bool hidden)
+ 
+ // Do this for all supported flag types.
+ INSTANTIATE_FLAG_REGISTERER_CTOR(bool);
+@@ -1524,6 +1529,7 @@ void GetAllFlags(vector<CommandLineFlagInfo>* OUTPUT) {
+   registry->Lock();
+   for (FlagRegistry::FlagConstIterator i = registry->flags_.begin();
+        i != registry->flags_.end(); ++i) {
++    if (i->second->Hidden()) continue;
+     CommandLineFlagInfo fi;
+     i->second->FillCommandLineFlagInfo(&fi);
+     OUTPUT->push_back(fi);
+@@ -1733,7 +1739,7 @@ class FlagSaverImpl {
+       // Sets up all the const variables in backup correctly
+       CommandLineFlag* backup = new CommandLineFlag(
+           main->name(), main->help(), main->filename(),
+-          main->current_->New(), main->defvalue_->New());
++          main->current_->New(), main->defvalue_->New(), true);
+       // Sets up all the non-const variables in backup correctly
+       backup->CopyFrom(*main);
+       backup_registry_.push_back(backup);   // add it to a convenient list
+diff --git a/src/gflags.h.in b/src/gflags.h.in
+index 43b3f7a..be084df 100644
+--- a/src/gflags.h.in
++++ b/src/gflags.h.in
+@@ -438,7 +438,7 @@ class GFLAGS_DLL_DECL FlagRegisterer {
+   template <typename FlagType>
+   FlagRegisterer(const char* name,
+                  const char* help, const char* filename,
+-                 FlagType* current_storage, FlagType* defvalue_storage);
++      FlagType* current_storage, FlagType* defvalue_storage, bool hidden);
+ };
+ 
+ // If your application #defines STRIP_FLAG_HELP to a non-zero value
+@@ -473,7 +473,7 @@ extern GFLAGS_DLL_DECL const char kStrippedFlagHelp[];
+ // FLAGS_no<name>.  This serves the second purpose of assuring a
+ // compile error if someone tries to define a flag named no<name>
+ // which is illegal (--foo and --nofoo both affect the "foo" flag).
+-#define DEFINE_VARIABLE(type, shorttype, name, value, help)             \
++#define DEFINE_VARIABLE(type, shorttype, name, value, help, hidden)     \
+   namespace fL##shorttype {                                             \
+     static const type FLAGS_nono##name = value;                         \
+     /* We always want to export defined variables, dll or no */         \
+@@ -481,7 +481,7 @@ extern GFLAGS_DLL_DECL const char kStrippedFlagHelp[];
+     type FLAGS_no##name = FLAGS_nono##name;                             \
+     static GFLAGS_NAMESPACE::FlagRegisterer o_##name(                   \
+       #name, MAYBE_STRIPPED_HELP(help), __FILE__,                       \
+-      &FLAGS_##name, &FLAGS_no##name);                                  \
++      &FLAGS_##name, &FLAGS_no##name, hidden);                                 \
+   }                                                                     \
+   using fL##shorttype::FLAGS_##name
+ 
+@@ -504,31 +504,56 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
+ // Here are the actual DEFINE_*-macros. The respective DECLARE_*-macros
+ // are in a separate include, gflags_declare.h, for reducing
+ // the physical transitive size for DECLARE use.
+-#define DEFINE_bool(name, val, txt)                                     \
+-  namespace fLB {                                                       \
+-    typedef ::fLB::CompileAssert FLAG_##name##_value_is_not_a_bool[     \
+-            (sizeof(::fLB::IsBoolFlag(val)) != sizeof(double))? 1: -1]; \
+-  }                                                                     \
+-  DEFINE_VARIABLE(bool, B, name, val, txt)
++#define DEFINE_bool(name, val, txt)                             \
++  namespace fLB {                                               \
++typedef ::fLB::CompileAssert FLAG_##name##_value_is_not_a_bool[ \
++    (sizeof(::fLB::IsBoolFlag(val)) != sizeof(double))? 1: -1]; \
++  }                                                             \
++  DEFINE_VARIABLE(bool, B, name, val, txt, false)
++
++#define DEFINE_int32(name, val, txt)            \
++  DEFINE_VARIABLE(GFLAGS_NAMESPACE::int32, I,   \
++      name, val, txt, false)
++
++#define DEFINE_uint32(name,val, txt)            \
++  DEFINE_VARIABLE(GFLAGS_NAMESPACE::uint32, U,  \
++                    name, val, txt, false)
++
++#define DEFINE_int64(name, val, txt)            \
++  DEFINE_VARIABLE(GFLAGS_NAMESPACE::int64, I64, \
++                    name, val, txt, false)
++
++#define DEFINE_uint64(name,val, txt)                    \
++  DEFINE_VARIABLE(GFLAGS_NAMESPACE::uint64, U64,        \
++                    name, val, txt, false)
++
++#define DEFINE_double(name, val, txt)                   \
++  DEFINE_VARIABLE(double, D, name, val, txt, false)
++
++// WARNING: Make sure that these stay synced to their non-hidden equivalents above.
++// Hidden flags don't show up in --help, or any place that uses GetAllFlags().
++#define DEFINE_bool_hidden(name, val, txt) \
++  namespace fLB {                                               \
++typedef ::fLB::CompileAssert FLAG_##name##_value_is_not_a_bool[ \
++    (sizeof(::fLB::IsBoolFlag(val)) != sizeof(double))? 1: -1]; \
++  }                                                             \
++  DEFINE_VARIABLE(bool, B, name, val, txt, true)
+ 
+-#define DEFINE_int32(name, val, txt) \
+-   DEFINE_VARIABLE(GFLAGS_NAMESPACE::int32, I, \
+-                   name, val, txt)
++#define DEFINE_int32_hidden(name, val, txt)                             \
++  DEFINE_VARIABLE(GFLAGS_NAMESPACE::int32, I, name, val, txt, true)
+ 
+-#define DEFINE_uint32(name,val, txt) \
+-   DEFINE_VARIABLE(GFLAGS_NAMESPACE::uint32, U, \
+-                   name, val, txt)
++#define DEFINE_uint32_hidden(name, val, txt)                             \
++  DEFINE_VARIABLE(GFLAGS_NAMESPACE::uint32, U, name, val, txt, true)
+ 
+-#define DEFINE_int64(name, val, txt) \
+-   DEFINE_VARIABLE(GFLAGS_NAMESPACE::int64, I64, \
+-                   name, val, txt)
++#define DEFINE_int64_hidden(name, val, txt)                             \
++  DEFINE_VARIABLE(GFLAGS_NAMESPACE::int64, I64, name, val, txt, true)
+ 
+-#define DEFINE_uint64(name,val, txt) \
+-   DEFINE_VARIABLE(GFLAGS_NAMESPACE::uint64, U64, \
+-                   name, val, txt)
++#define DEFINE_uint64_hidden(name, val, txt)                             \
++  DEFINE_VARIABLE(GFLAGS_NAMESPACE::uint64, U64, name, val, txt, true)
++
++#define DEFINE_double_hidden(name, val, txt)                             \
++  DEFINE_VARIABLE(double, D, name, val, txt, true)
+ 
+-#define DEFINE_double(name, val, txt) \
+-   DEFINE_VARIABLE(double, D, name, val, txt)
+ 
+ // Strings are trickier, because they're not a POD, so we can't
+ // construct them at static-initialization time (instead they get
+@@ -558,7 +583,7 @@ class StringFlagDestructor {
+   void *current_storage_;
+   void *defvalue_storage_;
+ 
+-public: 
++public:
+ 
+   StringFlagDestructor(void *current, void *defvalue)
+   : current_storage_(current), defvalue_storage_(defvalue) {}
+@@ -588,7 +613,8 @@ public:
+                                                              val);          \
+     static GFLAGS_NAMESPACE::FlagRegisterer o_##name(                       \
+         #name, MAYBE_STRIPPED_HELP(txt), __FILE__,                          \
+-        FLAGS_no##name, new (s_##name[1].s) clstring(*FLAGS_no##name));     \
++        FLAGS_no##name, new (s_##name[1].s) clstring(*FLAGS_no##name),      \
++        false);                                                             \
+     static StringFlagDestructor d_##name(s_##name[0].s, s_##name[1].s);     \
+     extern GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name;                   \
+     using fLS::FLAGS_##name;                                                \
+@@ -596,6 +622,27 @@ public:
+   }                                                                         \
+   using fLS::FLAGS_##name
+ 
++// Straight copy of DEFINE_string, but string is defined as hidden.
++#define DEFINE_string_hidden(name, val, txt)                                \
++  namespace fLS {                                                           \
++    using ::fLS::clstring;                                                  \
++    using ::fLS::StringFlagDestructor;                                      \
++    static union { void* align; char s[sizeof(clstring)]; } s_##name[2];    \
++    clstring* const FLAGS_no##name = ::fLS::                                \
++                                   dont_pass0toDEFINE_string(s_##name[0].s, \
++                                                             val);          \
++    static GFLAGS_NAMESPACE::FlagRegisterer o_##name(                       \
++        #name, MAYBE_STRIPPED_HELP(txt), __FILE__,                          \
++        FLAGS_no##name, new (s_##name[1].s) clstring(*FLAGS_no##name),      \
++        true);                                                              \
++    static StringFlagDestructor d_##name(s_##name[0].s, s_##name[1].s);     \
++    extern GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name;                   \
++    using fLS::FLAGS_##name;                                                \
++    clstring& FLAGS_##name = *FLAGS_no##name;                               \
++  }                                                                         \
++  using fLS::FLAGS_##name
++
++
+ #endif  // SWIG
+ 
+ 
+diff --git a/test/gflags_unittest.cc b/test/gflags_unittest.cc
+index 9a922ef..ed2fba4 100755
+--- a/test/gflags_unittest.cc
++++ b/test/gflags_unittest.cc
+@@ -73,6 +73,7 @@ DEFINE_string(srcdir, StringFromEnv("SRCDIR", "."), "Source-dir root, needed to
+ DECLARE_string(tryfromenv);   // in gflags.cc
+ 
+ DEFINE_bool(test_bool, false, "tests bool-ness");
++DEFINE_bool_hidden(test_bool_hidden, false, "test hidden bool-ness");
+ DEFINE_int32(test_int32, -1, "");
+ DEFINE_int64(test_int64, -2, "");
+ DEFINE_uint32(test_uint32, 1, "");
+@@ -218,7 +219,7 @@ namespace fLI {
+   static FlagRegisterer o_tldflag1(
+     "tldflag1",
+     "should show up in --helpshort", "gflags_unittest.cc",
+-    &FLAGS_tldflag1, &FLAGS_notldflag1);
++    &FLAGS_tldflag1, &FLAGS_notldflag1, false);
+ }
+ using fLI::FLAGS_tldflag1;
+ 
+@@ -229,7 +230,7 @@ namespace fLI {
+   static FlagRegisterer o_tldflag2(
+     "tldflag2",
+     "should show up in --helpshort", "gflags_unittest.",
+-    &FLAGS_tldflag2, &FLAGS_notldflag2);
++    &FLAGS_tldflag2, &FLAGS_notldflag2, false);
+ }
+ using fLI::FLAGS_tldflag2;
+ 
+@@ -325,6 +326,7 @@ void TestFlagString(const string& flags,
+ }
+ 
+ 
++
+ // Tests reading flags from a string.
+ TEST(FlagFileTest, ReadFlagsFromString) {
+   TestFlagString(
+@@ -890,12 +892,22 @@ TEST(GetAllFlagsTest, BaseTest) {
+       EXPECT_EQ(i->type, "bool");
+       EXPECT_EQ(i->default_value, "false");
+       EXPECT_EQ(i->flag_ptr, &FLAGS_test_bool);
+-      break;
+     }
++    EXPECT_NE(i->name, "test_bool_hidden");
+   }
+   EXPECT_TRUE(found_test_bool);
+ }
+ 
++TEST(HiddenFlagsInFlagFileTest, BaseTest) {
++  string flags("--test_bool_hidden=true\n");
++  EXPECT_TRUE(ReadFlagsFromString(flags,
++          GetArgv0(),
++          // errors are fatal
++          true));
++
++  EXPECT_EQ(true, FLAGS_test_bool_hidden);
++}
++
+ TEST(ShowUsageWithFlagsTest, BaseTest) {
+   // TODO(csilvers): test this by allowing output other than to stdout.
+   // Not urgent since this functionality is tested via
+@@ -1369,7 +1381,7 @@ TEST(ParseCommandLineFlagsWrongFields,
+   static bool current_storage;
+   static bool defvalue_storage;
+   FlagRegisterer fr("flag_name", NULL, "filename",
+-                    &current_storage, &defvalue_storage);
++      &current_storage, &defvalue_storage, false);
+   CommandLineFlagInfo fi;
+   EXPECT_TRUE(GetCommandLineFlagInfo("flag_name", &fi));
+   EXPECT_EQ("", fi.description);
+@@ -1569,4 +1581,3 @@ static int main(int argc, char **argv) {
+ int main(int argc, char** argv) {
+   return GFLAGS_NAMESPACE::main(argc, argv);
+ }
+-
+-- 
+2.7.1
+
