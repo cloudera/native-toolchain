@@ -255,7 +255,7 @@ LIBUNWIND_VERSION=1.1 $SOURCE_DIR/source/libunwind/build.sh
 if (( BUILD_HISTORICAL )); then
   BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
 fi
-BREAKPAD_VERSION=88e5b2c8806bac3f2c80d2fe80094be5bd371601-p2 $SOURCE_DIR/source/breakpad/build.sh
+BREAKPAD_VERSION=ffe3e478657dc7126fca6329dfcedc49f4c726d9-p1 $SOURCE_DIR/source/breakpad/build.sh
 
 ################################################################################
 # Build Flatbuffers
