@@ -32,7 +32,6 @@ if needs_build_package ; then
 
   BOOST_ROOT=$BUILD_DIR/boost-$BOOST_VERSION
   ZLIB_ROOT=$BUILD_DIR/zlib-$ZLIB_VERSION
-  LIBEVENT_ROOT=$BUILD_DIR/libevent-$LIBEVENT_VERSION
 
   # If we build in local dev mode, use the bundled OpenSSL
   if [[ "$PRODUCTION" -eq "0" || "$OSTYPE" == "darwin"* ]]; then
@@ -58,7 +57,6 @@ if needs_build_package ; then
     --with-ruby=no --with-haskell=no --with-erlang=no --with-d=no \
     --with-boost=${BOOST_ROOT} \
     --with-zlib=${ZLIB_ROOT} \
-    --with-libevent=${LIBEVENT_ROOT} \
     --with-nodejs=no \
     --with-lua=no \
     --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} $OPENSSL_ARGS
