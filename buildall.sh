@@ -84,10 +84,6 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
 else
   CYRUS_SASL_VERSION=2.1.26 $SOURCE_DIR/source/cyrus-sasl/build.sh
 fi
-################################################################################
-# Build libevent
-################################################################################
-LIBEVENT_VERSION=1.4.15 $SOURCE_DIR/source/libevent/build.sh
 
 ################################################################################
 # Build protobuf
