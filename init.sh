@@ -18,6 +18,7 @@ set -u
 set -o pipefail
 
 # This script exports the following environment variables:
+#  - ARCH_NAME
 #  - AUTOCONF_VERSION
 #  - AUTOMAKE_VERSION
 #  - BINUTILS_VERSION
@@ -28,6 +29,7 @@ set -o pipefail
 #  - CMAKE_VERSION
 #  - COMPILER
 #  - COMPILER_VERSION
+#  - CONFIGURE_FLAG_BUILD_SYS
 #  - DEBUG
 #  - FAIL_ON_PUBLISH
 #  - GCC_VERSION
@@ -166,6 +168,16 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   # The deployment target environment variable is needed to silence warning and
   # errors on OS X wrt rpath settings and libary dependencies.
   export MACOSX_DEPLOYMENT_TARGET=$(echo $OS_VERSION | sed -E 's/(10.[0-9]+).*/\1/')
+fi
+
+#Set Architecture of the platform
+ARCH_NAME=`uname -p`
+export ARCH_NAME
+
+if [[ "$ARCH_NAME" == "ppc64le" ]]; then
+  export CONFIGURE_FLAG_BUILD_SYS="--build=powerpc64le-unknown-linux-gnu"
+else
+  export CONFIGURE_FLAG_BUILD_SYS=
 fi
 
 if [[ $SYSTEM_GCC -eq 0 ]]; then

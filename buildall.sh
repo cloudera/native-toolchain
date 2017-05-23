@@ -98,7 +98,11 @@ LIBEV_VERSION=4.20 $SOURCE_DIR/source/libev/build.sh
 ################################################################################
 # Build crcutil
 ################################################################################
-CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e\
+if (( BUILD_HISTORICAL )) ; then
+  CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e\
+    $SOURCE_DIR/source/crcutil/build.sh
+fi
+CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e-p1\
   $SOURCE_DIR/source/crcutil/build.sh
 
 ################################################################################
@@ -240,7 +244,10 @@ fi
 ################################################################################
 # Build Libunwind
 ################################################################################
-LIBUNWIND_VERSION=1.1 $SOURCE_DIR/source/libunwind/build.sh
+if (( BUILD_HISTORICAL )) ; then
+  LIBUNWIND_VERSION=1.1 $SOURCE_DIR/source/libunwind/build.sh
+fi
+LIBUNWIND_VERSION=1.1-p1 $SOURCE_DIR/source/libunwind/build.sh
 
 ################################################################################
 # Build Breakpad
@@ -248,7 +255,7 @@ LIBUNWIND_VERSION=1.1 $SOURCE_DIR/source/libunwind/build.sh
 if (( BUILD_HISTORICAL )); then
   BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
 fi
-BREAKPAD_VERSION=ffe3e478657dc7126fca6329dfcedc49f4c726d9-p1 $SOURCE_DIR/source/breakpad/build.sh
+BREAKPAD_VERSION=ffe3e478657dc7126fca6329dfcedc49f4c726d9-p2 $SOURCE_DIR/source/breakpad/build.sh
 
 ################################################################################
 # Build Flatbuffers

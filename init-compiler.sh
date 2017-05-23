@@ -31,7 +31,11 @@ set -o pipefail
 if [[ "$OSTYPE" =~ ^linux ]]; then
   # ARCH_FLAGS are used to convey architectur dependent flags that should
   # be obbeyed by libraries explicitly needing this information.
-  ARCH_FLAGS="-mno-avx2"
+  if [[ "$ARCH_NAME" == "ppc64le" ]]; then
+     ARCH_FLAGS="-mvsx -maltivec"
+  else
+     ARCH_FLAGS="-mno-avx2"
+  fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Setting the C++ stlib to libstdc++ on Mac instead of the default libc++
   ARCH_FLAGS="${ARCH_FLAGS} -stdlib=libstdc++"

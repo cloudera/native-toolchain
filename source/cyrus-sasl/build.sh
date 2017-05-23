@@ -49,7 +49,7 @@ if needs_build_package ; then
   CFLAGS="$CFLAGS -fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" wrap ./configure \
     --disable-sql --disable-otp --disable-ldap --disable-digest --with-saslauthd=no \
     $CONFIGURE_FLAGS \
-    --prefix=$LOCAL_INSTALL --enable-static --enable-staticdlopen $WITH_FRAMEWORKS
+    --prefix=$LOCAL_INSTALL --enable-static --enable-staticdlopen $WITH_FRAMEWORKS $CONFIGURE_FLAG_BUILD_SYS
   # the first time you do a make it fails, build again.
   wrap make || /bin/true
   wrap make -j${BUILD_THREADS:-4}

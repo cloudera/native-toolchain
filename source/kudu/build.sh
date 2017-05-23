@@ -28,8 +28,11 @@ THIS_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Returns success if Kudu can be built on this platform.
 function is_supported_platform {
   set +u
-  if [[ -z "$OS_NAME" || -z "$OS_VERSION" ]]; then
-    echo OS_NAME and OS_VERSION must be set before calling this script.
+  if [[ -z "$OS_NAME" || -z "$OS_VERSION" || -z "$ARCH_NAME" ]]; then
+    echo OS_NAME, OS_VERSION and ARCH_NAME must be set before calling this script.
+    return 1
+  fi
+  if [[ "$ARCH_NAME" == "ppc64le" ]]; then
     return 1
   fi
   set -u

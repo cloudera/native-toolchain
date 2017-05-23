@@ -333,7 +333,7 @@ function build_fake_package() {
   if needs_build_package; then
     DESTDIR="${BUILD_DIR}/${PACKAGE_STRING}${PATCH_VERSION}"
     mkdir -p ${DESTDIR}
-    echo "Package not built for $OSTYPE $RELEASE_NAME." >> ${DESTDIR}/README
+    echo "Package not built for $OSTYPE $RELEASE_NAME $ARCH_NAME." >> ${DESTDIR}/README
 
     # Package and upload the fake dir
     build_dist_package

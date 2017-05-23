@@ -30,7 +30,7 @@ if needs_build_package ; then
 
   enable_toolchain_autotools
 
-  wrap ./configure --with-pic --prefix=$LOCAL_INSTALL
+  wrap ./configure --with-pic --prefix=$LOCAL_INSTALL $CONFIGURE_FLAG_BUILD_SYS
   wrap make -j${BUILD_THREADS:-4} install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION

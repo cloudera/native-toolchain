@@ -50,6 +50,7 @@ if needs_build_package ; then
     wrap glibtoolize --copy
     wrap autoconf
   fi
+
   JAVA_PREFIX=${LOCAL_INSTALL}/java PY_PREFIX=${LOCAL_INSTALL}/python \
     wrap ./configure --with-pic --prefix=${LOCAL_INSTALL} \
     --with-c_glib=no \
@@ -59,7 +60,7 @@ if needs_build_package ; then
     --with-zlib=${ZLIB_ROOT} \
     --with-nodejs=no \
     --with-lua=no \
-    --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} $OPENSSL_ARGS
+    --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} $OPENSSL_ARGS $CONFIGURE_FLAG_BUILD_SYS
   MAKEFLAGS="" wrap make   # Build fails with -j${BUILD_THREADS}
   wrap make install
   cd contrib/fb303

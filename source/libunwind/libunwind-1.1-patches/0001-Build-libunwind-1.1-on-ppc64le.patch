@@ -1,0 +1,7 @@
+--- libunwind-1.1/tests/Makefile.am	2012-10-05 21:54:38.000000000 -0700
++++ libunwind-1.1_ppc/tests/Makefile.am	2017-03-29 03:54:40.821559790 -0700
+@@ -189,3 +189,4 @@
+ Lia64_test_readonly_LDADD = $(LIBUNWIND_local)
+ ia64_test_dyn1_LDADD = $(LIBUNWIND)
+ ia64_test_sig_LDADD = $(LIBUNWIND)
++ppc64_test_altivec_LDADD = $(LIBUNWIND)

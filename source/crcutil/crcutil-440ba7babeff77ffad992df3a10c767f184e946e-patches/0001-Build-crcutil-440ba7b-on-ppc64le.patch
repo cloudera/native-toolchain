@@ -1,0 +1,65 @@
+diff -urx '*.m4' crcutil-440ba7babeff77ffad992df3a10c767f184e946e_up/autogen.sh crcutil-440ba7babeff77ffad992df3a10c767f184e946e/autogen.sh
+--- crcutil-440ba7babeff77ffad992df3a10c767f184e946e_up/autogen.sh	2017-05-15 23:52:41.274478669 -0700
++++ crcutil-440ba7babeff77ffad992df3a10c767f184e946e/autogen.sh	2017-05-17 01:38:54.844907482 -0700
+@@ -92,6 +92,10 @@
+ elif [[ "$IS_CLANG" = "1" ]]; then
+   crcutil_flags="${crcutil_flags} -msse4.2"
+ fi
++if [[ "$ARCH_NAME" == "ppc64le" ]]; then
++  crcutil_flags=
++  crcutil_flags="-DCRCUTIL_USE_MM_CRC32=1 -Wall -Icode -Iexamples -Itests -O3"
++fi
+ 
+ echo>>${target} "AM_CXXFLAGS=${crcutil_flags}"
+ echo>>${target} 'AM_CFLAGS=$(AM_CXXFLAGS)'
+diff -urx '*.m4' crcutil-440ba7babeff77ffad992df3a10c767f184e946e_up/code/crc32c_sse4.h crcutil-440ba7babeff77ffad992df3a10c767f184e946e/code/crc32c_sse4.h
+--- crcutil-440ba7babeff77ffad992df3a10c767f184e946e_up/code/crc32c_sse4.h	2017-05-15 23:52:41.274478669 -0700
++++ crcutil-440ba7babeff77ffad992df3a10c767f184e946e/code/crc32c_sse4.h	2017-05-17 01:40:37.788636753 -0700
+@@ -22,7 +22,7 @@
+ #include "gf_util.h"              // base types, gf_util class, etc.
+ #include "crc32c_sse4_intrin.h"   // _mm_crc32_u* intrinsics
+ 
+-#if HAVE_I386 || HAVE_AMD64
++#if HAVE_I386 || HAVE_AMD64 || HAVE_PPC64
+ 
+ #if CRCUTIL_USE_MM_CRC32
+ 
+@@ -247,6 +247,6 @@
+ 
+ }  // namespace crcutil
+ 
+-#endif  // HAVE_I386 || HAVE_AMD64
++#endif  // HAVE_I386 || HAVE_AMD64 || HAVE_PPC64
+ 
+ #endif  // CRCUTIL_CRC32C_SSE4_H_
+diff -urx '*.m4' crcutil-440ba7babeff77ffad992df3a10c767f184e946e_up/code/platform.h crcutil-440ba7babeff77ffad992df3a10c767f184e946e/code/platform.h
+--- crcutil-440ba7babeff77ffad992df3a10c767f184e946e_up/code/platform.h	2017-05-15 23:52:41.278478734 -0700
++++ crcutil-440ba7babeff77ffad992df3a10c767f184e946e/code/platform.h	2017-05-17 00:02:44.200979684 -0700
+@@ -46,6 +46,15 @@
+ #endif  // defined(HAVE_AMD64)
+ 
+ 
++#if !defined(HAVE_PPC64)
++#if defined(__PPC64__)
++#define HAVE_PPC64 1
++#else
++#define HAVE_PPC64 0
++#endif  // defined(__PPC64__)
++#endif  // defined(HAVE_PPC64)
++
++
+ #if HAVE_AMD64 || HAVE_I386
+ #if defined(_MSC_VER)
+ #pragma warning(push)
+diff -urx '*.m4' crcutil-440ba7babeff77ffad992df3a10c767f184e946e_up/tests/unittest.h crcutil-440ba7babeff77ffad992df3a10c767f184e946e/tests/unittest.h
+--- crcutil-440ba7babeff77ffad992df3a10c767f184e946e_up/tests/unittest.h	2017-05-15 23:52:41.282478799 -0700
++++ crcutil-440ba7babeff77ffad992df3a10c767f184e946e/tests/unittest.h	2017-05-16 01:48:17.898539493 -0700
+@@ -111,7 +111,7 @@
+   void InitWithCrc32c(const Crc &generating_polynomial,
+                       size_t degree,
+                       bool constant) {
+-    Init(generating_polynomial, degree, constant);
++    this->Init(generating_polynomial, degree, constant);
+   }
+ 
+   bool HaveCrc32c() const {

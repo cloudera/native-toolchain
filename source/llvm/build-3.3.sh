@@ -81,10 +81,16 @@ function build_llvm_33() {
     exit 1
   fi
 
+  if [[ "$ARCH_NAME" == "ppc64le" ]]; then
+    LLVM_BUILD_TARGET+="powerpc,cpp"
+  else
+    LLVM_BUILD_TARGET+="x86_64,cpp"
+  fi
+
   wrap ../llvm-$PACKAGE_VERSION.src$PATCH_VERSION/configure \
-      --enable-targets=x86_64,cpp --enable-terminfo=no \
+      --enable-targets=$LLVM_BUILD_TARGET --enable-terminfo=no \
       --prefix=$LOCAL_INSTALL --with-pic $EXTRA_CONFIG_ARG \
-      --with-extra-ld-options="$LDFLAGS"
+      --with-extra-ld-options="$LDFLAGS" $CONFIGURE_FLAG_BUILD_SYS
 
   wrap make -j${BUILD_THREADS:-4} REQUIRES_RTTI=1 install
 
