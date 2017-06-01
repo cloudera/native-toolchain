@@ -228,7 +228,7 @@ LIBUNWIND_VERSION=1.1 $SOURCE_DIR/source/libunwind/build.sh
 ################################################################################
 # Build Breakpad
 ################################################################################
-BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
+BREAKPAD_VERSION=ffe3e478657dc7126fca6329dfcedc49f4c726d9-p1 $SOURCE_DIR/source/breakpad/build.sh
 
 ################################################################################
 # Build Kudu
