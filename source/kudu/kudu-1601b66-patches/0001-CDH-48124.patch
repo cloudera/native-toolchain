@@ -1,0 +1,40 @@
+diff --git a/thirdparty/download-thirdparty.sh b/thirdparty/download-thirdparty.sh
+index 9b8c8ce..b0e1c53 100755
+--- a/thirdparty/download-thirdparty.sh
++++ b/thirdparty/download-thirdparty.sh
+@@ -146,8 +146,15 @@ if [ ! -d $PROTOBUF_SOURCE ]; then
+   popd
+ fi
+ 
++CMAKE_PATCHLEVEL=1
++delete_if_wrong_patchlevel $CMAKE_SOURCE $CMAKE_PATCHLEVEL
+ if [ ! -d $CMAKE_SOURCE ]; then
+   fetch_and_expand cmake-${CMAKE_VERSION}.tar.gz
++  pushd $CMAKE_SOURCE
++  patch -p1 < $TP_DIR/patches/cmake-IMPALA-3191.patch
++  touch patchlevel-$CMAKE_PATCHLEVEL
++  popd
++  echo
+ fi
+ 
+ if [ ! -d $SNAPPY_SOURCE ]; then
+diff --git a/thirdparty/patches/cmake-IMPALA-3191.patch b/thirdparty/patches/cmake-IMPALA-3191.patch
+new file mode 100644
+index 0000000..c5d4c7f
+--- /dev/null
++++ b/thirdparty/patches/cmake-IMPALA-3191.patch
+@@ -0,0 +1,14 @@
++diff --git a/Source/kwsys/ProcessUNIX.c b/Source/kwsys/ProcessUNIX.c
++index 1be6d02..525217a 100644
++--- a/Source/kwsys/ProcessUNIX.c
+++++ b/Source/kwsys/ProcessUNIX.c
++@@ -110,7 +110,8 @@ static inline void kwsysProcess_usleep(unsigned int msec)
++  * without select().
++  */
++ #if !defined(__BEOS__) && !defined(__VMS) && !defined(__MINT__)
++-# define KWSYSPE_USE_SELECT 1
+++// Don't use select() due to https://cmake.org/Bug/view.php?id=15873
+++# define KWSYSPE_USE_SELECT 0
++ #endif
++ 
++ /* Some platforms do not have siginfo on their signal handlers.  */
