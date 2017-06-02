@@ -40,8 +40,9 @@ source ./init-compiler.sh
 ################################################################################
 if (( BUILD_HISTORICAL )) ; then
   BOOST_VERSION=1.57.0 $SOURCE_DIR/source/boost/build.sh
+  BOOST_VERSION=1.57.0-p1 $SOURCE_DIR/source/boost/build.sh
 fi
-BOOST_VERSION=1.57.0-p1 $SOURCE_DIR/source/boost/build.sh
+BOOST_VERSION=1.57.0-p2 $SOURCE_DIR/source/boost/build.sh
 
 ################################################################################
 # Build Python
@@ -120,7 +121,7 @@ ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
 # Thrift
 #  * depends on boost, zlib and openssl
 ################################################################################
-export BOOST_VERSION=1.57.0-p1
+export BOOST_VERSION=1.57.0-p2
 export ZLIB_VERSION=1.2.8
 export OPENSSL_VERSION=1.0.1p
 
@@ -266,7 +267,7 @@ FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
 # Build Kudu
 ################################################################################
 (
-  export BOOST_VERSION=1.57.0-p1
+  export BOOST_VERSION=1.57.0-p2
   export KUDU_VERSION=795c435
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build

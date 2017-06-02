@@ -1,0 +1,68 @@
+commit 48511bddf4ad90b0f04842949b7edd5617209e25
+Author: James E. King, III <jim.king@simplivity.com>
+Date:   Tue Feb 21 16:37:53 2017 -0500
+
+    4543: fix ptime 2038 issue
+    
+    (cherry picked from commit 818dea52f3f0c8b4f5172df13c5fa4f57340625f)
+    
+    Conflicts:
+    	include/boost/date_time/posix_time/conversion.hpp
+    	include/boost/date_time/time_resolution_traits.hpp
+
+diff --git a/boost/date_time/posix_time/conversion.hpp b/boost/date_time/posix_time/conversion.hpp
+index 59e5cb7..7900775 100644
+--- a/boost/date_time/posix_time/conversion.hpp
++++ b/boost/date_time/posix_time/conversion.hpp
+@@ -10,6 +10,7 @@
+  */
+ 
+ #include <cstring>
++#include <boost/cstdint.hpp>
+ #include <boost/date_time/posix_time/ptime.hpp>
+ #include <boost/date_time/posix_time/posix_time_duration.hpp>
+ #include <boost/date_time/filetime_functions.hpp>
+@@ -21,13 +22,18 @@ namespace boost {
+ 
+ namespace posix_time {
+ 
+-
+   //! Function that converts a time_t into a ptime.
+   inline
+   ptime from_time_t(std::time_t t)
+   {
+-    ptime start(gregorian::date(1970,1,1));
+-    return start + seconds(static_cast<long>(t));
++    return ptime(gregorian::date(1970,1,1)) + seconds(t);
++  }
++
++  //! Function that converts a ptime into a time_t
++  inline
++  std::time_t to_time_t(ptime pt)
++  {
++    return (pt - ptime(gregorian::date(1970,1,1))).total_seconds();
+   }
+ 
+   //! Convert a time to a tm structure truncating any fractional seconds
+diff --git a/boost/date_time/time_resolution_traits.hpp b/boost/date_time/time_resolution_traits.hpp
+index 37785d0..3df147b 100644
+--- a/boost/date_time/time_resolution_traits.hpp
++++ b/boost/date_time/time_resolution_traits.hpp
+@@ -9,7 +9,7 @@
+  * $Date$
+  */
+ 
+-
++#include <ctime>
+ #include <boost/cstdint.hpp>
+ #include <boost/date_time/time_defs.hpp>
+ #include <boost/date_time/int_adapter.hpp>
+@@ -68,7 +68,7 @@ namespace date_time {
+            typename frac_sec_type::int_type resolution_adjust,
+ #endif
+            unsigned short frac_digits,
+-           typename v_type = boost::int32_t >
++           typename v_type = std::time_t >
+   class time_resolution_traits {
+   public:
+     typedef typename frac_sec_type::int_type fractional_seconds_type;
