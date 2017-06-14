@@ -305,11 +305,11 @@ function apply_patches() {
       echo "Applying patch ${PATCH_NUM}...${p}"
       set +e
       # Check if patch can be applied at -p2 first, then p1
-      patch -p2 < $p >> $BUILD_LOG 2>&1
+      patch --verbose -p2 < $p >> $BUILD_LOG 2>&1
       RET_VAL=$?
       set -e
       if [[ $RET_VAL -ne 0 ]]; then
-        patch -p1 < $p >> $BUILD_LOG 2>&1
+        patch --verbose -p1 < $p >> $BUILD_LOG 2>&1
       fi
       PATCH_NUM=$(($PATCH_NUM + 1))
       if [[ $PATCH_NUM -gt $PATCH_LEVEL ]]; then

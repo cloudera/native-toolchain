@@ -31,6 +31,8 @@ if needs_build_package ; then
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
   cd src/
+  # no-maybe-uninitialized: GCC7 has false positive warnings.
+  export CFLAGS="$CFLAGS -Wno-maybe-uninitialized"
   wrap ./configure --with-pic --prefix=$LOCAL_INSTALL
   wrap make -j${BUILD_THREADS:-4}
   wrap make install

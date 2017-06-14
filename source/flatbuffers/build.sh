@@ -29,7 +29,15 @@ if needs_build_package ; then
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
-  wrap cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL}
+
+  CXXFLAGS=
+  GCC_MAJOR_VERSION=$(echo $GCC_VERSION | cut -d . -f1)
+  if (( GCC_MAJOR_VERSION >= 7 )); then
+    # Prevent implicit fallthrough warning in GCC7+ from failing build.
+    CXXFLAGS+=" -Wno-error=implicit-fallthrough"
+  fi
+  wrap cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} \
+    -DCMAKE_CXX_FLAGS="$CXXFLAGS"
   wrap make -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

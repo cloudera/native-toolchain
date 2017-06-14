@@ -41,8 +41,9 @@ source ./init-compiler.sh
 if (( BUILD_HISTORICAL )) ; then
   BOOST_VERSION=1.57.0 $SOURCE_DIR/source/boost/build.sh
   BOOST_VERSION=1.57.0-p1 $SOURCE_DIR/source/boost/build.sh
+  BOOST_VERSION=1.57.0-p2 $SOURCE_DIR/source/boost/build.sh
 fi
-BOOST_VERSION=1.57.0-p2 $SOURCE_DIR/source/boost/build.sh
+BOOST_VERSION=1.57.0-p3 $SOURCE_DIR/source/boost/build.sh
 
 ################################################################################
 # Build Python
@@ -65,7 +66,7 @@ if (( BUILD_HISTORICAL )) ; then
   LLVM_VERSION=3.3-no-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
 fi
 
-# Build LLVM 3.7.0 and 3.8.0 without assertions. For LLVM 3.7+, the default is a
+# Build LLVM 3.7+ with and without assertions. For LLVM 3.7+, the default is a
 # release build with no assertions.
 (
   export PYTHON_VERSION=2.7.10
@@ -73,8 +74,17 @@ fi
     LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
     LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
   fi
-  LLVM_VERSION=3.8.0-p1 $SOURCE_DIR/source/llvm/build.sh
-  LLVM_VERSION=3.8.0-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
+  # LLVM 3.8 is the default. However GCC5+ switched to a new C++ ABI that is only
+  # supported by LLVM 3.9+, so in that (still experimental) case, build a later LLVM
+  # version.
+  # TODO: LLVM 3.9 will become the default at some point.
+  if [[ $GCC_VERSION = '4.9.2' ]]; then
+    LLVM_VERSION=3.8.0-p1 $SOURCE_DIR/source/llvm/build.sh
+    LLVM_VERSION=3.8.0-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
+  else
+    LLVM_VERSION=3.9.1-p1 $SOURCE_DIR/source/llvm/build.sh
+    LLVM_VERSION=3.9.1-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
+  fi
 )
 
 ################################################################################
@@ -121,7 +131,7 @@ ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
 # Thrift
 #  * depends on boost, zlib and openssl
 ################################################################################
-export BOOST_VERSION=1.57.0-p2
+export BOOST_VERSION=1.57.0-p3
 export ZLIB_VERSION=1.2.8
 export OPENSSL_VERSION=1.0.1p
 
@@ -268,7 +278,7 @@ FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
 # Build Kudu
 ################################################################################
 (
-  export BOOST_VERSION=1.57.0-p2
+  export BOOST_VERSION=1.57.0-p3
   export KUDU_VERSION=c0798a9
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build

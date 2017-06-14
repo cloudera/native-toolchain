@@ -44,9 +44,14 @@ if needs_build_package ; then
     CONFIGURE_FLAGS+=" --with-bdb-libdir=/usr/lib64/libdb4"
   fi
 
+  # Sasl does not have a --with-pic configuration, so specify PIC this way.
+  # -fgnu89-inline: work around problems with system headers where libc functions like
+  # strtol() end up defined in multiple .o files, which causes a linker error.
+  COMMON_FLAGS="-fPIC -DPIC -fgnu89-inline"
+  export CFLAGS="$CFLAGS $COMMON_FLAGS"
+  export CXXFLAGS="$CXXFLAGS $COMMON_FLAGS"
   # Disable everything except those protocols needed -- currently just Kerberos.
-  # Sasl does not have a --with-pic configuration.
-  CFLAGS="$CFLAGS -fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" wrap ./configure \
+  wrap ./configure \
     --disable-sql --disable-otp --disable-ldap --disable-digest --with-saslauthd=no \
     $CONFIGURE_FLAGS \
     --prefix=$LOCAL_INSTALL --enable-static --enable-staticdlopen $WITH_FRAMEWORKS $CONFIGURE_FLAG_BUILD_SYS

@@ -36,6 +36,7 @@ if needs_build_package ; then
   else
     TOOLSET=
   fi
+  CXXFLAGS+=" -Wno-deprecated-declarations"
   # Update compilers to use our toolchain
   wrap ./bootstrap.sh --without-libraries=python --prefix=$LOCAL_INSTALL cxxflags="$CXXFLAGS"
   wrap ./b2 -s"NO_BZIP2=1" $TOOLSET cxxflags="$CXXFLAGS" linkflags="$CXXFLAGS" --prefix=$LOCAL_INSTALL -j4 install
