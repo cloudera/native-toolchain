@@ -33,7 +33,8 @@ if needs_build_package ; then
   # Recent glog releases (2.2.0+) use CMake rather than autotools. Prefer that if
   # available.
   if [ -e CMakeLists.txt ]; then
-    wrap cmake -DBUILD_STATIC_LIBS=ON -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE
+    wrap cmake -DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE
   else
     wrap ./configure --with-pic --prefix=$LOCAL_INSTALL
   fi
