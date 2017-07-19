@@ -106,13 +106,6 @@ function build {
   KUDU_TP_PATH="`pwd`/thirdparty/installed/common/bin"
   PATH="$BUILD_DIR/python-2.7.10/bin:$KUDU_TP_PATH:$OLD_PATH"
 
-  # The line below configures clang to find gcc from the toolchain. Without this the
-  # build will still work on some systems but there will be strange crashes at runtime.
-  # On other systems, such as default RHEL6, the build will fail because c++11 isn't
-  # supported on the system gcc.
-  sed -i -r "s:^(set\(IR_FLAGS):\1\n  --gcc-toolchain=$(dirname $(which $CXX))/..:" \
-      src/kudu/codegen/CMakeLists.txt
-
   # Now Kudu can be built.
   RELEASE_INSTALL_DIR="$LOCAL_INSTALL/release"
   mkdir -p release_build_dir
