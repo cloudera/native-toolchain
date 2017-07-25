@@ -235,7 +235,7 @@ BREAKPAD_VERSION=ffe3e478657dc7126fca6329dfcedc49f4c726d9-p1 $SOURCE_DIR/source/
 ################################################################################
 (
   export BOOST_VERSION=1.57.0
-  export KUDU_VERSION=ddaab4a
+  export KUDU_VERSION=4c6c7d1
   export KUDU_GITHUB_URL=http://github.mtv.cloudera.com/CDH/kudu/
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
