@@ -120,7 +120,10 @@ CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e-p1\
 # Build OpenSSL - this is not intended for production use of Impala.
 # Libraries that depend on OpenSSL will only use it if PRODUCTION=1.
 ################################################################################
-OPENSSL_VERSION=1.0.1p $SOURCE_DIR/source/openssl/build.sh
+if (( BUILD_HISTORICAL )); then
+    OPENSSL_VERSION=1.0.1p $SOURCE_DIR/source/openssl/build.sh
+fi
+OPENSSL_VERSION=1.0.2l $SOURCE_DIR/source/openssl/build.sh
 
 ################################################################################
 # Build ZLib
@@ -133,7 +136,7 @@ ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
 ################################################################################
 export BOOST_VERSION=1.57.0-p3
 export ZLIB_VERSION=1.2.8
-export OPENSSL_VERSION=1.0.1p
+export OPENSSL_VERSION=1.0.2l
 
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
   if (( BUILD_HISTORICAL )); then
