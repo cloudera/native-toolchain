@@ -53,6 +53,7 @@ if needs_build_package ; then
 
   JAVA_PREFIX=${LOCAL_INSTALL}/java PY_PREFIX=${LOCAL_INSTALL}/python \
     wrap ./configure --with-pic --prefix=${LOCAL_INSTALL} \
+    --enable-tutorial=no \
     --with-c_glib=no \
     --with-php=no --with-java=no --with-perl=no --with-erlang=no --with-csharp=no \
     --with-ruby=no --with-haskell=no --with-erlang=no --with-d=no \

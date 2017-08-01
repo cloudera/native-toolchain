@@ -147,8 +147,9 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
     # It is equivalent to p4 and is needed for subsequent patches.
     THRIFT_VERSION=0.9.0-p7 $SOURCE_DIR/source/thrift/build.sh
     THRIFT_VERSION=0.9.0-p8 $SOURCE_DIR/source/thrift/build.sh
+    THRIFT_VERSION=0.9.0-p9 $SOURCE_DIR/source/thrift/build.sh
   fi
-  THRIFT_VERSION=0.9.0-p9 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.0-p10 $SOURCE_DIR/source/thrift/build.sh
 else
   THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
 fi

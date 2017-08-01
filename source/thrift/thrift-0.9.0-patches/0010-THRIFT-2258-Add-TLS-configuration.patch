@@ -1,0 +1,133 @@
+From 2bdc74de0a0874129e68371796362b1130227e42 Mon Sep 17 00:00:00 2001
+From: jfarrell <jfarrell@apache.org>
+Date: Mon, 31 Mar 2014 23:58:32 -0400
+Subject: [PATCH] CLDR Patch 10: THRIFT-2258:Add TLS v1.1/1.2 support to
+ TSSLSocket.cpp
+
+---
+ lib/cpp/src/thrift/transport/TSSLSocket.cpp | 37 +++++++++++++++++++++++++----
+ lib/cpp/src/thrift/transport/TSSLSocket.h   | 19 +++++++++++++--
+ 2 files changed, 49 insertions(+), 7 deletions(-)
+
+diff --git a/lib/cpp/src/thrift/transport/TSSLSocket.cpp b/lib/cpp/src/thrift/transport/TSSLSocket.cpp
+index 6234ad3..90bc646 100644
+--- a/lib/cpp/src/thrift/transport/TSSLSocket.cpp
++++ b/lib/cpp/src/thrift/transport/TSSLSocket.cpp
+@@ -39,6 +39,7 @@
+ #include "TSSLSocket.h"
+ 
+ #define OPENSSL_VERSION_NO_THREAD_ID 0x10000000L
++#define OPENSSL_VERSION_HAS_TLS_1_1 0x10001000L
+ 
+ using namespace std;
+ using namespace boost;
+@@ -56,15 +57,41 @@ static bool matchName(const char* host, const char* pattern, int size);
+ static char uppercase(char c);
+ 
+ // SSLContext implementation
+-SSLContext::SSLContext() {
+-  ctx_ = SSL_CTX_new(SSLv23_method());
++SSLContext::SSLContext(const SSLProtocol& protocol) {
++  // Never SSLv2 or v3.
++  int options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
++
++  switch (protocol) {
++    case TLSv1_0:
++      ctx_ = SSL_CTX_new(TLSv1_method());
++      break;
++#if OPENSSL_VERSION_NUMBER >= OPENSSL_VERSION_HAS_TLS_1_1
++    case TLSv1_1:
++      ctx_ = SSL_CTX_new(TLSv1_1_method());
++      break;
++    case TLSv1_2:
++      ctx_ = SSL_CTX_new(TLSv1_2_method());
++      break;
++    case TLSv1_2_plus:
++      options |= SSL_OP_NO_TLSv1_1;
++    case TLSv1_1_plus:
++      options |= SSL_OP_NO_TLSv1;
++#endif
++    case TLSv1_0_plus:
++      ctx_ = SSL_CTX_new(SSLv23_method());
++      break;
++    default:
++      throw TSSLException("SSL_CTX_new: Unknown protocol");
++  }
++
+   if (ctx_ == NULL) {
+     string errors;
+     buildErrors(errors);
+     throw TSSLException("SSL_CTX_new: " + errors);
+   }
+   SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
+-  SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
++
++  SSL_CTX_set_options(ctx_, options);
+ }
+ 
+ SSLContext::~SSLContext() {
+@@ -351,14 +378,14 @@ bool     TSSLSocketFactory::initialized = false;
+ uint64_t TSSLSocketFactory::count_ = 0;
+ Mutex    TSSLSocketFactory::mutex_;
+ 
+-TSSLSocketFactory::TSSLSocketFactory(): server_(false) {
++TSSLSocketFactory::TSSLSocketFactory(const SSLProtocol& protocol): server_(false) {
+   Guard guard(mutex_);
+   if (count_ == 0) {
+     initializeOpenSSL();
+     randomize();
+   }
+   count_++;
+-  ctx_ = boost::shared_ptr<SSLContext>(new SSLContext);
++  ctx_ = boost::shared_ptr<SSLContext>(new SSLContext(protocol));
+ }
+ 
+ TSSLSocketFactory::~TSSLSocketFactory() {
+diff --git a/lib/cpp/src/thrift/transport/TSSLSocket.h b/lib/cpp/src/thrift/transport/TSSLSocket.h
+index d77c2f5..99b9ab4 100644
+--- a/lib/cpp/src/thrift/transport/TSSLSocket.h
++++ b/lib/cpp/src/thrift/transport/TSSLSocket.h
+@@ -31,6 +31,19 @@ namespace apache { namespace thrift { namespace transport {
+ class AccessManager;
+ class SSLContext;
+ 
++enum SSLProtocol {
++  //SSLTLS        = 0,  // Supports SSLv3 and TLSv1. Disabled.
++  //SSLv2         = 1,  // HORRIBLY INSECURE!
++  //SSLv3         = 2,  // Also too insecure
++  TLSv1_0         = 3,  // Supports TLSv1_0 only.
++  TLSv1_1         = 4,  // Supports TLSv1_1 only.
++  TLSv1_2         = 5,  // Supports TLSv1_2 only.
++  TLSv1_0_plus    = 6,  // Supports TLSv1_0 and all later protocols
++  TLSv1_1_plus    = 7,  // Supports TLSv1_0 and all later protocols
++  TLSv1_2_plus    = 8,  // Supports TLSv1_0 and all later protocols
++};
++
++
+ /**
+  * OpenSSL implementation for SSL socket interface.
+  */
+@@ -108,8 +121,10 @@ class TSSLSocketFactory {
+  public:
+   /**
+    * Constructor/Destructor
++   *
++   * @param protocol The SSL/TLS protocol to use.
+    */
+-  TSSLSocketFactory();
++  TSSLSocketFactory(const SSLProtocol& protocol = TLSv1_0_plus);
+   virtual ~TSSLSocketFactory();
+   /**
+    * Create an instance of TSSLSocket with a fresh new socket.
+@@ -234,7 +249,7 @@ class TSSLException: public TTransportException {
+  */
+ class SSLContext {
+  public:
+-  SSLContext();
++  SSLContext(const SSLProtocol& protocol = TLSv1_0_plus);
+   virtual ~SSLContext();
+   SSL* createSSL();
+   SSL_CTX* get() { return ctx_; }
+-- 
+2.7.1
+
