@@ -1,0 +1,91 @@
+From d828da9c284e8cf99912bf57e2a9a175623fa458 Mon Sep 17 00:00:00 2001
+From: Henry Robinson <henry@cloudera.com>
+Date: Fri, 25 Aug 2017 11:51:47 -0700
+Subject: [PATCH] CLDR Patch 11: IMPALA-5849: Don't use compile-time checks to
+ disable TLS1.2
+
+This patch slightly changes the TLS configuration code to remove the
+compile-time checks that were used to disable 1.1+ support based on the
+OpenSSL library on the build machine.
+
+Instead, we define the symbols we need ourselves if necessary, and rely
+on runtime behaviour to catch errors or unsupported configurations.
+---
+ lib/cpp/src/thrift/transport/TSSLSocket.cpp | 33 +++++++++++++++++++++--------
+ 1 file changed, 24 insertions(+), 9 deletions(-)
+
+diff --git a/lib/cpp/src/thrift/transport/TSSLSocket.cpp b/lib/cpp/src/thrift/transport/TSSLSocket.cpp
+index 90bc646..1318da1 100644
+--- a/lib/cpp/src/thrift/transport/TSSLSocket.cpp
++++ b/lib/cpp/src/thrift/transport/TSSLSocket.cpp
+@@ -39,7 +39,18 @@
+ #include "TSSLSocket.h"
+ 
+ #define OPENSSL_VERSION_NO_THREAD_ID 0x10000000L
+-#define OPENSSL_VERSION_HAS_TLS_1_1 0x10001000L
++
++// If these constants aren't defined, we still need them to compile.
++#ifndef SSL_OP_NO_TLSv1
++#define SSL_OP_NO_TLSv1 0x04000000L
++#endif
++#ifndef SSL_OP_NO_TLSv1_1
++#define SSL_OP_NO_TLSv1_1 0x10000000L
++#endif
++#ifndef SSL_OP_NO_TLSv1_2
++#define SSL_OP_NO_TLSv1_2 0x08000000L
++#endif
++
+ 
+ using namespace std;
+ using namespace boost;
+@@ -63,27 +74,27 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
+ 
+   switch (protocol) {
+     case TLSv1_0:
+-      ctx_ = SSL_CTX_new(TLSv1_method());
++      options |= (SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2);
+       break;
+-#if OPENSSL_VERSION_NUMBER >= OPENSSL_VERSION_HAS_TLS_1_1
+     case TLSv1_1:
+-      ctx_ = SSL_CTX_new(TLSv1_1_method());
++      options |= (SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_2);
+       break;
+     case TLSv1_2:
+-      ctx_ = SSL_CTX_new(TLSv1_2_method());
++      options |= (SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1);
+       break;
+     case TLSv1_2_plus:
+-      options |= SSL_OP_NO_TLSv1_1;
++      options |= (SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1);
++      break;
+     case TLSv1_1_plus:
+       options |= SSL_OP_NO_TLSv1;
+-#endif
++      break;
+     case TLSv1_0_plus:
+-      ctx_ = SSL_CTX_new(SSLv23_method());
+       break;
+     default:
+       throw TSSLException("SSL_CTX_new: Unknown protocol");
+   }
+ 
++  ctx_ = SSL_CTX_new(SSLv23_method());
+   if (ctx_ == NULL) {
+     string errors;
+     buildErrors(errors);
+@@ -91,7 +102,11 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
+   }
+   SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
+ 
+-  SSL_CTX_set_options(ctx_, options);
++  if ((SSL_CTX_set_options(ctx_, options) & options) != options) {
++    string errors;
++    buildErrors(errors);
++    throw TSSLException("SSL_CTX_set_options: " + errors);
++  }
+ }
+ 
+ SSLContext::~SSLContext() {
+-- 
+2.7.1
+
