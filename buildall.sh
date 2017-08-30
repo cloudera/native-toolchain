@@ -73,18 +73,11 @@ fi
   if (( BUILD_HISTORICAL )) ; then
     LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
     LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
-  fi
-  # LLVM 3.8 is the default. However GCC5+ switched to a new C++ ABI that is only
-  # supported by LLVM 3.9+, so in that (still experimental) case, build a later LLVM
-  # version.
-  # TODO: LLVM 3.9 will become the default at some point.
-  if [[ $GCC_VERSION = '4.9.2' ]]; then
     LLVM_VERSION=3.8.0-p1 $SOURCE_DIR/source/llvm/build.sh
     LLVM_VERSION=3.8.0-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
-  else
-    LLVM_VERSION=3.9.1-p1 $SOURCE_DIR/source/llvm/build.sh
-    LLVM_VERSION=3.9.1-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
   fi
+  LLVM_VERSION=3.9.1 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=3.9.1-asserts $SOURCE_DIR/source/llvm/build.sh
 )
 
 ################################################################################
