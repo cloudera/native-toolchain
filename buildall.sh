@@ -285,7 +285,7 @@ FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
 (
   export BOOST_VERSION=1.57.0-p3
   export KUDU_GITHUB_URL=http://github.mtv.cloudera.com/CDH/kudu
-  export KUDU_VERSION=eacd8b4
+  export KUDU_VERSION=cdh5.13.0-rc5
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else
