@@ -38,7 +38,7 @@ if [[ "$OSTYPE" =~ ^linux ]]; then
   fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Setting the C++ stlib to libstdc++ on Mac instead of the default libc++
-  ARCH_FLAGS="${ARCH_FLAGS} -stdlib=libstdc++"
+  ARCH_FLAGS="-stdlib=libstdc++"
 fi
 
 if [[ $SYSTEM_GCC -eq 0 ]]; then
