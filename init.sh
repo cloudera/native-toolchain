@@ -105,7 +105,7 @@ export AUTOMAKE_VERSION
 : ${LIBTOOL_VERSION=2.4.2}
 export LIBTOOL_VERSION
 
-# Set the build label from the Jenkins envirment if it was not already set, or fall
+# Set the build label from the Jenkins environment if it was not already set, or fall
 # back to 'generic'.
 : ${label="generic"}
 : ${BUILD_LABEL=$label}
