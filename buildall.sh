@@ -166,8 +166,9 @@ GFLAGS_VERSION=2.2.0-p1 $SOURCE_DIR/source/gflags/build.sh
 if (( BUILD_HISTORICAL )); then
   GPERFTOOLS_VERSION=2.0-p1 $SOURCE_DIR/source/gperftools/build.sh
   GPERFTOOLS_VERSION=2.3 $SOURCE_DIR/source/gperftools/build.sh
+  GPERFTOOLS_VERSION=2.5 $SOURCE_DIR/source/gperftools/build.sh
 fi
-GPERFTOOLS_VERSION=2.5 $SOURCE_DIR/source/gperftools/build.sh
+GPERFTOOLS_VERSION=2.6.3 $SOURCE_DIR/source/gperftools/build.sh
 
 ################################################################################
 # Build glog
