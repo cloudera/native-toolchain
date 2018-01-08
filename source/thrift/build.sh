@@ -20,61 +20,92 @@ set -u
 
 set -o pipefail
 
-source $SOURCE_DIR/functions.sh
+source "${SOURCE_DIR}"/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
-prepare $THIS_DIR
+prepare "${THIS_DIR}"
 
 if needs_build_package ; then
   # Download the dependency from S3
-  download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
+  download_dependency "${PACKAGE}" "${PACKAGE_STRING}.tar.gz" "${THIS_DIR}"
 
-  setup_package_build $PACKAGE $PACKAGE_VERSION
+  setup_package_build "${PACKAGE}" "${PACKAGE_VERSION}"
 
-  BOOST_ROOT=$BUILD_DIR/boost-$BOOST_VERSION
-  ZLIB_ROOT=$BUILD_DIR/zlib-$ZLIB_VERSION
+  BISON_ROOT="${BUILD_DIR}"/bison-"${BISON_VERSION}"
+  BOOST_ROOT="${BUILD_DIR}"/boost-"${BOOST_VERSION}"
+  OPENSSL_ROOT="${BUILD_DIR}"/openssl-"${OPENSSL_VERSION}"
+  ZLIB_ROOT="${BUILD_DIR}"/zlib-"${ZLIB_VERSION}"
 
-  # If we build in local dev mode, use the bundled OpenSSL
-  if [[ "$PRODUCTION" -eq "0" || "$OSTYPE" == "darwin"* ]]; then
-    OPENSSL_ROOT=$BUILD_DIR/openssl-$OPENSSL_VERSION
-    OPENSSL_ARGS=--with-openssl=$OPENSSL_ROOT
+  read OPENSSL_MAJ_VER OPENSSL_MIN_VER OPENSSL_PATCH_VER <<< `openssl version |  \
+      sed -r 's/^OpenSSL ([0-9]+)\.([0-9]+)\.([0-9a-z]+).*/\1 \2 \3/'`
+  # Build with system openssl if the system openssl version >= 1.0.1. Build with the
+  # bundled openssl otherwise.
+  if [[ "${PRODUCTION}" -eq "0" || "${OSTYPE}" == "darwin"* || \
+      "${OPENSSL_MAJ_VER}" == "0" || \
+      ( "${OPENSSL_MIN_VER}" ==  "0" &&  "$OPENSSL_PATCH_VER" < "1" ) ]]; then
+    OPENSSL_ARGS=--with-openssl="${OPENSSL_ROOT}"
+    export LDFLAGS="-L${OPENSSL_ROOT}/lib ${LDFLAGS}"
+    # This is required for autoconf to detect "GNU libc compatible malloc"
+    export LD_LIBRARY_PATH="${OPENSSL_ROOT}/lib:${LD_LIBRARY_PATH:-}"
   else
     OPENSSL_ARGS=
   fi
 
-  if [ -d "${PIC_LIB_PATH:-}" ]; then
-    PIC_LIB_OPTIONS="--with-zlib=${PIC_LIB_PATH} "
+  if [[ -d "${PIC_LIB_PATH:-}" ]]; then
+    PIC_LIB_OPTIONS="--with-zlib=${PIC_LIB_PATH}"
   fi
 
-  if [[ "$OSTYPE" == "darwin"* ]]; then
+  if [[ "${OSTYPE}" == "darwin"* ]]; then
     wrap aclocal -I ./aclocal
     wrap glibtoolize --copy
     wrap autoconf
   fi
 
-  JAVA_PREFIX=${LOCAL_INSTALL}/java PY_PREFIX=${LOCAL_INSTALL}/python \
-    wrap ./configure --with-pic --prefix=${LOCAL_INSTALL} \
+  PATH="${BISON_ROOT}"/bin:"${PATH}" \
+    PY_PREFIX="${LOCAL_INSTALL}"/python \
+    wrap ./configure \
+    --with-pic \
+    --prefix="${LOCAL_INSTALL}" \
     --enable-tutorial=no \
     --with-c_glib=no \
-    --with-php=no --with-java=no --with-perl=no --with-erlang=no --with-csharp=no \
-    --with-ruby=no --with-haskell=no --with-erlang=no --with-d=no \
-    --with-boost=${BOOST_ROOT} \
-    --with-zlib=${ZLIB_ROOT} \
+    --with-php=no \
+    --with-java=no \
+    --with-perl=no \
+    --with-erlang=no \
+    --with-csharp=no \
+    --with-ruby=no \
+    --with-haskell=no \
+    --with-erlang=no \
+    --with-d=no \
+    --with-boost="${BOOST_ROOT}" \
+    --with-zlib="${ZLIB_ROOT}" \
     --with-nodejs=no \
     --with-lua=no \
-    --with-go=no --with-qt4=no --with-libevent=no ${PIC_LIB_OPTIONS:-} $OPENSSL_ARGS $CONFIGURE_FLAG_BUILD_SYS
-  MAKEFLAGS="" wrap make   # Build fails with -j${BUILD_THREADS}
-  wrap make install
+    --with-go=no \
+    --with-qt4=no \
+    --with-libevent=no \
+    ${PIC_LIB_OPTIONS:-} \
+    ${OPENSSL_ARGS} \
+    ${CONFIGURE_FLAG_BUILD_SYS}
+  # The error code is zero if one more more libraries can be built. To ensure that C++
+  # and python libraries are built the output should be checked.
+  if ! grep -q "Building C++ Library \.* : yes" "${BUILD_LOG}"; then
+    echo "Thrift cpp lib configuration failed."
+    exit 1
+  fi
+  if ! grep -q "Building Python Library \.* : yes" "${BUILD_LOG}"; then
+    echo "Thrift python lib configuration failed."
+    exit 1
+  fi
+  wrap make -j"${BUILD_THREADS}" install
   cd contrib/fb303
   rm -f config.cache
   chmod 755 ./bootstrap.sh
-  wrap ./bootstrap.sh --with-boost=${BOOST_ROOT}
+  wrap ./bootstrap.sh --with-boost="${BOOST_ROOT}"
   wrap chmod 755 configure
-  CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX=${LOCAL_INSTALL}/python wrap ./configure \
-    --with-boost=${BOOST_ROOT} \
-    --with-java=no --with-php=no --prefix=${LOCAL_INSTALL} \
-    --with-thriftpath=${LOCAL_INSTALL} $OPENSSL_ARGS
-  wrap make -j${BUILD_THREADS}
-  wrap make install
-
-  finalize_package_build $PACKAGE $PACKAGE_VERSION
+  CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX="${LOCAL_INSTALL}"/python wrap ./configure \
+    --with-boost="${BOOST_ROOT}" \
+    --with-java=no --with-php=no --prefix="${LOCAL_INSTALL}" \
+    --with-thriftpath="${LOCAL_INSTALL}" ${OPENSSL_ARGS}
+  wrap make -j"${BUILD_THREADS}" install
+  finalize_package_build "${PACKAGE}" "${PACKAGE_VERSION}"
 fi
