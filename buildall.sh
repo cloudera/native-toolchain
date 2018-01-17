@@ -123,10 +123,17 @@ OPENSSL_VERSION=1.0.2l $SOURCE_DIR/source/openssl/build.sh
 ################################################################################
 ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
 
+
 ################################################################################
-# Thrift
-#  * depends on boost, zlib and openssl
+# Build Bison
 ################################################################################
+BISON_VERSION=3.0.4 $SOURCE_DIR/source/bison/build.sh
+
+################################################################################
+# Build Thrift
+#  * depends on bison, boost, zlib and openssl
+################################################################################
+export BISON_VERSION=3.0.4
 export BOOST_VERSION=1.57.0-p3
 export ZLIB_VERSION=1.2.8
 export OPENSSL_VERSION=1.0.2l
@@ -143,11 +150,12 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
     THRIFT_VERSION=0.9.0-p9 $SOURCE_DIR/source/thrift/build.sh
     THRIFT_VERSION=0.9.0-p10 $SOURCE_DIR/source/thrift/build.sh
   fi
-  THRIFT_VERSION=0.9.0-p11 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.3-p2 $SOURCE_DIR/source/thrift/build.sh
 else
   THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
 fi
 
+export -n BISON_VERSION
 export -n BOOST_VERSION
 export -n ZLIB_VERSION
 export -n OPENSSL_VERSION

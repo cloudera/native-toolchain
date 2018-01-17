@@ -1,0 +1,39 @@
+From a06851c816d99c569cf02d41970bad72ffe8f26e Mon Sep 17 00:00:00 2001
+From: Jens Geyer <jensg@apache.org>
+Date: Sun, 21 Feb 2016 15:07:51 +0100
+Subject: [PATCH] THRIFT-3650 incorrect union serialization Client: Compiler
+ (general) Patch: Jens Geyer
+
+---
+ compiler/cpp/src/parse/t_struct.h | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/compiler/cpp/src/parse/t_struct.h b/compiler/cpp/src/parse/t_struct.h
+index 93cb089..d19447c 100644
+--- a/compiler/cpp/src/parse/t_struct.h
++++ b/compiler/cpp/src/parse/t_struct.h
+@@ -66,12 +66,16 @@ public:
+   void validate_union_member(t_field* field) {
+     if (is_union_ && (!name_.empty())) {
+ 
+-      // unions can't have required fields
+-      if (field->get_req() == t_field::T_REQUIRED) {
+-        pwarning(1,
+-                 "Required field %s of union %s set to optional.\n",
+-                 field->get_name().c_str(),
+-                 name_.c_str());
++      // 1) unions can't have required fields
++      // 2) union members are implicitly optional, otherwise bugs like THRIFT-3650 wait to happen
++      if (field->get_req() != t_field::T_OPTIONAL) {
++        // no warning on default requiredness, but do warn on anything else that is explicitly asked for
++        if(field->get_req() != t_field::T_OPT_IN_REQ_OUT) {
++          pwarning(1,
++                   "Union %s field %s: union members must be optional, ignoring specified requiredness.\n",
++                   name_.c_str(),
++                   field->get_name().c_str());
++        }
+         field->set_req(t_field::T_OPTIONAL);
+       }
+ 
+-- 
+2.7.0.windows.1
