@@ -105,11 +105,13 @@ export AUTOMAKE_VERSION
 : ${LIBTOOL_VERSION=2.4.2}
 export LIBTOOL_VERSION
 
-# Set the build label from the Jenkins environment if it was not already set, or fall
-# back to 'generic'.
-: ${label="generic"}
-: ${BUILD_LABEL=$label}
+set -x
+# Set the build target platform from the Jenkins environment if it was not
+# already set, or fall back to 'generic'.
+: ${BUILD_TARGET_LABEL="generic"}
+: ${BUILD_LABEL=$BUILD_TARGET_LABEL}
 export BUILD_LABEL
+set +x
 
 # Determine the number of build threads
 BUILD_THREADS=$(getconf _NPROCESSORS_ONLN)
