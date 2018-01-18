@@ -53,7 +53,7 @@ function download_url() {
   local URL=$1
   local OUTPUT_PATH="${2-$(basename $URL)}"
   if [[ ! -f "$OUTPUT_PATH" ]]; then
-    ARGS=()
+    ARGS=(--progress=dot:giga)
     if [[ $DEBUG -eq 0 ]]; then
       ARGS+=(-q)
     fi
@@ -356,7 +356,9 @@ function build_dist_package() {
   git rev-parse HEAD > \
     ${BUILD_DIR}/${PACKAGE_STRING}${PATCH_VERSION}/toolchain-build-hash.txt
 
-  tar zcf ${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz\
+  PACKAGE_FINAL_TGZ="${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz"
+
+  tar zcf ${PACKAGE_FINAL_TGZ}\
     --directory=${BUILD_DIR} \
     ${PACKAGE_STRING}${PATCH_VERSION}
 
@@ -368,15 +370,18 @@ function build_dist_package() {
 
   # Package and upload the archive to the artifactory
   if [[ "PUBLISH_DEPENDENCIES" -eq "1" ]]; then
-    mvn deploy:deploy-file -DgroupId=com.cloudera.toolchain\
+    mvn -B deploy:deploy-file -DgroupId=com.cloudera.toolchain\
+      -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn\
       -DartifactId="${PACKAGE}"\
       -Dversion="${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}-${TOOLCHAIN_BUILD_ID}"\
-      -Dfile="${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz"\
+      -Dfile="${PACKAGE_FINAL_TGZ}"\
       -Durl="http://maven.jenkins.cloudera.com:8081/artifactory/cdh-staging-local/"\
       -DrepositoryId=cdh.releases.repo -Dpackaging=tar.gz -Dclassifier=${BUILD_LABEL} || $RET_VAL
 
-    aws s3 cp "${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz" \
-      s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${BUILD_LABEL}.tar.gz \
+    PACKAGE_S3_DESTINATION="s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${BUILD_LABEL}.tar.gz"
+    echo "Uploading ${PACKAGE_FINAL_TGZ} to ${PACKAGE_S3_DESTINATION}"
+    aws s3 cp --only-show-errors "${PACKAGE_FINAL_TGZ}" \
+      "${PACKAGE_S3_DESTINATION}" \
       --region=us-west-1 || $RET_VAL
   fi
 }
