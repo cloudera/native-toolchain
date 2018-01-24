@@ -150,6 +150,9 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
     THRIFT_VERSION=0.9.0-p9 $SOURCE_DIR/source/thrift/build.sh
     THRIFT_VERSION=0.9.0-p10 $SOURCE_DIR/source/thrift/build.sh
   fi
+  # Required until Python 2.6 compatibility issues have been sorted out with
+  # thrift-0.9.3.
+  THRIFT_VERSION=0.9.0-p11 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.9.3-p2 $SOURCE_DIR/source/thrift/build.sh
 else
   THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
@@ -174,8 +177,9 @@ GFLAGS_VERSION=2.2.0-p1 $SOURCE_DIR/source/gflags/build.sh
 if (( BUILD_HISTORICAL )); then
   GPERFTOOLS_VERSION=2.0-p1 $SOURCE_DIR/source/gperftools/build.sh
   GPERFTOOLS_VERSION=2.3 $SOURCE_DIR/source/gperftools/build.sh
-  GPERFTOOLS_VERSION=2.5 $SOURCE_DIR/source/gperftools/build.sh
 fi
+# IMPALA-6414: Required until issues with 2.6.3 have been sorted out.
+GPERFTOOLS_VERSION=2.5 $SOURCE_DIR/source/gperftools/build.sh
 GPERFTOOLS_VERSION=2.6.3 $SOURCE_DIR/source/gperftools/build.sh
 
 ################################################################################

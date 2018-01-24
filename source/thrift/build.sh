@@ -86,7 +86,7 @@ if needs_build_package ; then
     ${PIC_LIB_OPTIONS:-} \
     ${OPENSSL_ARGS} \
     ${CONFIGURE_FLAG_BUILD_SYS}
-  # The error code is zero if one more more libraries can be built. To ensure that C++
+  # The error code is zero if one or more libraries can be built. To ensure that C++
   # and python libraries are built the output should be checked.
   if ! grep -q "Building C++ Library \.* : yes" "${BUILD_LOG}"; then
     echo "Thrift cpp lib configuration failed."
@@ -96,7 +96,7 @@ if needs_build_package ; then
     echo "Thrift python lib configuration failed."
     exit 1
   fi
-  wrap make -j"${BUILD_THREADS}" install
+  wrap make install # Thrift 0.9.0 doesn't build with -j${BUILD_THREADS}
   cd contrib/fb303
   rm -f config.cache
   chmod 755 ./bootstrap.sh
