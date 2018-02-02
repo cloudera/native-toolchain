@@ -312,3 +312,15 @@ TPC_DS_VERSION=2.1.0 $SOURCE_DIR/source/tpc-ds/build.sh
 # Build KRB5
 ################################################################################
 KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
+
+################################################################################
+# Build ORC
+################################################################################
+(
+  export LZ4_VERSION=1.7.5
+  export PROTOBUF_VERSION=2.6.1
+  export SNAPPY_VERSION=1.1.4
+  export ZLIB_VERSION=1.2.8
+  export ORC_VERSION=1.4.3-p2
+  $SOURCE_DIR/source/orc/build.sh
+)
