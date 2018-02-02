@@ -1,0 +1,135 @@
+From fe5c977e660b356de7720715569099529c4369a2 Mon Sep 17 00:00:00 2001
+From: Tim Armstrong <tarmstrong@cloudera.com>
+Date: Fri, 9 Feb 2018 16:21:30 -0800
+Subject: Allow building against external versions of dependencies
+
+TODO: remove this patch for later versions where ORC-266 fixes it.
+ORC-266 couldn't be cleanly cherry-picked to the 1.4.3 branch.
+
+---
+ CMakeLists.txt          | 56 +++++++++++++++++++++++++++++++++++++------------
+ c++/libs/CMakeLists.txt | 16 ++++++++++----
+ c++/src/CMakeLists.txt  |  4 +++-
+ 3 files changed, 58 insertions(+), 18 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f8fe7b6..a14e8e6 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -23,6 +23,18 @@ SET(ORC_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.$
+ option (BUILD_JAVA
+     "Include ORC Java library in the build process"
+      ON)
++option (BUILD_LZ4
++     "Build and use vendored LZ4 as part of build process"
++     ON)
++option (BUILD_PROTOBUF
++     "Build and use vendored Protobuf as part of build process"
++     ON)
++option (BUILD_SNAPPY
++     "Build and use vendored Snappy as part of build process"
++     ON)
++option (BUILD_ZLIB
++     "Build and use vendored ZLIB as part of build process"
++     ON)
+ 
+ # Make sure that a build type is selected
+ if (NOT CMAKE_BUILD_TYPE)
+@@ -47,27 +59,45 @@ if(NOT APPLE AND NOT MSVC)
+   list (APPEND GMOCK_LIBRARIES pthread)
+ endif(NOT APPLE AND NOT MSVC)
+ 
+-set (LZ4_VERSION "r131")
+-set (LZ4_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/c++/libs/lz4-${LZ4_VERSION}/lib")
++if (BUILD_LZ4)
++  set (LZ4_VERSION "r131")
++  set (LZ4_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/c++/libs/lz4-${LZ4_VERSION}/lib")
++else ()
++  link_directories(${LZ4_LIB_DIR})
++endif ()
+ set (LZ4_LIBRARIES lz4)
+ 
+ set (PROTOBUF_VERSION "2.6.0")
+-set (PROTOBUF_INCLUDE_DIRS
++if (BUILD_PROTOBUF)
++  set (PROTOBUF_INCLUDE_DIRS
+      "${CMAKE_SOURCE_DIR}/c++/libs/protobuf-${PROTOBUF_VERSION}/src")
++  set (PROTOBUF_EXECUTABLE
++      "${CMAKE_BINARY_DIR}/c++/libs/protobuf-${PROTOBUF_VERSION}/protoc")
++else ()
++  link_directories(${PROTOBUF_LIB_DIR})
++endif ()
+ set (PROTOBUF_LIBRARIES protobuf)
+-set (PROTOBUF_EXECUTABLE "${CMAKE_BINARY_DIR}/c++/libs/protobuf-${PROTOBUF_VERSION}/protoc")
+ 
+-set (SNAPPY_VERSION "1.1.2")
+-set (SNAPPY_INCLUDE_DIRS
+-     "${CMAKE_SOURCE_DIR}/c++/libs/snappy-${SNAPPY_VERSION}")
++if (BUILD_SNAPPY)
++  set (SNAPPY_VERSION "1.1.2")
++  set (SNAPPY_INCLUDE_DIRS
++       "${CMAKE_SOURCE_DIR}/c++/libs/snappy-${SNAPPY_VERSION}")
++else ()
++  link_directories(${SNAPPY_LIB_DIR})
++endif ()
+ set (SNAPPY_LIBRARIES snappy)
+ 
+-set (ZLIB_VERSION "1.2.8")
+-set (ZLIB_INCLUDE_DIRS
+-     "${CMAKE_SOURCE_DIR}/c++/libs/zlib-${ZLIB_VERSION}"
+-     "${CMAKE_BINARY_DIR}/c++/libs/zlib-${ZLIB_VERSION}"
+-    )
+-set (ZLIB_LIBRARIES zlib)
++if (BUILD_ZLIB)
++  set (ZLIB_VERSION "1.2.8")
++  set (ZLIB_INCLUDE_DIRS
++       "${CMAKE_SOURCE_DIR}/c++/libs/zlib-${ZLIB_VERSION}"
++       "${CMAKE_BINARY_DIR}/c++/libs/zlib-${ZLIB_VERSION}"
++      )
++  set (ZLIB_LIBRARIES zlib)
++else ()
++  link_directories(${ZLIB_LIB_DIR})
++  set (ZLIB_LIBRARIES z)
++endif ()
+ 
+ #
+ # Compiler specific flags
+diff --git a/c++/libs/CMakeLists.txt b/c++/libs/CMakeLists.txt
+index e298f0d..964fa15 100644
+--- a/c++/libs/CMakeLists.txt
++++ b/c++/libs/CMakeLists.txt
+@@ -19,7 +19,15 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+ endif ()
+ 
+ add_subdirectory(gmock-${GMOCK_VERSION})
+-add_subdirectory(zlib-${ZLIB_VERSION})
+-add_subdirectory(protobuf-${PROTOBUF_VERSION})
+-add_subdirectory(snappy-${SNAPPY_VERSION})
+-add_subdirectory(lz4-${LZ4_VERSION})
++if (BUILD_ZLIB)
++  add_subdirectory(zlib-${ZLIB_VERSION})
++endif ()
++if (BUILD_PROTOBUF)
++  add_subdirectory(protobuf-${PROTOBUF_VERSION})
++endif ()
++if (BUILD_SNAPPY)
++  add_subdirectory(snappy-${SNAPPY_VERSION})
++endif ()
++if (BUILD_LZ4)
++  add_subdirectory(lz4-${LZ4_VERSION})
++endif ()
+diff --git a/c++/src/CMakeLists.txt b/c++/src/CMakeLists.txt
+index d717fb4..8b0c09a 100644
+--- a/c++/src/CMakeLists.txt
++++ b/c++/src/CMakeLists.txt
+@@ -165,4 +165,6 @@ target_link_libraries (orc
+   ${LZ4_LIBRARIES}
+   )
+ 
+-add_dependencies(orc protoc)
++if (BUILD_PROTOBUF)
++  add_dependencies(orc protoc)
++endif ()
+-- 
+2.7.4
+
