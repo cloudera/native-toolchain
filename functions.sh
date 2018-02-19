@@ -372,11 +372,9 @@ function build_dist_package() {
       -DrepositoryId=cdh.releases.repo -Dpackaging=tar.gz -Dclassifier=${label} || $RET_VAL
 
     # Publish to S3 as well
-    if [[ -n "${AWS_ACCESS_KEY_ID}" && -n "${AWS_SECRET_ACCESS_KEY}" && -n "${S3_BUCKET}" ]]; then
-      aws s3 cp "${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz" \
-        s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${label}.tar.gz \
-        --region=us-west-1 || $RET_VAL
-    fi
+    aws s3 cp "${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz" \
+      s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${label}.tar.gz \
+      --region=us-west-1 || $RET_VAL
 
   fi
 }
