@@ -69,28 +69,22 @@ function build {
 
   cd $THIS_DIR
   # Allow overriding of the github URL from the environment - e.g. if we want to build
-  # a hash from a forked repo.
-  KUDU_GITHUB_URL=${KUDU_GITHUB_URL:-https://github.com/apache/kudu}
-  download_url ${KUDU_GITHUB_URL}/archive/$PACKAGE_VERSION.tar.gz kudu-$PACKAGE_VERSION.tar.gz
+  # a hash from a forked repo. Fetch over SSH because github.com does not allow TLS < V1.2
+  # connections and therefore https won't work for some older distributions.
+  KUDU_GITHUB_URL=${KUDU_GITHUB_URL:-git@github.com:apache/kudu.git}
+  KUDU_SOURCE_DIR=kudu-$PACKAGE_VERSION
+  if [[ ! -d "$KUDU_SOURCE_DIR" ]]; then
+    git clone $KUDU_GITHUB_URL $KUDU_SOURCE_DIR
+    pushd $KUDU_SOURCE_DIR
+    git checkout $PACKAGE_VERSION
+    popd
+  fi
 
   if ! needs_build_package; then
     return
   fi
 
-  # If the version is a git hash, the name of the root dir in the archive includes the
-  # full hash even if an abbreviated hash was given through the download URL. The
-  # difference would lead to a mismatch in expected vs actual dir name after extraction.
-  # So the extracted root dir name will be found by inspection.
-  EXTRACTED_DIR_NAME=$(tar -tz --exclude='kudu-*/*' -f kudu-$PACKAGE_VERSION.tar.gz)
-  # Removing trailing slash
-  EXTRACTED_DIR_NAME=${EXTRACTED_DIR_NAME%/}
-  if [[ $(wc -l <<< "$EXTRACTED_DIR_NAME") -ne 1 ]]; then
-    echo Failed to find the name of the root folder in the Kudu tarball. The search \
-        command output was: "'$EXTRACTED_DIR_NAME'".
-    exit 1
-  fi
-  setup_package_build $PACKAGE $PACKAGE_VERSION kudu-$PACKAGE_VERSION.tar.gz \
-      $EXTRACTED_DIR_NAME
+  setup_package_build $PACKAGE $PACKAGE_VERSION
 
   # Kudu's dependencies are not in the toolchain. They could be added later.
   cd thirdparty
@@ -132,7 +126,6 @@ function build {
   popd
 
   cd $THIS_DIR
-  rm -rf $EXTRACTED_DIR_NAME kudu-$PACKAGE_VERSION.tar.gz
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 }
