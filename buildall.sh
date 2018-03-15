@@ -290,7 +290,8 @@ FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
 ################################################################################
 (
   export BOOST_VERSION=1.57.0-p3
-  export KUDU_VERSION=b315d0e
+  export KUDU_GITHUB_URL=git://github.mtv.cloudera.com/cdh/kudu.git
+  export KUDU_VERSION=cdh5.15-impala-toolchain
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else
