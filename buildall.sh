@@ -324,3 +324,8 @@ KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
   export ORC_VERSION=1.4.3-p2
   $SOURCE_DIR/source/orc/build.sh
 )
+
+################################################################################
+# CCTZ
+################################################################################
+CCTZ_VERSION=2.2 $SOURCE_DIR/source/cctz/build.sh
