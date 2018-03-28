@@ -75,9 +75,11 @@ fi
     LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
     LLVM_VERSION=3.8.0-p1 $SOURCE_DIR/source/llvm/build.sh
     LLVM_VERSION=3.8.0-asserts-p1 $SOURCE_DIR/source/llvm/build.sh
+    LLVM_VERSION=3.9.1 $SOURCE_DIR/source/llvm/build.sh
+    LLVM_VERSION=3.9.1-asserts $SOURCE_DIR/source/llvm/build.sh
   fi
-  LLVM_VERSION=3.9.1 $SOURCE_DIR/source/llvm/build.sh
-  LLVM_VERSION=3.9.1-asserts $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=5.0.1 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=5.0.1-asserts $SOURCE_DIR/source/llvm/build.sh
 )
 
 ################################################################################
