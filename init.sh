@@ -123,7 +123,9 @@ export BUILD_THREADS
 : ${BUILD_HISTORICAL=0}
 
 # SOURCE DIR for the current script
-export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
+if [ -z "$SOURCE_DIR" ]; then
+    export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
+fi
 
 if [[ $DEBUG -eq 1 ]]; then
   set -x
