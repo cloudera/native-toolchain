@@ -155,7 +155,7 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
   # Required until Python 2.6 compatibility issues have been sorted out with
   # thrift-0.9.3.
   THRIFT_VERSION=0.9.0-p11 $SOURCE_DIR/source/thrift/build.sh
-  THRIFT_VERSION=0.9.3-p3 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.3-p4 $SOURCE_DIR/source/thrift/build.sh
 else
   THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
 fi
