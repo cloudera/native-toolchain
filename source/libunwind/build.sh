@@ -30,6 +30,8 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
+  # Disable minidebuginfo, which depends on liblzma, until/unless we decide to
+  # add liblzma to thirdparty.
   wrap ./configure -disable-minidebuginfo --with-pic --prefix=$LOCAL_INSTALL $CONFIGURE_FLAG_BUILD_SYS
   wrap make -j${BUILD_THREADS:-4} install
 
