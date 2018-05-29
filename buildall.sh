@@ -269,7 +269,10 @@ fi
 ################################################################################
 # Build Libunwind
 ################################################################################
-LIBUNWIND_VERSION=1.3-rc1-p2 $SOURCE_DIR/source/libunwind/build.sh
+if (( BUILD_HISTORICAL )) ; then
+  LIBUNWIND_VERSION=1.1 $SOURCE_DIR/source/libunwind/build.sh
+fi
+LIBUNWIND_VERSION=1.1-p1 $SOURCE_DIR/source/libunwind/build.sh
 
 ################################################################################
 # Build Breakpad
