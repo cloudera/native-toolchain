@@ -23,13 +23,19 @@ function build_llvm() {
   rm -Rf "$THIS_DIR/${PACKAGE_STRING}.src"
   rm -Rf "$THIS_DIR/build-${PACKAGE_STRING}"
 
-  # Patches are based on source version. Pass to setup_package_build function
-  # with this var.
-  PATCH_DIR=${THIS_DIR}/llvm-${SOURCE_VERSION}-patches
+  # The llvm source is composed of multiple archives, some of which are optional.
+  # To allow unified patches across the entirety of the source, we extract all of the
+  # desired archives in the appropriate places, and then use
+  # setup_extracted_package_build, which can then apply patches across the whole
+  # source tree.
+  EXTRACTED_DIR="llvm-${SOURCE_VERSION}.src"
+  TARGET_DIR="$PACKAGE_STRING.src"
 
-  setup_package_build $PACKAGE $PACKAGE_VERSION \
-      "$THIS_DIR/llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" \
-      "llvm-${SOURCE_VERSION}.src" "$PACKAGE_STRING.src"
+  extract_archive "$THIS_DIR/llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}"
+  if [ "$EXTRACTED_DIR" != "$TARGET_DIR" ]; then
+    mv "$EXTRACTED_DIR" "$TARGET_DIR"
+  fi
+  pushd "$TARGET_DIR"
 
   pushd tools
   # CLANG
@@ -53,7 +59,14 @@ function build_llvm() {
     popd
   fi
 
-  popd
+  popd # tools
+  popd # $TARGET_DIR
+
+  # Patches are based on source version. Pass to setup_extracted_package_build function
+  # with this var.
+  PATCH_DIR=${THIS_DIR}/llvm-${SOURCE_VERSION}-patches
+
+  setup_extracted_package_build $PACKAGE $PACKAGE_VERSION $TARGET_DIR
 
   PYTHON_EXECUTABLE=$BUILD_DIR/python-$PYTHON_VERSION/bin/python
   if [[ "$OSTYPE" == "darwin"* ]]; then

@@ -1,0 +1,55 @@
+From 3fb2bea8f0bf7a8aef8e1e615452f844e6535714 Mon Sep 17 00:00:00 2001
+From: Joe McDonnell <joemcdonnell@cloudera.com>
+Date: Mon, 18 Jun 2018 15:15:03 -0700
+Subject: [PATCH] [PATCH] Fix run-clang-tidy.py's output
+
+This makes a few changes to run-clang-tidy.py to ease Impala's
+use of it:
+1. It changes enforcement of the -quiet parameter so that -quiet
+   will also supress this script's output (except when there is
+   an error). During a successful run, the only output in this
+   mode is output from clang-tidy itself.
+2. It changes the invokation of clang-tidy from subprocess.call()
+   to subprocess.check_output(). This means that if clang-tidy
+   returns a non-zero error code, it will generate an exception
+   rather than being silently ignored. Also, it allows for output
+   from a single file to be contiguous due to the Global
+   Interpretor Lock.
+---
+ tools/clang/tools/extra/clang-tidy/tool/run-clang-tidy.py | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/tools/clang/tools/extra/clang-tidy/tool/run-clang-tidy.py b/tools/clang/tools/extra/clang-tidy/tool/run-clang-tidy.py
+index d9d827b..086c3fa 100755
+--- a/tools/clang/tools/extra/clang-tidy/tool/run-clang-tidy.py
++++ b/tools/clang/tools/extra/clang-tidy/tool/run-clang-tidy.py
+@@ -119,8 +119,13 @@ def run_tidy(args, tmpdir, build_path, queue):
+                                      tmpdir, build_path, args.header_filter,
+                                      args.extra_arg, args.extra_arg_before,
+                                      args.quiet)
+-    sys.stdout.write(' '.join(invocation) + '\n')
+-    subprocess.call(invocation)
++    if not args.quiet:
++      sys.stdout.write(' '.join(invocation) + '\n')
++    # If clang-tidy fails, this can throw an exception. Allow this to propagate
++    # for now.
++    clang_tidy_output = subprocess.check_output(invocation)
++    sys.stdout.write(clang_tidy_output)
++    sys.stdout.flush()
+     queue.task_done()
+ 
+ 
+@@ -180,7 +185,9 @@ def main():
+     if args.checks:
+       invocation.append('-checks=' + args.checks)
+     invocation.append('-')
+-    print(subprocess.check_output(invocation))
++    list_checks_output = subprocess.check_output(invocation)
++    if not args.quiet:
++      print(list_checks_output)
+   except:
+     print("Unable to run clang-tidy.", file=sys.stderr)
+     sys.exit(1)
+-- 
+1.9.1
+
