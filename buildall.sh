@@ -196,9 +196,10 @@ if (( BUILD_HISTORICAL )) ; then
       # CentOS 5 has issues with the glog patch, probably autotools is too old.
       GFLAGS_VERSION=2.2.0 GLOG_VERSION=0.3.3-p1 $SOURCE_DIR/source/glog/build.sh
   fi
+  GFLAGS_VERSION=2.2.0-p1 GLOG_VERSION=0.3.4-p2 $SOURCE_DIR/source/glog/build.sh
 fi
 
-GFLAGS_VERSION=2.2.0-p1 GLOG_VERSION=0.3.4-p2 $SOURCE_DIR/source/glog/build.sh
+GFLAGS_VERSION=2.2.0-p1 GLOG_VERSION=0.3.4-p3 $SOURCE_DIR/source/glog/build.sh
 
 ################################################################################
 # Build gtest
