@@ -43,3 +43,19 @@ To build on Mac we cannot use a custom GCC, so we have to use
 the system compiler:
 
     SYSTEM_GCC=1 DEBUG=1 ./buildall.sh
+
+
+# How do I contribute code?
+
+First of all, you need to sign and return an
+["Individual Contributor Licensing Agreement" form](https://github.com/cloudera/native-toolchain/wiki/Individual-Contributor-License-Agreement-(ICLA))
+(or a [CCLA](https://github.com/cloudera/native-toolchain/wiki/Corporate-Contributor-License-Agreement-(CCLA)),
+if you’re contributing as part of your job), which is required before we can accept and
+redistribute your contribution. Once this is submitted - and you only need to do it once -
+you are free to start contributing.
+
+We use the native-toolchain project on https://gerrit.cloudera.org for code review.
+See the [Impala contributor guide](https://cwiki.apache.org/confluence/display/IMPALA/Contributing+to+Impala)
+for tips on code review etiquette and how to use gerrit.
+
+We track issues for native-toolchain on https://github.com/cloudera/native-toolchain.
