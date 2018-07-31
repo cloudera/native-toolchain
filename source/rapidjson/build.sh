@@ -30,8 +30,9 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
+  # RapidJson is header-only - just copy the headers and license.
   mkdir -p $LOCAL_INSTALL/include
-  wrap cp -R include/rapidjson $LOCAL_INSTALL/include
+  wrap cp -R license.txt include/rapidjson $LOCAL_INSTALL/include
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

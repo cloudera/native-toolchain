@@ -250,7 +250,9 @@ AVRO_VERSION=1.7.4-p4 $SOURCE_DIR/source/avro/build.sh
 ################################################################################
 # Build Rapidjson
 ################################################################################
+# Build two versions for now - the build time and size is fairly minimal.
 RAPIDJSON_VERSION=0.11 $SOURCE_DIR/source/rapidjson/build.sh
+RAPIDJSON_VERSION=1.1.0 $SOURCE_DIR/source/rapidjson/build.sh
 
 ################################################################################
 # Build BZip2
