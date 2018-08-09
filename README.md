@@ -46,16 +46,43 @@ the system compiler:
 
 
 # How do I contribute code?
+You need to first sign and return an
+[ICLA](https://github.com/cloudera/native-toolchain/blob/icla/Cloudera%20ICLA_25APR2018.pdf)
+and
+[CCLA](https://github.com/cloudera/native-toolchain/blob/icla/Cloudera%20CCLA_25APR2018.pdf)
+before we can accept and redistribute your contribution. Once these are submitted you are
+free to start contributing to native-toolchain. Submit these to CLA@cloudera.com.
 
-First of all, you need to sign and return an
-["Individual Contributor Licensing Agreement" form](https://github.com/cloudera/native-toolchain/wiki/Individual-Contributor-License-Agreement-(ICLA))
-(or a [CCLA](https://github.com/cloudera/native-toolchain/wiki/Corporate-Contributor-License-Agreement-(CCLA)),
-if you’re contributing as part of your job), which is required before we can accept and
-redistribute your contribution. Once this is submitted - and you only need to do it once -
-you are free to start contributing.
+## Find
+We use Github issues to track bugs for this project. Find an issue that you would like to
+work on (or file one if you have discovered a new issue!). If no-one is working on it,
+assign it to yourself only if you intend to work on it shortly.
 
-We use the native-toolchain project on https://gerrit.cloudera.org for code review.
-See the [Impala contributor guide](https://cwiki.apache.org/confluence/display/IMPALA/Contributing+to+Impala)
-for tips on code review etiquette and how to use gerrit.
+It’s a good idea to discuss your intended approach on the issue. You are much more
+likely to have your patch reviewed and committed if you’ve already got buy-in from the
+native-toolchain community before you start.
 
-We track issues for native-toolchain on https://github.com/cloudera/native-toolchain.
+## Fix
+Now start coding! As you are writing your patch, please keep the following things in mind:
+
+First, please include tests with your patch. If your patch adds a feature or fixes a bug
+and does not include tests, it will generally not be accepted. If you are unsure how to
+write tests for a particular component, please ask on the issue for guidance.
+
+Second, please keep your patch narrowly targeted to the problem described by the issue.
+It’s better for everyone if we maintain discipline about the scope of each patch. In
+general, if you find a bug while working on a specific feature, file a issue for the bug,
+check if you can assign it to yourself and fix it independently of the feature. This helps
+us to differentiate between bug fixes and features and allows us to build stable
+maintenance releases.
+
+Finally, please write a good, clear commit message, with a short, descriptive title and
+a message that is exactly long enough to explain what the problem was, and how it was
+fixed.
+
+Please post your patch to the native-toolchain project at https://gerrit.cloudera.org
+for review. See
+[Impala's guide on using gerrit](https://cwiki.apache.org/confluence/display/IMPALA/Using+Gerrit+to+submit+and+review+patches)
+to submit and review patches for instructions on how to send patches to
+http://gerrit.cloudera.org, except make sure to send your patch to the native-toolchain
+project instead of Impala-ASF.
