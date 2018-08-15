@@ -207,7 +207,7 @@ GFLAGS_VERSION=2.2.0-p1 GLOG_VERSION=0.3.4-p3 $SOURCE_DIR/source/glog/build.sh
 GTEST_VERSION=1.6.0 $SOURCE_DIR/source/gtest/build.sh
 
 # New versions of gtest are named googletest
-GOOGLETEST_VERSION=20151222 $SOURCE_DIR/source/googletest/build.sh
+GOOGLETEST_VERSION=1.8.0 $SOURCE_DIR/source/googletest/build.sh
 
 ################################################################################
 # Build Snappy
@@ -325,8 +325,9 @@ KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
   export PROTOBUF_VERSION=3.5.1
   export SNAPPY_VERSION=1.1.4
   export ZLIB_VERSION=1.2.8
-  export ORC_VERSION=1.4.3-p2
-  $SOURCE_DIR/source/orc/build.sh
+  export GOOGLETEST_VERSION=1.8.0
+  ORC_VERSION=1.4.3-p2 $SOURCE_DIR/source/orc/build.sh
+  ORC_VERSION=1.5.2-p1 $SOURCE_DIR/source/orc/build.sh
 )
 
 ################################################################################

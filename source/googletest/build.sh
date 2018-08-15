@@ -28,12 +28,15 @@ if needs_build_package ; then
   # Download the dependency from S3
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
 
-  setup_package_build $PACKAGE $PACKAGE_VERSION
+  # The extracted package dir has "release" in the name.
+  EXTRACTED_DIR="${PACKAGE}-release-${PACKAGE_VERSION}"
+  setup_package_build $PACKAGE $PACKAGE_VERSION "${PACKAGE_STRING}.tar.gz" \
+      "$EXTRACTED_DIR"
 
   pushd ..
   mkdir -p build-googletest-$GOOGLETEST_VERSION
   pushd build-googletest-$GOOGLETEST_VERSION
-  wrap cmake -DCMAKE_CXX_FLAGS="${CXXFLAGS}" -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL ../googletest-$GOOGLETEST_VERSION
+  wrap cmake -DCMAKE_CXX_FLAGS="${CXXFLAGS}" -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL "../${EXTRACTED_DIR}"
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
 

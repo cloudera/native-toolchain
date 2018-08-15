@@ -1,0 +1,25 @@
+From e1f79fbd2495ed4f09cf0930ecd36b459211477d Mon Sep 17 00:00:00 2001
+From: Tim Armstrong <tarmstrong@cloudera.com>
+Date: Wed, 15 Aug 2018 11:44:37 -0700
+Subject: [PATCH] ORC-396: also look for LZ4 libs in lib64 subdir
+
+---
+ cmake_modules/FindLZ4.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmake_modules/FindLZ4.cmake b/cmake_modules/FindLZ4.cmake
+index 581ebcb..e522a6f 100644
+--- a/cmake_modules/FindLZ4.cmake
++++ b/cmake_modules/FindLZ4.cmake
+@@ -30,7 +30,7 @@ find_path (LZ4_INCLUDE_DIR lz4.h HINTS
+ 
+ find_library (LZ4_LIBRARIES NAMES lz4 HINTS
+   ${_lz4_path}
+-  PATH_SUFFIXES "lib")
++  PATH_SUFFIXES "lib" "lib64")
+ 
+ if (LZ4_INCLUDE_DIR AND LZ4_LIBRARIES)
+   set (LZ4_FOUND TRUE)
+-- 
+2.7.4
+
