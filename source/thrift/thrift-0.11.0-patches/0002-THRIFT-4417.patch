@@ -1,0 +1,21 @@
+commit 2590988c02ac6c500266a802d3fe1bd25057e04b
+Author: James E. King, III <jking@apache.org>
+Date:   Sat Dec 9 12:21:37 2017 -0500
+
+    THRIFT-4417: Fix broken fb303 build, that occurred after conversion to stdcxx::shared_ptr
+    Patch: Stanislav Korolev
+    
+    This closes #1439
+
+diff --git a/contrib/fb303/cpp/FacebookBase.h b/contrib/fb303/cpp/FacebookBase.h
+index 2159c95..daa5246 100644
+--- a/contrib/fb303/cpp/FacebookBase.h
++++ b/contrib/fb303/cpp/FacebookBase.h
+@@ -22,6 +22,7 @@
+ 
+ #include "FacebookService.h"
+ 
++#include <boost/shared_ptr.hpp>
+ #include <thrift/server/TServer.h>
+ #include <thrift/concurrency/Mutex.h>
+ 
