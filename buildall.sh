@@ -173,7 +173,7 @@ export -n OPENSSL_VERSION
 if (( BUILD_HISTORICAL )); then
     GFLAGS_VERSION=2.0 $SOURCE_DIR/source/gflags/build.sh
 fi
-GFLAGS_VERSION=2.2.0-p1 $SOURCE_DIR/source/gflags/build.sh
+GFLAGS_VERSION=2.2.0-p2 $SOURCE_DIR/source/gflags/build.sh
 
 ################################################################################
 # Build gperftools
@@ -199,7 +199,7 @@ if (( BUILD_HISTORICAL )) ; then
   GFLAGS_VERSION=2.2.0-p1 GLOG_VERSION=0.3.4-p2 $SOURCE_DIR/source/glog/build.sh
 fi
 
-GFLAGS_VERSION=2.2.0-p1 GLOG_VERSION=0.3.4-p3 $SOURCE_DIR/source/glog/build.sh
+GFLAGS_VERSION=2.2.0-p2 GLOG_VERSION=0.3.4-p3 $SOURCE_DIR/source/glog/build.sh
 
 ################################################################################
 # Build gtest

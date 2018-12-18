@@ -1,0 +1,149 @@
+From bdd463677a2597c697c2e59114020da8e1c70bf4 Mon Sep 17 00:00:00 2001
+From: Fredy Wijaya <fwijaya@cloudera.com>
+Date: Tue, 18 Dec 2018 12:17:22 -0800
+Subject: [PATCH] Add show_hidden parameter in GetAllFlags() function
+
+By default GetAllFlags() will return all flags except hidden flags.
+Passing show_hidden to true will show all flags including hidden flags
+only if the hidden flags were modified from their default values.
+---
+ src/gflags.cc           | 13 ++++++++-----
+ src/gflags.h.in         |  6 ++++--
+ test/gflags_unittest.cc | 26 ++++++++++++++++++++++++++
+ 3 files changed, 38 insertions(+), 7 deletions(-)
+
+diff --git a/src/gflags.cc b/src/gflags.cc
+index 5fd707a..802e504 100644
+--- a/src/gflags.cc
++++ b/src/gflags.cc
+@@ -617,6 +617,7 @@ void CommandLineFlag::FillCommandLineFlagInfo(
+   result->is_default = !modified_;
+   result->has_validator_fn = validate_function() != NULL;
+   result->flag_ptr = flag_ptr();
++  result->hidden = Hidden();
+ }
+ 
+ void CommandLineFlag::UpdateModifiedBit() {
+@@ -714,7 +715,8 @@ class FlagRegistry {
+  private:
+   friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // reads all the flags in order to copy them
+   friend class CommandLineFlagParser;    // for ValidateUnmodifiedFlags
+-  friend void GFLAGS_NAMESPACE::GetAllFlags(vector<CommandLineFlagInfo>*);
++  friend void GFLAGS_NAMESPACE::GetAllFlags(vector<CommandLineFlagInfo>*,
++                                            bool show_modified_hidden);
+ 
+   // The map from name to flag, for FindFlagLocked().
+   typedef map<const char*, CommandLineFlag*, StringCmp> FlagMap;
+@@ -1524,12 +1526,13 @@ struct FilenameFlagnameCmp {
+   }
+ };
+ 
+-void GetAllFlags(vector<CommandLineFlagInfo>* OUTPUT) {
++void GetAllFlags(vector<CommandLineFlagInfo>* OUTPUT, bool show_modified_hidden) {
+   FlagRegistry* const registry = FlagRegistry::GlobalRegistry();
+   registry->Lock();
+   for (FlagRegistry::FlagConstIterator i = registry->flags_.begin();
+        i != registry->flags_.end(); ++i) {
+-    if (i->second->Hidden()) continue;
++    // Only show the hidden flag when show_modified_hidden is true and the flag was modified.
++    if (i->second->Hidden() && !(show_modified_hidden && i->second->Modified())) continue;
+     CommandLineFlagInfo fi;
+     i->second->FillCommandLineFlagInfo(&fi);
+     OUTPUT->push_back(fi);
+@@ -1817,9 +1820,9 @@ static string TheseCommandlineFlagsIntoString(
+   return retval;
+ }
+ 
+-string CommandlineFlagsIntoString() {
++string CommandlineFlagsIntoString(bool show_modified_hidden) {
+   vector<CommandLineFlagInfo> sorted_flags;
+-  GetAllFlags(&sorted_flags);
++  GetAllFlags(&sorted_flags, show_modified_hidden);
+   return TheseCommandlineFlagsIntoString(sorted_flags);
+ }
+ 
+diff --git a/src/gflags.h.in b/src/gflags.h.in
+index be084df..3d5f133 100644
+--- a/src/gflags.h.in
++++ b/src/gflags.h.in
+@@ -164,6 +164,7 @@ struct CommandLineFlagInfo {
+                                // has not been set explicitly from the cmdline
+                                // or via SetCommandLineOption
+   const void* flag_ptr;        // pointer to the flag's current value (i.e. FLAGS_foo)
++  bool hidden;                 // a hidden flag
+ };
+ 
+ // Using this inside of a validator is a recipe for a deadlock.
+@@ -171,7 +172,8 @@ struct CommandLineFlagInfo {
+ // call validators during ParseAllFlags.
+ // Also make sure then to uncomment the corresponding unit test in
+ // gflags_unittest.sh
+-extern GFLAGS_DLL_DECL void GetAllFlags(std::vector<CommandLineFlagInfo>* OUTPUT);
++extern GFLAGS_DLL_DECL void GetAllFlags(std::vector<CommandLineFlagInfo>* OUTPUT,
++                                        bool show_modified_hidden=false);
+ // These two are actually defined in gflags_reporting.cc.
+ extern GFLAGS_DLL_DECL void ShowUsageWithFlags(const char *argv0);  // what --help does
+ extern GFLAGS_DLL_DECL void ShowUsageWithFlagsRestrict(const char *argv0, const char *restrict);
+@@ -291,7 +293,7 @@ class GFLAGS_DLL_DECL FlagSaver {
+ // Some deprecated or hopefully-soon-to-be-deprecated functions.
+ 
+ // This is often used for logging.  TODO(csilvers): figure out a better way
+-extern GFLAGS_DLL_DECL std::string CommandlineFlagsIntoString();
++extern GFLAGS_DLL_DECL std::string CommandlineFlagsIntoString(bool show_modified_hidden=true);
+ // Usually where this is used, a FlagSaver should be used instead.
+ extern GFLAGS_DLL_DECL
+ bool ReadFlagsFromString(const std::string& flagfilecontents,
+diff --git a/test/gflags_unittest.cc b/test/gflags_unittest.cc
+index ed2fba4..e872629 100755
+--- a/test/gflags_unittest.cc
++++ b/test/gflags_unittest.cc
+@@ -125,6 +125,7 @@ DEFINE_string(unused_string, "unused", "");
+ // These flags are used by gflags_unittest.sh
+ DEFINE_bool(changed_bool1, false, "changed");
+ DEFINE_bool(changed_bool2, false, "changed");
++DEFINE_bool_hidden(changed_bool_hidden, false, "changed");
+ DEFINE_bool(long_helpstring, false,
+             "This helpstring goes on forever and ever and ever and ever and "
+             "ever and ever and ever and ever and ever and ever and ever and "
+@@ -898,6 +899,30 @@ TEST(GetAllFlagsTest, BaseTest) {
+   EXPECT_TRUE(found_test_bool);
+ }
+ 
++TEST(GetAllHiddenFlagsTest, BaseTest) {
++  vector<CommandLineFlagInfo> flags;
++  GetAllFlags(&flags, true);
++  bool found_test_bool = false;
++  bool found_test_bool_hidden = false;
++  bool found_changed_bool_hidden = false;
++  vector<CommandLineFlagInfo>::const_iterator i;
++  for (i = flags.begin(); i != flags.end(); ++i) {
++    if (i->name == "test_bool") {
++      found_test_bool = true;
++      EXPECT_EQ(i->type, "bool");
++      EXPECT_EQ(i->default_value, "false");
++      EXPECT_EQ(i->flag_ptr, &FLAGS_test_bool);
++    } else if (i->name == "test_bool_hidden") {
++      found_test_bool_hidden = true;
++    } else if (i->name == "changed_bool_hidden") {
++      found_changed_bool_hidden = true;
++    }
++  }
++  EXPECT_TRUE(found_test_bool);
++  EXPECT_FALSE(found_test_bool_hidden);
++  EXPECT_TRUE(found_changed_bool_hidden);
++}
++
+ TEST(HiddenFlagsInFlagFileTest, BaseTest) {
+   string flags("--test_bool_hidden=true\n");
+   EXPECT_TRUE(ReadFlagsFromString(flags,
+@@ -1558,6 +1583,7 @@ static int main(int argc, char **argv) {
+   // Modify flag values from declared default value in two ways.
+   // The recommended way:
+   SetCommandLineOptionWithMode("changed_bool1", "true", SET_FLAGS_DEFAULT);
++  SetCommandLineOptionWithMode("changed_bool_hidden", "true", SET_FLAGS_VALUE);
+ 
+   // The non-recommended way:
+   FLAGS_changed_bool2 = true;
+-- 
+2.7.4
+
