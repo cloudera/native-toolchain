@@ -1,0 +1,31 @@
+FROM ubuntu:16.04
+
+RUN apt-get update && apt-get install -y autoconf \
+      bison \
+      build-essential \
+      ccache \
+      curl \
+      flex \
+      git \
+      groff-base \
+      libkrb5-dev \
+      libncurses5-dev \
+      libsasl2-dev \
+      libssl-dev \
+      libtool-bin \
+      libz-dev \
+      lsb-release \
+      openjdk-8-jdk \
+      pigz \
+      pkg-config \
+      python \
+      rsync \
+      texinfo \
+      unzip \
+      vim-common \
+      wget
+
+
+COPY ./all/assert-dependencies-present.py /usr/local/bin
+# Asserts that the packages listed above were correctly installed
+RUN assert-dependencies-present.py

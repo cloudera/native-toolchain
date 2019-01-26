@@ -1,0 +1,62 @@
+FROM centos:7.2.1511
+
+COPY ./redhat/yum-install /usr/local/bin
+# We need to pin our yum updates to keep old library versions.
+# Since we are at 7.2.1511, we'll modify the /etc/yum.repos.d/CentOS-Base.repo file to vault's 7.2.1511.
+COPY ./redhat/CentOS-7.2.1511-Base.repo /etc/yum.repos.d/CentOS-Base.repo
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1213602
+RUN yum-install yum-plugin-ovl
+
+# To prevent:
+# Error: libselinux conflicts with fakesystemd-1-17.el7.centos.noarch
+# Error: fakesystemd conflicts with systemd-219-62.el7_6.2.x86_64
+#  You could try using --skip-broken to work around the problem
+# ** Found 1 pre-existing rpmdb problem(s), 'yum check' output follows:
+RUN yum swap -y -- remove fakesystemd -- install systemd systemd-libs
+
+RUN yum-install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN yum-install autoconf \
+  automake \
+  bison \
+  byacc \
+  bzip2 \
+  ccache\
+  curl \
+  cyrus-sasl \
+  cyrus-sasl-gssapi \
+  cyrus-sasl-devel \
+  cyrus-sasl-plain \
+  flex \
+  gcc \
+  gcc-c++ \
+  git \
+  glibc-devel \
+  java-1.8.0-openjdk-devel \
+  krb5-devel \
+  libevent-devel \
+  libdb4-devel \
+  libffi-devel \
+  libtool \
+  lzo-devel \
+  make \
+  mawk \
+  ncurses-devel \
+  ntp \
+  openssl-devel \
+  pigz \
+  postgresql \
+  postgresql-server \
+  python-devel \
+  redhat-lsb \
+  rsync \
+  unzip \
+  vim-common \
+  wget \
+  which \
+  xz \
+  zlib-devel
+
+COPY ./all/assert-dependencies-present.py /usr/local/bin
+# Asserts that the packages listed above were correctly installed
+RUN assert-dependencies-present.py

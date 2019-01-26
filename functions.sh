@@ -476,3 +476,9 @@ function enable_toolchain_autotools() {
     ACLOCAL_PATH=${BUILD_DIR}/libtool-${LIBTOOL_VERSION}/share/aclocal:${ACLOCAL_PATH:-}
     export ACLOCAL_PATH
 }
+
+# Print a message to standard error and exit with a non-zero status.
+function die() {
+  printf '%s\n' "$1" >&2
+  exit 1
+}
