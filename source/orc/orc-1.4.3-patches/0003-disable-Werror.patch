@@ -1,0 +1,77 @@
+gcc7 treats the following errors as warnings. so disable -Werror
+
+[ 92%] Built target orc-memory
+In file included from /mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/common.h:45:0,
+                 from /mnt/build/protobuf-3.5.1/include/google/protobuf/io/zero_copy_stream.h:111,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/wrap/zero-copy-stream-wrapper.h:30,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/Compression.hh:25,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/test/TestCompression.cc:19:
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h: In static member function 'static google::protobuf::uint16 google::protobuf::BigEndian::FromHost16(google::protobuf::uint16)':
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h:464:47: warning: conversion to 'short unsigned int' from 'int' may alter its value [-Wconversion]
+   static uint16 FromHost16(uint16 x) { return bswap_16(x); }
+                                               ^
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h: In static member function 'static google::protobuf::uint16 google::protobuf::BigEndian::ToHost16(google::protobuf::uint16)':
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h:465:45: warning: conversion to 'short unsigned int' from 'int' may alter its value [-Wconversion]
+   static uint16 ToHost16(uint16 x) { return bswap_16(x); }
+                                             ^
+In file included from /mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/common.h:45:0,
+                 from /mnt/build/protobuf-3.5.1/include/google/protobuf/io/zero_copy_stream.h:111,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/wrap/zero-copy-stream-wrapper.h:30,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/Compression.hh:25,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/test/TestRle.cc:20:
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h: In static member function 'static google::protobuf::uint16 google::protobuf::BigEndian::FromHost16(google::protobuf::uint16)':
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h:464:47: warning: conversion to 'short unsigned int' from 'int' may alter its value [-Wconversion]
+   static uint16 FromHost16(uint16 x) { return bswap_16(x); }
+                                               ^
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h: In static member function 'static google::protobuf::uint16 google::protobuf::BigEndian::ToHost16(google::protobuf::uint16)':
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h:465:45: warning: conversion to 'short unsigned int' from 'int' may alter its value [-Wconversion]
+   static uint16 ToHost16(uint16 x) { return bswap_16(x); }
+                                             ^
+[ 94%] Linking CXX executable create-test-files
+cd /mnt/source/orc/orc-1.4.3-p3/c++/test && /mnt/build/cmake-3.8.2-p1/bin/cmake -E cmake_link_script CMakeFiles/create-test-files.dir/link.txt --verbose=1
+/mnt/build/gcc-4.9.2/bin/g++  -mno-avx2 -static-libstdc++ -fPIC -O3 -m64 -std=c++11 -Wall -Wno-unknown-pragmas -Wconversion -O3 -DNDEBUG  -mno-avx2 -Wl,-rpath,/mnt/build/gcc-4.9.2/lib64,-rpath,'$ORIGIN/../lib64',-rpath,'$ORIGIN/../lib' -L/mnt/build/gcc-4.9.2/lib64 -rdynamic CMakeFiles/create-test-files.dir/CreateTestFiles.cc.o  -o create-test-files  -L/mnt/build/lz4-1.7.5/lib64  -L/mnt/build/protobuf-3.5.1/lib  -L/mnt/build/snappy-1.1.4/lib  -L/mnt/build/zlib-1.2.8/lib -Wl,-rpath,/mnt/build/lz4-1.7.5/lib64:/mnt/build/protobuf-3.5.1/lib:/mnt/build/snappy-1.1.4/lib:/mnt/build/zlib-1.2.8/lib ../src/liborc.a -lprotobuf -lz -lsnappy -llz4 
+In file included from /mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/common.h:45:0,
+                 from /mnt/build/protobuf-3.5.1/include/google/protobuf/io/zero_copy_stream.h:111,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/wrap/zero-copy-stream-wrapper.h:30,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/Compression.hh:25,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/ByteRLE.hh:24,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/test/TestByteRle.cc:20:
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h: In static member function 'static google::protobuf::uint16 google::protobuf::BigEndian::FromHost16(google::protobuf::uint16)':
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h:464:47: warning: conversion to 'short unsigned int' from 'int' may alter its value [-Wconversion]
+   static uint16 FromHost16(uint16 x) { return bswap_16(x); }
+                                               ^
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h: In static member function 'static google::protobuf::uint16 google::protobuf::BigEndian::ToHost16(google::protobuf::uint16)':
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h:465:45: warning: conversion to 'short unsigned int' from 'int' may alter its value [-Wconversion]
+   static uint16 ToHost16(uint16 x) { return bswap_16(x); }
+                                             ^
+In file included from /mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/common.h:45:0,
+                 from /mnt/build/protobuf-3.5.1/include/google/protobuf/io/zero_copy_stream.h:111,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/wrap/zero-copy-stream-wrapper.h:30,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/Compression.hh:25,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/ByteRLE.hh:24,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/src/ColumnReader.hh:23,
+                 from /mnt/source/orc/orc-1.4.3-p3/c++/test/TestColumnReader.cc:20:
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h: In static member function 'static google::protobuf::uint16 google::protobuf::BigEndian::FromHost16(google::protobuf::uint16)':
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h:464:47: warning: conversion to 'short unsigned int' from 'int' may alter its value [-Wconversion]
+   static uint16 FromHost16(uint16 x) { return bswap_16(x); }
+                                               ^
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h: In static member function 'static google::protobuf::uint16 google::protobuf::BigEndian::ToHost16(google::protobuf::uint16)':
+/mnt/build/protobuf-3.5.1/include/google/protobuf/stubs/port.h:465:45: warning: conversion to 'short unsigned int' from 'int' may alter its value [-Wconversion]
+   static uint16 ToHost16(uint16 x) { return bswap_16(x); }
+
+
+diff -u -r orc-1.4.3-p2/CMakeLists.txt orc-1.4.3-patched/CMakeLists.txt
+--- orc-1.4.3-p2/CMakeLists.txt	2018-12-26 13:13:37.824603596 -0800
++++ orc-1.4.3-patched/CMakeLists.txt	2018-12-26 13:16:44.127297919 -0800
+@@ -112,9 +112,9 @@
+   set (WARN_FLAGS "${WARN_FLAGS} -Wno-c++98-compat-pedantic -Wno-padded")
+   set (WARN_FLAGS "${WARN_FLAGS} -Wno-covered-switch-default")
+   set (WARN_FLAGS "${WARN_FLAGS} -Wno-missing-noreturn -Wno-unknown-pragmas")
+-  set (WARN_FLAGS "${WARN_FLAGS} -Wconversion -Werror")
++  set (WARN_FLAGS "${WARN_FLAGS} -Wconversion")
+ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+-  set (WARN_FLAGS "-Wall -Wno-unknown-pragmas -Wconversion -Werror")
++  set (WARN_FLAGS "-Wall -Wno-unknown-pragmas -Wconversion")
+   if (CMAKE_CXX_COMPILER_VERSION STREQUAL "" OR
+       CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7")
+     set (CXX11_FLAGS "-std=c++0x")
