@@ -92,13 +92,13 @@ function build {
   # not really needed since the toolchain provides python 2.7. To skip the thirdparty
   # build, "python2.7" needs to be in the PATH.
   OLD_PATH="$PATH"
-  PATH="$BUILD_DIR/python-2.7.10/bin:$OLD_PATH"
+  PATH="$BUILD_DIR/python-2.7.15/bin:$OLD_PATH"
   wrap ./build-if-necessary.sh
   cd ..
 
   # Update the PATH to include Kudu's toolchain binaries (after our toolchain's Python).
   KUDU_TP_PATH="`pwd`/thirdparty/installed/common/bin"
-  PATH="$BUILD_DIR/python-2.7.10/bin:$KUDU_TP_PATH:$OLD_PATH"
+  PATH="$BUILD_DIR/python-2.7.15/bin:$KUDU_TP_PATH:$OLD_PATH"
 
   # Now Kudu can be built.
   RELEASE_INSTALL_DIR="$LOCAL_INSTALL/release"

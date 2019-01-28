@@ -1,0 +1,323 @@
+From dfb931f0b3ce2816d00057365fa2b55fcaebd94c Mon Sep 17 00:00:00 2001
+From: Hector Acosta <hector.acosta@cloudera.com>
+Date: Fri, 25 Jan 2019 17:21:08 +0000
+Subject: [PATCH] Based on:
+ https://sourceware.org/ml/gdb-patches/2016-08/msg00180.html
+
+GLIBC BZ#20311 [1] proc_service.h install patch also remove 'const'
+attributes from ps_get_thread_area and comment #15 discuss why to remove
+the const attribute (basically since it a callback with the struct
+ps_prochandle owned by the client it should be able to modify it if
+it the case).
+
+On default build this is not the issue and current g++ does not trigger
+any issue with this mismatch declaration.  However, on some bootstrap
+build configuration where gdbserver is build with gcc instead this
+triggers:
+
+error: conflicting types for 'ps_get_thread_area'
+
+This patch fixes it by syncing the declaration with GLIBC.
+
+[1] https://sourceware.org/bugzilla/show_bug.cgi?id=20311
+
+2016-08-17  Adhemerval Zanella  <adhemerval.zanella@linaro.org>
+
+	* gdb/aarch64-linux-nat.c (ps_get_thread_area): Remove const from
+	struct ps_prochandle.
+	* gdb/amd64-linux-nat.c (ps_get_thread_area): Likewise.
+	* gdb/arm-linux-nat.c (ps_get_thread_area): Likewise.
+	* gdb/gdb_proc_service.h (ps_get_thread_area): Likewise.
+	* gdb/gdbserver/gdb_proc_service.h (ps_get_thread_area): Likewise.
+	* gdb/gdbserver/linux-aarch64-low.c (ps_get_thread_area): Likewise.
+	* gdb/gdbserver/linux-arm-low.c (ps_get_thread_area): Likewise.
+	* gdb/gdbserver/linux-crisv32-low.c (ps_get_thread_area): Likewise.
+	* gdb/gdbserver/linux-m68k-low.c (ps_get_thread_area): Likewise.
+	* gdb/gdbserver/linux-mips-low.c (ps_get_thread_area): Likewise.
+	* gdb/gdbserver/linux-nios2-low.c (ps_get_thread_area): Likewise.
+	* gdb/gdbserver/linux-tic6x-low.c (ps_get_thread_area): Likewise.
+	* gdb/gdbserver/linux-x86-low.c (ps_get_thread_area): Likewise.
+	* gdb/gdbserver/linux-xtensa-low.c (ps_get_thread_area): Likewise.
+	* gdb/i386-linux-nat.c (ps_get_thread_area): Likewise.
+	* gdb/m68klinux-nat.c (ps_get_thread_area): Likewise.
+	* gdb/mips-linux-nat.c (ps_get_thread_area): Likewise.
+	* gdb/nat/aarch64-linux.c (aarch64_ps_get_thread_area): Likewise.
+	* gdb/nat/aarch64-linux.h (aarch64_ps_get_thread_area): Likewise.
+	* gdb/xtensa-linux-nat.c (ps_get_thread_area): Likewise.
+
+---
+ gdb/ChangeLog                     | 24 ++++++++++++++++++++++++
+ gdb/aarch64-linux-nat.c           |  2 +-
+ gdb/amd64-linux-nat.c             |  2 +-
+ gdb/arm-linux-nat.c               |  2 +-
+ gdb/gdb_proc_service.h            |  2 +-
+ gdb/gdbserver/gdb_proc_service.h  |  2 +-
+ gdb/gdbserver/linux-aarch64-low.c |  2 +-
+ gdb/gdbserver/linux-arm-low.c     |  2 +-
+ gdb/gdbserver/linux-crisv32-low.c |  2 +-
+ gdb/gdbserver/linux-m68k-low.c    |  2 +-
+ gdb/gdbserver/linux-mips-low.c    |  2 +-
+ gdb/gdbserver/linux-nios2-low.c   |  2 +-
+ gdb/gdbserver/linux-tic6x-low.c   |  2 +-
+ gdb/gdbserver/linux-x86-low.c     |  2 +-
+ gdb/gdbserver/linux-xtensa-low.c  |  2 +-
+ gdb/i386-linux-nat.c              |  2 +-
+ gdb/m68klinux-nat.c               |  2 +-
+ gdb/mips-linux-nat.c              |  2 +-
+ gdb/nat/aarch64-linux.c           |  2 +-
+ gdb/nat/aarch64-linux.h           |  2 +-
+ gdb/xtensa-linux-nat.c            |  2 +-
+ 21 files changed, 44 insertions(+), 20 deletions(-)
+---
+ gdb/aarch64-linux-nat.c           | 2 +-
+ gdb/amd64-linux-nat.c             | 2 +-
+ gdb/arm-linux-nat.c               | 2 +-
+ gdb/gdb_proc_service.h            | 2 +-
+ gdb/gdbserver/linux-aarch64-low.c | 2 +-
+ gdb/gdbserver/linux-arm-low.c     | 2 +-
+ gdb/gdbserver/linux-crisv32-low.c | 2 +-
+ gdb/gdbserver/linux-m68k-low.c    | 2 +-
+ gdb/gdbserver/linux-mips-low.c    | 2 +-
+ gdb/gdbserver/linux-nios2-low.c   | 2 +-
+ gdb/gdbserver/linux-tic6x-low.c   | 2 +-
+ gdb/gdbserver/linux-x86-low.c     | 2 +-
+ gdb/gdbserver/proc-service.c      | 5 +++--
+ gdb/i386-linux-nat.c              | 2 +-
+ gdb/m68klinux-nat.c               | 2 +-
+ gdb/mips-linux-nat.c              | 2 +-
+ gdb/proc-service.c                | 1 -
+ 17 files changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/gdb/aarch64-linux-nat.c b/gdb/aarch64-linux-nat.c
+index c58f68a..6a5fdd9 100644
+--- a/gdb/aarch64-linux-nat.c
++++ b/gdb/aarch64-linux-nat.c
+@@ -736,7 +736,7 @@ aarch64_linux_new_fork (struct lwp_info *parent, pid_t child_pid)
+    storage (or its descriptor).  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+ 		    lwpid_t lwpid, int idx, void **base)
+ {
+   struct iovec iovec;
+diff --git a/gdb/amd64-linux-nat.c b/gdb/amd64-linux-nat.c
+index 22a1359..4fc1d38 100644
+--- a/gdb/amd64-linux-nat.c
++++ b/gdb/amd64-linux-nat.c
+@@ -243,7 +243,7 @@ amd64_linux_store_inferior_registers (struct target_ops *ops,
+    a request for a thread's local storage address.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+                     lwpid_t lwpid, int idx, void **base)
+ {
+   if (gdbarch_bfd_arch_info (target_gdbarch ())->bits_per_word == 32)
+diff --git a/gdb/arm-linux-nat.c b/gdb/arm-linux-nat.c
+index bb8358c..2dd27fc 100644
+--- a/gdb/arm-linux-nat.c
++++ b/gdb/arm-linux-nat.c
+@@ -612,7 +612,7 @@ supply_fpregset (struct regcache *regcache, const gdb_fpregset_t *fpregsetp)
+ /* Fetch the thread-local storage pointer for libthread_db.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+                     lwpid_t lwpid, int idx, void **base)
+ {
+   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
+diff --git a/gdb/gdb_proc_service.h b/gdb/gdb_proc_service.h
+index 2c633b3..cacfb3d 100644
+--- a/gdb/gdb_proc_service.h
++++ b/gdb/gdb_proc_service.h
+@@ -115,7 +115,7 @@ extern pid_t ps_getpid (struct ps_prochandle *);
+ /* Fetch the special per-thread address associated with the given LWP.
+    This call is only used on a few platforms (most use a normal register).
+    The meaning of the `int' parameter is machine-dependent.  */
+-extern ps_err_e ps_get_thread_area (const struct ps_prochandle *,
++extern ps_err_e ps_get_thread_area (struct ps_prochandle *,
+ 				    lwpid_t, int, psaddr_t *);
+ 
+ 
+diff --git a/gdb/gdbserver/linux-aarch64-low.c b/gdb/gdbserver/linux-aarch64-low.c
+index 6b84042..0452dfa 100644
+--- a/gdb/gdbserver/linux-aarch64-low.c
++++ b/gdb/gdbserver/linux-aarch64-low.c
+@@ -1087,7 +1087,7 @@ aarch64_stopped_by_watchpoint (void)
+ /* Fetch the thread-local storage pointer for libthread_db.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+ 		    lwpid_t lwpid, int idx, void **base)
+ {
+   struct iovec iovec;
+diff --git a/gdb/gdbserver/linux-arm-low.c b/gdb/gdbserver/linux-arm-low.c
+index 303d9c8..3d5c0ad 100644
+--- a/gdb/gdbserver/linux-arm-low.c
++++ b/gdb/gdbserver/linux-arm-low.c
+@@ -334,7 +334,7 @@ arm_reinsert_addr (void)
+ /* Fetch the thread-local storage pointer for libthread_db.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+ 		    lwpid_t lwpid, int idx, void **base)
+ {
+   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
+diff --git a/gdb/gdbserver/linux-crisv32-low.c b/gdb/gdbserver/linux-crisv32-low.c
+index 65e6c09..fd5e627 100644
+--- a/gdb/gdbserver/linux-crisv32-low.c
++++ b/gdb/gdbserver/linux-crisv32-low.c
+@@ -336,7 +336,7 @@ cris_stopped_data_address (void)
+ }
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+                     lwpid_t lwpid, int idx, void **base)
+ {
+   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
+diff --git a/gdb/gdbserver/linux-m68k-low.c b/gdb/gdbserver/linux-m68k-low.c
+index 4501904..7415930 100644
+--- a/gdb/gdbserver/linux-m68k-low.c
++++ b/gdb/gdbserver/linux-m68k-low.c
+@@ -160,7 +160,7 @@ m68k_breakpoint_at (CORE_ADDR pc)
+ /* Fetch the thread-local storage pointer for libthread_db.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+ 		    lwpid_t lwpid, int idx, void **base)
+ {
+   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
+diff --git a/gdb/gdbserver/linux-mips-low.c b/gdb/gdbserver/linux-mips-low.c
+index 478bb6e..ca7166d 100644
+--- a/gdb/gdbserver/linux-mips-low.c
++++ b/gdb/gdbserver/linux-mips-low.c
+@@ -589,7 +589,7 @@ mips_stopped_data_address (void)
+ /* Fetch the thread-local storage pointer for libthread_db.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+ 		    lwpid_t lwpid, int idx, void **base)
+ {
+   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
+diff --git a/gdb/gdbserver/linux-nios2-low.c b/gdb/gdbserver/linux-nios2-low.c
+index e2fbb89..f99e6ee 100644
+--- a/gdb/gdbserver/linux-nios2-low.c
++++ b/gdb/gdbserver/linux-nios2-low.c
+@@ -149,7 +149,7 @@ nios2_breakpoint_at (CORE_ADDR where)
+ /* Fetch the thread-local storage pointer for libthread_db.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+                     lwpid_t lwpid, int idx, void **base)
+ {
+   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
+diff --git a/gdb/gdbserver/linux-tic6x-low.c b/gdb/gdbserver/linux-tic6x-low.c
+index 0a0d220..26c4dee 100644
+--- a/gdb/gdbserver/linux-tic6x-low.c
++++ b/gdb/gdbserver/linux-tic6x-low.c
+@@ -266,7 +266,7 @@ tic6x_breakpoint_at (CORE_ADDR where)
+ /* Fetch the thread-local storage pointer for libthread_db.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+ 		    lwpid_t lwpid, int idx, void **base)
+ {
+   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
+diff --git a/gdb/gdbserver/linux-x86-low.c b/gdb/gdbserver/linux-x86-low.c
+index 2c3fccc..7c085de 100644
+--- a/gdb/gdbserver/linux-x86-low.c
++++ b/gdb/gdbserver/linux-x86-low.c
+@@ -242,7 +242,7 @@ is_64bit_tdesc (void)
+ /* Called by libthread_db.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+ 		    lwpid_t lwpid, int idx, void **base)
+ {
+ #ifdef __x86_64__
+diff --git a/gdb/gdbserver/proc-service.c b/gdb/gdbserver/proc-service.c
+index b181ae5..a71a34e 100644
+--- a/gdb/gdbserver/proc-service.c
++++ b/gdb/gdbserver/proc-service.c
+@@ -135,7 +135,8 @@ ps_lsetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, const prgregset_t gregset)
+    process PH and store them in FPREGSET.  */
+ 
+ ps_err_e
+-ps_lgetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, void *fpregset)
++ps_lgetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
++                prfpregset_t * fpgreset)
+ {
+   /* Unneeded.  */
+   return PS_ERR;
+@@ -145,7 +146,7 @@ ps_lgetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, void *fpregset)
+    process PH from FPREGSET.  */
+ 
+ ps_err_e
+-ps_lsetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, void *fpregset)
++ps_lsetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, const prfpregset_t *fpregset)
+ {
+   /* Unneeded.  */
+   return PS_ERR;
+diff --git a/gdb/i386-linux-nat.c b/gdb/i386-linux-nat.c
+index b95b47e..9efac9e 100644
+--- a/gdb/i386-linux-nat.c
++++ b/gdb/i386-linux-nat.c
+@@ -601,7 +601,7 @@ i386_linux_store_inferior_registers (struct target_ops *ops,
+    storage (or its descriptor).  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+ 		    lwpid_t lwpid, int idx, void **base)
+ {
+   unsigned int base_addr;
+diff --git a/gdb/m68klinux-nat.c b/gdb/m68klinux-nat.c
+index 8f89d7b..6e528b4 100644
+--- a/gdb/m68klinux-nat.c
++++ b/gdb/m68klinux-nat.c
+@@ -508,7 +508,7 @@ m68k_linux_store_inferior_registers (struct target_ops *ops,
+ /* Fetch the thread-local storage pointer for libthread_db.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph, 
++ps_get_thread_area (struct ps_prochandle *ph, 
+ 		    lwpid_t lwpid, int idx, void **base)
+ {
+   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) < 0)
+diff --git a/gdb/mips-linux-nat.c b/gdb/mips-linux-nat.c
+index a36bb63..9f6d697 100644
+--- a/gdb/mips-linux-nat.c
++++ b/gdb/mips-linux-nat.c
+@@ -152,7 +152,7 @@ mips64_linux_register_addr (struct gdbarch *gdbarch, int regno, int store)
+ /* Fetch the thread-local storage pointer for libthread_db.  */
+ 
+ ps_err_e
+-ps_get_thread_area (const struct ps_prochandle *ph,
++ps_get_thread_area (struct ps_prochandle *ph,
+                     lwpid_t lwpid, int idx, void **base)
+ {
+   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
+diff --git a/gdb/proc-service.c b/gdb/proc-service.c
+index 484054a..23a4edc 100644
+--- a/gdb/proc-service.c
++++ b/gdb/proc-service.c
+@@ -50,7 +50,6 @@ typedef void *gdb_ps_read_buf_t;
+ typedef const void *gdb_ps_write_buf_t;
+ typedef size_t gdb_ps_size_t;
+ #endif
+-
+ 
+ /* Helper functions.  */
+ 
+-- 
+2.17.1
+

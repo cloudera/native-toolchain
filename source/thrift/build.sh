@@ -58,11 +58,18 @@ if needs_build_package ; then
     wrap aclocal -I ./aclocal
     wrap glibtoolize --copy
     wrap autoconf
-  fi
+  else
+     # Based on https://github.com/facebook/fbthrift/issues/222
+     # but we don't run autoconf.
+     sed -i 's/BN_init/BN_new/g' configure
+   fi
 
+
+  # LEXLIB= is a Workaround /usr/lib64/libfl.so: undefined reference to `yylex'
   PATH="${BISON_ROOT}"/bin:"${PATH}" \
     PY_PREFIX="${LOCAL_INSTALL}"/python \
     wrap ./configure \
+    LEXLIB= \
     --with-pic \
     --prefix="${LOCAL_INSTALL}" \
     --enable-tutorial=no \

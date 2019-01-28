@@ -1,0 +1,32 @@
+FROM ubuntu:18.04
+
+RUN apt-get update && apt-get install -y autoconf \
+      bison \
+      build-essential \
+      ccache \
+      curl \
+      git \
+      groff-base \
+      libkrb5-dev \
+      libfl2 \
+      libfl-dev \
+      libncurses5-dev \
+      libsasl2-dev \
+      libssl-dev \
+      libtool-bin \
+      libz-dev \
+      lsb-release \
+      openjdk-8-jdk \
+      pigz \
+      pkg-config \
+      python \
+      python3-distutils \
+      rsync \
+      texinfo \
+      unzip \
+      vim-common \
+      wget
+
+COPY ./all/assert-dependencies-present.py /usr/local/bin
+# Asserts that the packages listed above were correctly installed
+RUN assert-dependencies-present.py

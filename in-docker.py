@@ -60,7 +60,9 @@ KNOWN_DOCKER_TAGS = ['impala-toolchain-debian7',
                      'impala-toolchain-redhat7',
                      'impala-toolchain-ubuntu1204',
                      'impala-toolchain-ubuntu1404',
-                     'impala-toolchain-ubuntu1604']
+                     'impala-toolchain-ubuntu1604',
+                     'impala-toolchain-ubuntu1804']
+
 
 __SOURCE_DIR = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 TARGET_DIR = '/mnt'

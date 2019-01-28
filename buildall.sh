@@ -50,9 +50,9 @@ BOOST_VERSION=1.57.0-p3 $SOURCE_DIR/source/boost/build.sh
 ################################################################################
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
   PYTHON_VERSION=2.7.11 build_fake_package "python"
-  PYTHON_VERSION=2.7.10 $SOURCE_DIR/source/python/build.sh
+  PYTHON_VERSION=2.7.15 $SOURCE_DIR/source/python/build.sh
 else
-  PYTHON_VERSION=2.7.10 build_fake_package "python"
+  PYTHON_VERSION=2.7.15 build_fake_package "python"
 fi
 
 ################################################################################
@@ -69,7 +69,7 @@ fi
 # Build LLVM 3.7+ with and without assertions. For LLVM 3.7+, the default is a
 # release build with no assertions.
 (
-  export PYTHON_VERSION=2.7.10
+  export PYTHON_VERSION=2.7.15
   if (( BUILD_HISTORICAL )) ; then
     LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
     LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
@@ -156,11 +156,11 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
   fi
   # Required until Python 2.6 compatibility issues have been sorted out with
   # thrift-0.9.3.
-  THRIFT_VERSION=0.9.0-p11 $SOURCE_DIR/source/thrift/build.sh
-  THRIFT_VERSION=0.9.3-p4 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.0-p12 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.3-p5 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.11.0-p2 $SOURCE_DIR/source/thrift/build.sh
 else
-  THRIFT_VERSION=0.9.2-p2 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.9.2-p4 $SOURCE_DIR/source/thrift/build.sh
 fi
 
 export -n BISON_VERSION
@@ -238,7 +238,7 @@ RE2_VERSION=20130115-p1 $SOURCE_DIR/source/re2/build.sh
 ################################################################################
 # Build Ldap
 ################################################################################
-OPENLDAP_VERSION=2.4.25 $SOURCE_DIR/source/openldap/build.sh
+OPENLDAP_VERSION=2.4.47 $SOURCE_DIR/source/openldap/build.sh
 
 ################################################################################
 # Build Avro
@@ -267,9 +267,9 @@ BZIP2_VERSION=1.0.6-p2 $SOURCE_DIR/source/bzip2/build.sh
 # Build GDB
 ################################################################################
 if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
-  GDB_VERSION=7.9.1 $SOURCE_DIR/source/gdb/build.sh
+  GDB_VERSION=7.9.1-p1 $SOURCE_DIR/source/gdb/build.sh
 else
-  GDB_VERSION=7.9.1 build_fake_package "gdb"
+  GDB_VERSION=7.9.1-p1 build_fake_package "gdb"
 fi
 
 ################################################################################

@@ -29,11 +29,11 @@ To build a specific package run:
 
  for example:
 
-    ./build.sh python 2.7.10
+    ./build.sh python 2.7.15
 
  Its possible as well to build several packages at once.
 
-    ./build.sh python 2.7.10 llvm 3.3-p1
+    ./build.sh python 2.7.15 llvm 3.3-p5
 
 Here, the arguments are package version pairs.
 

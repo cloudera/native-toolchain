@@ -21,7 +21,8 @@ DISTROS = debian7 \
 	redhat7 \
 	ubuntu1204 \
 	ubuntu1404 \
-	ubuntu1604
+	ubuntu1604 \
+	ubuntu1804
 
 $(STAMP_DIR)/impala-toolchain-% :
 	@mkdir -p $(@D)
