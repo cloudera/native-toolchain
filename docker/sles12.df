@@ -1,0 +1,53 @@
+FROM registry.suse.com/suse/sles12sp3
+
+RUN rm -f /usr/lib/zypp/plugins/services/container-suseconnect
+
+ARG SLES_MIRROR
+# Mandatory argument, use --build-arg to set up a sles_mirror
+RUN test -n "$SLES_MIRROR"
+
+RUN zypper --non-interactive ar -G -c ${SLES_MIRROR}/SUSE/Products/SLE-SERVER/12-SP3/x86_64/product a
+RUN zypper --non-interactive ar -G -c ${SLES_MIRROR}/SUSE/Products/SLE-SDK/12-SP3/x86_64/product/ b
+RUN zypper --non-interactive ar -G -c  https://download.opensuse.org/repositories/server:monitoring/SLE_12_SP3/server:monitoring.repo
+RUN zypper --non-interactive in --oldpackage libncurses6-5.9-40.124.x86_64 libncurses5-5.9-40.124.x86_64 ncurses-devel-5.9-40.124.x86_64
+
+RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-interactive install autoconf \
+  automake \
+  bison \
+  byacc \
+  ccache\
+  curl \
+  cyrus-sasl \
+  cyrus-sasl-gssapi \
+  cyrus-sasl-devel \
+  cyrus-sasl-plain \
+  flex \
+  gcc \
+  gcc-c++ \
+  git \
+  glibc-devel \
+  groff \
+  java-1_8_0-openjdk-devel \
+  krb5-devel \
+  libevent-devel \
+  libdb-4_8-devel \
+  libffi48-devel \
+  libopenssl-devel \
+  libtool \
+  lsb-release \
+  lzo-devel \
+  make \
+  ncurses-devel \
+  ntp \
+  patch \
+  python-devel \
+  rsync \
+  unzip \
+  vim \
+  wget \
+  which \
+  zlib-devel
+
+COPY ./all/assert-dependencies-present.py /usr/local/bin
+# Asserts that the packages listed above were correctly installed
+RUN assert-dependencies-present.py

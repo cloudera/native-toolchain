@@ -19,6 +19,7 @@ DISTROS = debian7 \
 	debian8 \
 	redhat6 \
 	redhat7 \
+	sles12 \
 	ubuntu1204 \
 	ubuntu1404 \
 	ubuntu1604 \

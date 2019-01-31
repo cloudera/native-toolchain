@@ -42,6 +42,7 @@ def regex_in_list(regex, l):
 
 def check_libraries():
   patterns = [r'libdb.*\.so',
+              r'libffi.*\.so',
               r'libkrb.*\.so',
               r'libncurses\.so',
               r'libsasl.*\.so',
@@ -67,13 +68,21 @@ def check_path():
            'git',
            'java',
            'make',
+           ('mawk', 'gawk'),
+           'patch',
            'pigz',
            'python',
+           'soelim',
            'unzip',
            'bzip2',
            'yacc']
   which = distutils.spawn.find_executable
   for p in progs:
+    if isinstance(p, tuple):
+      LOG.info('Checking for any program of: %s' % ', '.join(p))
+      if not any(map(which, p)):
+        raise Exception('Unable to find any of \'%s\' in PATH' % ', '.join(p))
+      continue
     LOG.info('Checking program: %s' % p)
     if not which(p):
       raise Exception('Unable to find %s in PATH' % p)

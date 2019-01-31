@@ -20,7 +20,16 @@ set -e
 
 for i in *.df; do
   tag=impala-toolchain-${i%.*}
+  BUILD_ARGS=(build -f $i -t $tag)
+  if [[ $i =~ "sles12" ]]; then
+    if [[ -n "${SLES_MIRROR:-""}" ]]; then
+      BUILD_ARGS+=(--build-arg="SLES_MIRROR=$SLES_MIRROR")
+    else
+      >&2 echo "Skipping sles 12 because SLES_MIRROR is empty"
+      continue
+    fi
+  fi
   >&2 echo "Building image: $tag"
-  docker build -f $i -t $tag . >&2
+  docker ${BUILD_ARGS[@]} . >&2
   echo $tag
 done
