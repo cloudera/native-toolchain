@@ -59,6 +59,7 @@ def check_path():
   progs = ['aclocal',
            'autoconf',
            'automake',
+           'aws',
            'bison',
            'ccache',
            'flex',
@@ -69,6 +70,7 @@ def check_path():
            'java',
            'make',
            ('mawk', 'gawk'),
+           'mvn',
            'patch',
            'pigz',
            'python',
@@ -98,11 +100,20 @@ def check_openssl_version():
       raise Exception('Unexpected openssl version. Was: %s, expected: %s' % (out, want))
 
 
+def check_aws_works():
+  # Due to the python/pip version discrepancies it's
+  # worthwhile to verify that aws was correctly installed
+  # and not just in our path
+  LOG.info('Checking that aws is correctly isntalled.')
+  check_output(['aws', '--version'])
+
+
 def main():
   logging.basicConfig(level=logging.INFO)
   check_libraries()
   check_path()
   check_openssl_version()
+  check_aws_works()
 
 
 if __name__ == '__main__':

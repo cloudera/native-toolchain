@@ -54,16 +54,18 @@ import textwrap
 LOG = logging.getLogger()
 
 
-KNOWN_DOCKER_TAGS = ['impala-toolchain-debian7',
-                     'impala-toolchain-debian8',
-                     'impala-toolchain-redhat6',
-                     'impala-toolchain-redhat7',
-                     'impala-toolchain-sles12',
-                     'impala-toolchain-ubuntu1204',
-                     'impala-toolchain-ubuntu1404',
-                     'impala-toolchain-ubuntu1604',
-                     'impala-toolchain-ubuntu1804']
-
+# Maps docker images to BUILD_TARGET_LABELs which is ultimately included
+# in the path for each built package. The mapping that follows is also present
+# in bin/bootstrap_toolchain.py, which depends on these strings.
+KNOWN_DOCKER_TAGS = {'impala-toolchain-debian7': 'ec2-package-debian-7',
+                     'impala-toolchain-debian8': 'ec2-package-debian-8',
+                     'impala-toolchain-redhat6': 'ec2-package-centos-6',
+                     'impala-toolchain-redhat7': 'ec2-package-centos-7',
+                     'impala-toolchain-sles12': 'ec2-package-sles-12',
+                     'impala-toolchain-ubuntu1204': 'ec2-package-ubuntu-12-04',
+                     'impala-toolchain-ubuntu1404': 'ec2-package-ubuntu-14-04',
+                     'impala-toolchain-ubuntu1604': 'ec2-package-ubuntu-16-04',
+                     'impala-toolchain-ubuntu1804': 'ec2-package-ubuntu-18-04'}
 
 __SOURCE_DIR = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 TARGET_DIR = '/mnt'
@@ -112,18 +114,31 @@ def create_mounts_cmd(distro_build_dir):
   return cmd
 
 
-def passthrough_env():
-  env_vars = ['DEBUG',
-              'KUDU_GITHUB_URL',
-              'KUDU_VERSION',
-              'TOOLCHAIN_BUILD_ID',
-              'FAIL_ON_PUBLISH',
-              'PUBLISH_DEPENDENCIES',
-              'PRODUCTION',
+def passthrough_env(image):
+  env_vars = ['AWS_ACCESS_KEY_ID',
+              'AWS_SECRET_ACCESS_KEY',
+              'AWS_SESSION_TOKEN',
+              'BUILD_TARGET_LABEL',
               'CLEAN',
               'CLEAN_TMP_AFTER_BUILD',
+              'DEBUG',
+              'FAIL_ON_PUBLISH',
+              'KUDU_GITHUB_URL',
+              'KUDU_VERSION',
+              'PRODUCTION',
+              'PUBLISH_DEPENDENCIES',
+              'PUBLISH_DEPENDENCIES_S3',
+              'PUBLISH_DEPENDENCIES_ARTIFACTORY',
               'SYSTEM_GCC',
-              'SYSTEM_CMAKE']
+              'SYSTEM_CMAKE',
+              'S3_BUCKET',
+              'TOOLCHAIN_BUILD_ID']
+  if 'BUILD_TARGET_LABEL' not in os.environ:
+    # Discard docker registry prefix, if it exists.
+    matches = filter(image.endswith, KNOWN_DOCKER_TAGS)
+    if matches:
+      assert len(matches) == 1
+      os.environ['BUILD_TARGET_LABEL'] = KNOWN_DOCKER_TAGS[matches[0]]
   for program in os.listdir('source'):
     env_vars.append(program.upper() + '_VERSION')
   ret = []
@@ -146,11 +161,11 @@ def main():
   logging.basicConfig(level=logging.INFO, format='%(message)s')
 
   build_dir = os.environ.get('BUILD_DIR', os.path.join(__SOURCE_DIR, 'build_docker'))
-  distro_build_dir = os.path.join(build_dir, args.DOCKER_IMAGE)
+  distro_build_dir = os.path.join(build_dir, args.DOCKER_IMAGE.replace('/', '_'))
 
   cmd = DOCKER_CMD
   cmd += create_mounts_cmd(distro_build_dir)
-  cmd += passthrough_env()
+  cmd += passthrough_env(args.DOCKER_IMAGE)
   cmd += shlex.split(args.docker_args)
   cmd += [args.DOCKER_IMAGE]
   cmd += args.COMMAND

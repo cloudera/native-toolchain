@@ -25,6 +25,8 @@ DISTROS = debian7 \
 	ubuntu1604 \
 	ubuntu1804
 
+export TOOLCHAIN_BUILD_ID := $(shell bash -ec 'source functions.sh && generate_build_id')
+
 $(STAMP_DIR)/impala-toolchain-% :
 	@mkdir -p $(@D)
 	./in-docker.py $(IN_DOCKER_ARGS) $(@F) -- ./buildall.sh |sed -s 's/^/$(@F): /'

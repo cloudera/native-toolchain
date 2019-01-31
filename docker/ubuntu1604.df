@@ -25,6 +25,18 @@ RUN apt-get update && apt-get install -y autoconf \
       vim-common \
       wget
 
+# Install `aws`
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+  python get-pip.py && \
+  pip install --upgrade awscli==1.16.96
+
+# Install `mvn`
+RUN cd /usr/local/ &&  \
+    wget --progress=dot:giga http://apache.osuosl.org/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.tar.gz && \
+    tar xf apache-maven-3.6.0-bin.tar.gz
+ENV M2_HOME=/usr/local/apache-maven-3.6.0
+ENV M2=$M2_HOME/bin
+ENV PATH=$M2:$PATH
 
 COPY ./all/assert-dependencies-present.py /usr/local/bin
 # Asserts that the packages listed above were correctly installed

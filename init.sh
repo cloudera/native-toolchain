@@ -59,9 +59,19 @@ export DEBUG
 : ${FAIL_ON_PUBLISH=0}
 export FAIL_ON_PUBLISH
 
-# If set to 1, the script will upload the artifacts to the internal artifactory
+# If set to 1, the script will upload the artifacts to the internal artifactory and s3
+# this is functionally the same as:
+# PUBLISH_DEPENDENCIES_S3=1 PUBLISH_DEPENDENCIES_ARTIFACTORY=1
 : ${PUBLISH_DEPENDENCIES=0}
 export PUBLISH_DEPENDENCIES
+
+# Publish dependencies to $S3_BUCKET
+: ${PUBLISH_DEPENDENCIES_S3=0}
+export PUBLISH_DEPENDENCIES_S3
+
+# Publish dependencies to artifactory
+: ${PUBLISH_DEPENDENCIES_ARTIFACTORY=0}
+export PUBLISH_DEPENDENCIES_ARTIFACTORY
 
 # A flag that can be used to trigger particular behavior. PRODUCTION=1 is how
 # the toolchain is used for packaging native products.

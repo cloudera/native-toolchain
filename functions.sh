@@ -388,8 +388,13 @@ function build_dist_package() {
     RET_VAL=false
   fi
 
-  # Package and upload the archive to the artifactory
   if [[ "PUBLISH_DEPENDENCIES" -eq "1" ]]; then
+    : ${PUBLISH_DEPENDENCIES_S3=1}j
+    : ${PUBLISH_DEPENDENCIES_ARTIFACTORY=1}
+  fi
+
+  # Package and upload the archive to the artifactory
+  if [[ "PUBLISH_DEPENDENCIES_ARTIFACTORY" -eq "1" ]]; then
     mvn -B deploy:deploy-file -DgroupId=com.cloudera.toolchain\
       -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn\
       -DartifactId="${PACKAGE}"\
@@ -397,7 +402,9 @@ function build_dist_package() {
       -Dfile="${PACKAGE_FINAL_TGZ}"\
       -Durl="http://maven.jenkins.cloudera.com:8081/artifactory/cdh-staging-local/"\
       -DrepositoryId=cdh.releases.repo -Dpackaging=tar.gz -Dclassifier=${BUILD_LABEL} || $RET_VAL
+  fi
 
+  if [[ "PUBLISH_DEPENDENCIES_S3" -eq "1" ]]; then
     PACKAGE_S3_DESTINATION="s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${BUILD_LABEL}.tar.gz"
     echo "Uploading ${PACKAGE_FINAL_TGZ} to ${PACKAGE_S3_DESTINATION}"
     aws s3 cp --only-show-errors "${PACKAGE_FINAL_TGZ}" \
