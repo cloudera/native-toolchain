@@ -42,6 +42,11 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 
 if [[ $SYSTEM_GCC -eq 0 ]]; then
+  if [[ $USE_CCACHE -ne 0 ]]; then
+    CC=$(setup_ccache $(which gcc))
+    CXX=$(setup_ccache $(which g++))
+    export PATH="$(dirname $CC):$(dirname $CXX):$PATH"
+  fi
   # Build GCC that is used to build LLVM
   $SOURCE_DIR/source/gcc/build.sh
 
@@ -69,6 +74,12 @@ else
 fi
 
 CFLAGS="-fPIC -O3 -m64"
+
+if [[ $USE_CCACHE -ne 0 ]]; then
+  CC=$(setup_ccache $CC)
+  CXX=$(setup_ccache $CXX)
+  export PATH="$(dirname $CC):$(dirname $CXX):$PATH"
+fi
 
 # List of export variables after configuring gcc
 export ARCH_FLAGS

@@ -127,6 +127,22 @@ export BUILD_THREADS
 # SOURCE DIR for the current script
 export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
 
+: ${USE_CCACHE=0}
+export USE_CCACHE
+
+: ${CCACHE_MAXSIZE=50G}
+export CCACHE_MAXSIZE
+
+: ${CCACHE_DIR=$SOURCE_DIR/ccache}
+export CCACHE_DIR
+
+# Default ccache_compilercheck is mtime, which considers CC's mtime + size
+# to determine if there's a hit. Setting CCACHE_COMPILERCHECK to 'content'
+# uses the hash of the compiler instead.
+export CCACHE_COMPILERCHECK=${CCACHE_COMPILERCHECK:-content}
+
+export CCACHE_COMPRESS=1
+
 if [[ $DEBUG -eq 1 ]]; then
   set -x
 fi

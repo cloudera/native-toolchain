@@ -484,6 +484,36 @@ function enable_toolchain_autotools() {
     export ACLOCAL_PATH
 }
 
+# Wrap the given compiler in a script that executes ccache. Return the
+# wrapped script.
+#
+# This function is a no-op if the given compiler is already ccache.
+function setup_ccache() {
+  local ORIG_COMPILER="$1"
+  if ! which ccache &> /dev/null; then
+    >&2 echo "USE_CCACHE was enabled but ccache is not in PATH"
+    exit 1
+  fi
+  # We're already a symlink to ccache, nothing to do here.
+  if readlink $ORIG_COMPILER|grep -q ccache; then
+    return 0
+  fi
+
+  mkdir -p $CCACHE_DIR
+  local TEMPDIR=$(mktemp -d --suffix="-impala-toolchain")
+  local RET=$TEMPDIR/$(basename $ORIG_COMPILER)
+  if [[ $CLEAN_TMP_AFTER_BUILD -eq 1 ]]; then
+    trap "rm -rf $TEMPDIR" EXIT
+  fi
+  # Setting CC='ccache gcc' causes some programs to try to execute `ccache gcc`,
+  # which fails. Since we set our CC variable, we can't rely on PATH ordering
+  # to tell ccache about our compiler, so we create our own CC wrapper which is
+  # then added to the PATH by the caller.
+  printf "#!/bin/sh\nexec ccache $ORIG_COMPILER "'"$@"\n' > "$RET"
+  chmod 770 "$RET"
+  echo $RET
+}
+
 # Print a message to standard error and exit with a non-zero status.
 function die() {
   printf '%s\n' "$1" >&2

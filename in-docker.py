@@ -103,6 +103,15 @@ def mkdir_p(d):
       raise
 
 
+def prepare_source_dir():
+  # Since we mount our entire SOURCE_DIR, create these directories ourselves to prevent root owned directories.
+  # mkdir foo
+  # docker run -v $(pwd):/mnt -v $(pwd)/foo:/mnt/baz -w /mnt ubuntu find . -user root; find . -user root;
+  # ./baz
+  for d in ['build', 'ccache', 'check', 'source']:
+    mkdir_p(d)
+
+
 def create_mounts_cmd(distro_build_dir):
   cmd = []
   for d in ['build', 'check', 'source']:
@@ -110,6 +119,7 @@ def create_mounts_cmd(distro_build_dir):
     tgtdir = os.path.join(TARGET_DIR, d)
     # Create the mountpoints first. Otherwise docker creates root owned directories.
     mkdir_p(srcdir)
+    assert ':' not in srcdir and ':' not in tgtdir, ': in source or targetdir'
     cmd += ['-v', '%s:%s' % (srcdir, tgtdir)]
   return cmd
 
@@ -156,15 +166,29 @@ def copy_source_dir(distro_build_dir):
     raise Exception('Error copying source directory into container mount.')
 
 
+def add_ccache_opts():
+  if os.environ.get('USE_CCACHE', '').lower() not in ('1', 'true'):
+    return []
+  # In order to make it easier to handle, we keep a single ccache directory for all containers
+  ccache_src = os.environ.get('CCACHE_DIR', os.path.join(__SOURCE_DIR, 'build_docker/ccache'))
+  ccache_tgt = os.path.join(TARGET_DIR, 'ccache')
+  mkdir_p(ccache_src)
+  return ['-e', 'USE_CCACHE=1',
+          '-v', '{ccache_src}:{ccache_tgt}'.format(ccache_src=ccache_src, ccache_tgt=ccache_tgt),
+          '-e', 'CCACHE_DIR={ccache_tgt}'.format(ccache_tgt=ccache_tgt)]
+
+
 def main():
   args = parse_args()
   logging.basicConfig(level=logging.INFO, format='%(message)s')
 
+  prepare_source_dir()
   build_dir = os.environ.get('BUILD_DIR', os.path.join(__SOURCE_DIR, 'build_docker'))
   distro_build_dir = os.path.join(build_dir, args.DOCKER_IMAGE.replace('/', '_'))
 
   cmd = DOCKER_CMD
   cmd += create_mounts_cmd(distro_build_dir)
+  cmd += add_ccache_opts()
   cmd += passthrough_env(args.DOCKER_IMAGE)
   cmd += shlex.split(args.docker_args)
   cmd += [args.DOCKER_IMAGE]
@@ -173,7 +197,7 @@ def main():
   copy_source_dir(distro_build_dir)
   container_id = None
   try:
-    LOG.info('Running: %s' % ' '.join(cmd))
+    LOG.info('Running:\n%s' % textwrap.fill(' '.join(cmd), 120, break_on_hyphens=False, break_long_words=False))
     container_id = subprocess.check_output(cmd).strip()
     subprocess.check_call(['docker', 'start', '--attach', '--interactive', container_id])
   except subprocess.CalledProcessError as e:

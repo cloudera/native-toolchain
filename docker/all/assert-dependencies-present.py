@@ -108,12 +108,18 @@ def check_aws_works():
   check_output(['aws', '--version'])
 
 
+def check_mvn_works():
+  LOG.info('Checking that mvn is correctly installed.')
+  check_output(['mvn', '--version'])
+
+
 def main():
   logging.basicConfig(level=logging.INFO)
   check_libraries()
   check_path()
   check_openssl_version()
   check_aws_works()
+  check_mvn_works()
 
 
 if __name__ == '__main__':
