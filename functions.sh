@@ -389,7 +389,7 @@ function build_dist_package() {
   fi
 
   if [[ "PUBLISH_DEPENDENCIES" -eq "1" ]]; then
-    : ${PUBLISH_DEPENDENCIES_S3=1}j
+    : ${PUBLISH_DEPENDENCIES_S3=1}
     : ${PUBLISH_DEPENDENCIES_ARTIFACTORY=1}
   fi
 
