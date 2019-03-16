@@ -232,8 +232,9 @@ LZ4_VERSION=1.7.5 $SOURCE_DIR/source/lz4/build.sh
 ################################################################################
 if (( BUILD_HISTORICAL )); then
   RE2_VERSION=20130115 $SOURCE_DIR/source/re2/build.sh
+  RE2_VERSION=20130115-p1 $SOURCE_DIR/source/re2/build.sh
 fi
-RE2_VERSION=20130115-p1 $SOURCE_DIR/source/re2/build.sh
+RE2_VERSION=20190301 $SOURCE_DIR/source/re2/build.sh
 
 ################################################################################
 # Build Ldap
