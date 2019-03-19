@@ -388,10 +388,8 @@ function build_dist_package() {
     RET_VAL=false
   fi
 
-  if [[ "PUBLISH_DEPENDENCIES" -eq "1" ]]; then
-    : ${PUBLISH_DEPENDENCIES_S3=1}
-    : ${PUBLISH_DEPENDENCIES_ARTIFACTORY=1}
-  fi
+  : ${PUBLISH_DEPENDENCIES_S3="$PUBLISH_DEPENDENCIES"}
+  : ${PUBLISH_DEPENDENCIES_ARTIFACTORY="$PUBLISH_DEPENDENCIES"}
 
   # Package and upload the archive to the artifactory
   if [[ "PUBLISH_DEPENDENCIES_ARTIFACTORY" -eq "1" ]]; then
