@@ -1,0 +1,28 @@
+From 81b8e8f87e835a7b88817ee1efe5db2b38e61d41 Mon Sep 17 00:00:00 2001
+From: Andrew Sherman <asherman@cloudera.com>
+Date: Fri, 22 Mar 2019 14:18:13 -0700
+Subject: [PATCH] Remove misleading deprecation warning from validate method.
+
+This method is used to determine if the peer's SSL certificate should be
+validated. The deprecation warning message seems to be the result of a
+confusion of the role of the validate method with the use of a
+deprecated parameter named validate that is used in the initializer.
+---
+ lib/py/src/transport/TSSLSocket.py | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/lib/py/src/transport/TSSLSocket.py b/lib/py/src/transport/TSSLSocket.py
+index 9be0912..5133cb5 100644
+--- a/lib/py/src/transport/TSSLSocket.py
++++ b/lib/py/src/transport/TSSLSocket.py
+@@ -224,7 +224,6 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
+ 
+   @property
+   def validate(self):
+-    warnings.warn('Use cert_reqs instead', DeprecationWarning)
+     return self.cert_reqs != ssl.CERT_NONE
+ 
+   @validate.setter
+-- 
+2.7.4
+
