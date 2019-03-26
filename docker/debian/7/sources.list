@@ -1,0 +1,5 @@
+deb [check-valid-until=no] http://archive.debian.org/debian/ wheezy main
+deb-src [check-valid-until=no] http://archive.debian.org/debian/ wheezy main
+
+deb http://security.debian.org/ wheezy/updates main
+deb-src http://security.debian.org/ wheezy/updates main
