@@ -2,19 +2,19 @@
 
 ## Building the images
 
-Running `./buildall.sh` in the docker directory produces docker images suitable to build
+Running `./buildall.py` in the docker directory produces docker images suitable to build
 the toolchain packages. The images are automatically tagged as `impala-toolchain-${distro}`.
 
 ## A note on SLES
 
-Because SLES repositories are not public, `./buildall.sh` will skip the docker image
+Because SLES repositories are not public, `./buildall.py` will skip the docker image
 building process for sles12 unless the `SLES_MIRROR` environment variable is set. In
 order to build this image set the `SLES_MIRROR` variable to a valid SLES SP3 mirror url.
 
 ## Using the images
 
 The top level `in-docker.py` script sets up mounts and relevant envrionment variables and
-then executes `./buildall.sh` in a container. Each container gets a copy of the `source`
+then executes `./buildall.py` in a container. Each container gets a copy of the `source`
 directory (this copy is done using `git ls-tree` so new files must be committed in order
 to be copied into the container). The `check` and `build` directories are mounted on a
 per-container basis. In the host, one can find per-container directories for `source`,
