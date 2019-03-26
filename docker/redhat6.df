@@ -5,6 +5,7 @@ COPY ./redhat/yum-install /usr/local/bin
 # Since we are at 6.6 we'll modify the /etc/yum.repos.d/CentOS-Base.repo
 # file to vault's 6.6.
 COPY ./redhat/CentOS-6.6-Base.repo /etc/yum.repos.d/CentOS-Base.repo
+COPY ./redhat/Centos6-Vault.repo /etc/yum.repos.d/CentOS-Vault.repo
 
 RUN yum-install https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
 RUN yum-install autoconf \
@@ -46,6 +47,10 @@ RUN yum-install autoconf \
   which \
   xz \
   zlib-devel
+
+# Install a newer nss version. The nss version shipped with centos:6.6 is unable to handle TLSv1.2
+# which github now requires.
+RUN yum-install --disablerepo='*' --enablerepo=C6.8-base nss
 
 COPY ./all/postinstall.sh /usr/local/bin
 RUN postinstall.sh
