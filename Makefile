@@ -29,7 +29,7 @@ export TOOLCHAIN_BUILD_ID := $(shell bash -ec 'source functions.sh && generate_b
 
 $(STAMP_DIR)/impala-toolchain-% :
 	@mkdir -p $(@D)
-	./in-docker.py $(IN_DOCKER_ARGS) $(DOCKER_REGISTRY)$(@F) -- ./buildall.sh |sed -s 's/^/$(@F): /'
+	./in-docker.py $(IN_DOCKER_ARGS) $(DOCKER_REGISTRY)$(@F) -- ./buildall.sh 2>&1|sed -s 's/^/$(@F): /'
 	@touch $@
 
 all: $(foreach d,$(DISTROS),$(STAMP_DIR)/impala-toolchain-$d)
