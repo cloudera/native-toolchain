@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y autoconf \
       pigz \
       pkg-config \
       python \
+      python-dev \
       rsync \
       texinfo \
       unzip \

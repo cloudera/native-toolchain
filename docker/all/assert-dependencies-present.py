@@ -19,12 +19,14 @@
 
 import distutils.core  # noqa: F401
 import distutils.spawn
+import distutils.sysconfig
 import platform
 import subprocess
 import logging
 import os
 import re
 import shutil
+import sys
 
 LOG = logging.getLogger('assert-dependencies')
 
@@ -40,6 +42,13 @@ def check_output(cmd):
 def regex_in_list(regex, l):
   cr = re.compile(regex)
   return any(map(cr.match, l))
+
+
+def check_python_headers_present():
+  # Causes thrift to fail silently, so ensure this is present
+  include = os.path.join(distutils.sysconfig.get_python_inc(), 'Python.h')
+  LOG.info('Checking if %s exists', include)
+  assert os.path.isfile(include)
 
 
 def check_libraries():
@@ -129,6 +138,7 @@ def main():
   git_clone_works_with_https()
   check_path()
   check_openssl_version()
+  check_python_headers_present()
   check_aws_works()
   check_mvn_works()
 

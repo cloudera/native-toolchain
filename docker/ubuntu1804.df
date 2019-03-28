@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y autoconf \
       pkg-config \
       python \
       python3-distutils \
+      python-dev \
       rsync \
       texinfo \
       unzip \
