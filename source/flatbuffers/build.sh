@@ -36,8 +36,13 @@ if needs_build_package ; then
     # Prevent implicit fallthrough warning in GCC7+ from failing build.
     CXXFLAGS+=" -Wno-error=implicit-fallthrough"
   fi
+  # flatbuffers build occasionally fails when using -j${BUILD_THREADS} with an error similar to:
+  # /mnt/source/flatbuffers/flatbuffers-1.6.0/samples/sample_binary.cpp:19:17: error: 'MyGame' has not been declared
+  # /mnt/source/flatbuffers/flatbuffers-1.6.0/samples/sample_binary.cpp:19:25: error: 'Sample' is not a namespace-name
+  # ...
+  # Disabling build tests gets rid of this flakiness and makes the compilation faster.
   wrap cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} \
-    -DCMAKE_CXX_FLAGS="$CXXFLAGS"
+    -DCMAKE_CXX_FLAGS="$CXXFLAGS" -DFLATBUFFERS_BUILD_TESTS="OFF"
   wrap make -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
