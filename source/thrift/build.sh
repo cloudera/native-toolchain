@@ -117,7 +117,8 @@ if needs_build_package ; then
   wrap make -j"${BUILD_THREADS}" install
 
   # Ensure that we've compiled the fastbinary shared object
-  PYTHONPATH=$(find $PY_PREFIX -type d -name site-packages) \
+  # Some distros place site-packages on lib and others do so in lib64
+  PYTHONPATH=$(find $PY_PREFIX -type d -name 'site-packages' -type d|tr '\n' ':') \
     python -c 'import thrift.protocol.fastbinary'
   finalize_package_build "${PACKAGE}" "${PACKAGE_VERSION}"
 fi
