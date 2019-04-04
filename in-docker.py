@@ -167,7 +167,7 @@ def copy_source_dir(distro_build_dir):
 
 
 def add_ccache_opts():
-  if os.environ.get('USE_CCACHE', '').lower() not in ('1', 'true'):
+  if os.environ.get('USE_CCACHE', '1').lower() not in ('1', 'true'):
     return []
   # In order to make it easier to handle, we keep a single ccache directory for all containers
   ccache_src = os.environ.get('CCACHE_DIR', os.path.join(__SOURCE_DIR, 'build_docker/ccache'))

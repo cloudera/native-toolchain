@@ -31,6 +31,7 @@ set -o pipefail
 #  - COMPILER_VERSION
 #  - CONFIGURE_FLAG_BUILD_SYS
 #  - DEBUG
+#  - DOWNLOAD_CCACHE
 #  - FAIL_ON_PUBLISH
 #  - GCC_VERSION
 #  - LIBTOOL_VERSION
@@ -127,8 +128,15 @@ export BUILD_THREADS
 # SOURCE DIR for the current script
 export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
 
-: ${USE_CCACHE=0}
+: ${USE_CCACHE=1}
 export USE_CCACHE
+
+# When set, a ccache directory from a previous run is downloaded from the native-toolchain bucket.
+# Failing to download this directory doesn't abort the build. If the UPLOAD_CCACHE makefile variable
+# (not exported in this file, because we only update ccache when we build all platforms) is set to 1,
+# CCACHE_DIR is tarred and uploaded at the end of a full build.
+: ${DOWNLOAD_CCACHE=1}
+export DOWNLOAD_CCACHE
 
 : ${CCACHE_MAXSIZE=50G}
 export CCACHE_MAXSIZE

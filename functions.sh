@@ -43,7 +43,7 @@ function popd() {
 # package-filename and the target download folder
 function download_dependency() {
   # S3 Base URL
-  S3_BASE_PREFIX="https://native-toolchain.s3.amazonaws.com/source"
+  local S3_BASE_PREFIX="https://native-toolchain.s3.amazonaws.com/source"
   download_url "${S3_BASE_PREFIX}/${1}/${2}" "${3}/${2}"
 }
 
@@ -403,7 +403,7 @@ function build_dist_package() {
   fi
 
   if [[ "PUBLISH_DEPENDENCIES_S3" -eq "1" ]]; then
-    PACKAGE_S3_DESTINATION="s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${BUILD_LABEL}.tar.gz"
+    local PACKAGE_S3_DESTINATION="s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${BUILD_LABEL}.tar.gz"
     echo "Uploading ${PACKAGE_FINAL_TGZ} to ${PACKAGE_S3_DESTINATION}"
     aws s3 cp --only-show-errors "${PACKAGE_FINAL_TGZ}" \
       "${PACKAGE_S3_DESTINATION}" \
@@ -500,9 +500,6 @@ function setup_ccache() {
   mkdir -p $CCACHE_DIR
   local TEMPDIR=$(mktemp -d --suffix="-impala-toolchain")
   local RET=$TEMPDIR/$(basename $ORIG_COMPILER)
-  if [[ $CLEAN_TMP_AFTER_BUILD -eq 1 ]]; then
-    trap "rm -rf $TEMPDIR" EXIT
-  fi
   # Setting CC='ccache gcc' causes some programs to try to execute `ccache gcc`,
   # which fails. Since we set our CC variable, we can't rely on PATH ordering
   # to tell ccache about our compiler, so we create our own CC wrapper which is
@@ -510,6 +507,54 @@ function setup_ccache() {
   printf "#!/bin/sh\nexec ccache $ORIG_COMPILER "'"$@"\n' > "$RET"
   chmod 770 "$RET"
   echo $RET
+}
+
+# Download ccache into $CCACHE_DIR from the native-toolchain bucket. If multiple
+# processes/containers call this function only the first process to acquire a lock
+# will perform the download. Failing to download a cache tarball is not considered
+# fatal. After downloading ccache from s3, the statistics are zero-ed out.
+function download_ccache() {
+  local WAIT_SECONDS=600
+  local LOCK=$CCACHE_DIR/ccache.lock
+  local TAR=ccache.tar
+  local S3_URL="https://native-toolchain.s3.amazonaws.com/ccache/$TAR"
+  (
+    flock -w $WAIT_SECONDS 200
+    if [[ -f "$CCACHE_DIR/ccache.done" ]]; then
+      # Nothing to do here. Already downloaded in another container.
+      return 0
+    fi
+    if ! download_url "$S3_URL"; then
+      >&2 echo "Unable to download cache. Will fall back to an empty ccache directory"
+      touch $CCACHE_DIR/ccache.done
+      return 0
+    fi
+    tar -C $CCACHE_DIR -xf $TAR --strip 1
+    touch $CCACHE_DIR/ccache.done
+    rm -f $TAR
+    ccache -z
+  ) 200> "$LOCK"
+  rm -f "$LOCK"
+}
+
+# Upload a tarball containing all files in $CCACHE_DIR to $S3_BUCKET/ccache/ccache.tar
+function upload_ccache() {
+  local S3_PREFIX="s3://${S3_BUCKET}/ccache"
+  local EXPIRES="$(date -d '+3 months' --utc +'%Y-%m-%dT%H:%M:%SZ')"
+  local EXPECTED_SIZE=$((1024*1024*1024 * 12))
+  local REGION="us-west-1"
+
+  # We do not compress here to speed up this operation which happens as part of the critical
+  # path, instead, we use CCACHE_COMPRESS=1
+  tar --exclude="ccache.done" \
+    --exclude="ccache.conf" \
+    -C $(dirname $CCACHE_DIR) \
+    -cf - $(basename $CCACHE_DIR) \
+    | aws s3 cp \
+        --expires "$EXPIRES" \
+        --expected-size $EXPECTED_SIZE \
+        --region=$REGION - $S3_PREFIX/ccache.tar
+  ccache -s | aws s3 cp --region="$REGION" - "$S3_PREFIX/stats.$TOOLCHAIN_BUILD_ID"
 }
 
 # Print a message to standard error and exit with a non-zero status.

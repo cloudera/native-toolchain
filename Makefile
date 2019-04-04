@@ -15,8 +15,7 @@
 BUILD_DIR=build_docker
 STAMP_DIR=$(BUILD_DIR)/stamp
 SHELL=/bin/bash -o pipefail
-DISTROS = debian7 \
-	debian8 \
+DISTROS = debian8 \
 	redhat6 \
 	redhat7 \
 	sles12 \
@@ -26,11 +25,20 @@ DISTROS = debian7 \
 	ubuntu1804
 
 export TOOLCHAIN_BUILD_ID := $(shell bash -ec 'source functions.sh && generate_build_id')
+UPLOAD_CCACHE ?= 0
+FIRST_IMAGE := $(DOCKER_REGISTRY)impala-toolchain-$(firstword $(DISTROS))
+IN_DOCKER := ./in-docker.py $(IN_DOCKER_ARGS)
+
+all: $(foreach d,$(DISTROS),$(STAMP_DIR)/impala-toolchain-$d)
+ifeq ($(UPLOAD_CCACHE), 1)
+	$(IN_DOCKER) $(FIRST_IMAGE) -- bash -ec 'source init.sh && upload_ccache'
+endif
+	@echo TOOLCHAIN_BUILD_ID is $(TOOLCHAIN_BUILD_ID)
+
+
+$(STAMP_DIR)/impala-toolchain-%-upload-ccache :
 
 $(STAMP_DIR)/impala-toolchain-% :
 	@mkdir -p $(@D)
-	./in-docker.py $(IN_DOCKER_ARGS) $(DOCKER_REGISTRY)$(@F) -- ./buildall.sh 2>&1|sed -s 's/^/$(@F): /'
+	$(IN_DOCKER) $(DOCKER_REGISTRY)$(@F) -- ./buildall.sh 2>&1|sed -s 's/^/$(@F): /'
 	@touch $@
-
-all: $(foreach d,$(DISTROS),$(STAMP_DIR)/impala-toolchain-$d)
-

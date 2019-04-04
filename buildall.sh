@@ -21,6 +21,11 @@ set -o pipefail
 
 # Set up the environment configuration.
 source ./init.sh
+
+if [[ "$DOWNLOAD_CCACHE" -ne 0 ]]; then
+  download_ccache
+fi
+
 # Configure the compiler/linker flags, bootstrapping tools if necessary.
 source ./init-compiler.sh
 
