@@ -71,7 +71,7 @@ function build {
   # Allow overriding of the github URL from the environment - e.g. if we want to build
   # a hash from a forked repo. Fetch over SSH because github.com does not allow TLS < V1.2
   # connections and therefore https won't work for some older distributions.
-  KUDU_GITHUB_URL=${KUDU_GITHUB_URL:-git@github.com:apache/kudu.git}
+  KUDU_GITHUB_URL=${KUDU_GITHUB_URL:-git://github.com/apache/kudu.git}
   KUDU_SOURCE_DIR=kudu-$PACKAGE_VERSION
   if [[ ! -d "$KUDU_SOURCE_DIR" ]]; then
     git clone $KUDU_GITHUB_URL $KUDU_SOURCE_DIR
