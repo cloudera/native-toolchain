@@ -518,6 +518,7 @@ function download_ccache() {
   local LOCK=$CCACHE_DIR/ccache.lock
   local TAR=ccache.tar
   local S3_URL="https://native-toolchain.s3.amazonaws.com/ccache/$TAR"
+  mkdir -p $CCACHE_DIR
   (
     flock -w $WAIT_SECONDS 200
     if [[ -f "$CCACHE_DIR/ccache.done" ]]; then
