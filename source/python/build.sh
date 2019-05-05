@@ -25,10 +25,19 @@ THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
 if needs_build_package ; then
-  # Download the dependency from S3
-  download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
+  ARCHIVE_FILE="${PACKAGE_STRING}.tar.xz"
+  download_dependency $PACKAGE $ARCHIVE_FILE $THIS_DIR
 
-  setup_package_build $PACKAGE $PACKAGE_VERSION
+  setup_package_build $PACKAGE $PACKAGE_VERSION $ARCHIVE_FILE "Python-${PYTHON_VERSION}"
+
+  # Python bakes the name of the C and C++ compilers into the package to be used for
+  # building native packages. We want the defaults to be just the name of the compiler,
+  # e.g. "gcc" and "g++" without any additional path, particularly not any temporary
+  # directories, because consumers of the toolchain will likely install the compilers in
+  # a different directory from the one used during our toolchain build.
+  export PATH="$(dirname ${CC}):$(dirname ${CXX}):$PATH"
+  CC=$(basename ${CC})
+  CXX=$(basename ${CXX})
 
   LDFLAGS= wrap ./configure --prefix=$LOCAL_INSTALL
   wrap make -j${BUILD_THREADS:-4}

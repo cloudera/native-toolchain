@@ -54,10 +54,9 @@ BOOST_VERSION=1.57.0-p3 $SOURCE_DIR/source/boost/build.sh
 # Build Python
 ################################################################################
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
-  PYTHON_VERSION=2.7.11 build_fake_package "python"
-  PYTHON_VERSION=2.7.15 $SOURCE_DIR/source/python/build.sh
+  PYTHON_VERSION=2.7.16 $SOURCE_DIR/source/python/build.sh
 else
-  PYTHON_VERSION=2.7.15 build_fake_package "python"
+  PYTHON_VERSION=2.7.16 build_fake_package "python"
 fi
 
 ################################################################################
@@ -74,7 +73,7 @@ fi
 # Build LLVM 3.7+ with and without assertions. For LLVM 3.7+, the default is a
 # release build with no assertions.
 (
-  export PYTHON_VERSION=2.7.15
+  export PYTHON_VERSION=2.7.16
   if (( BUILD_HISTORICAL )) ; then
     LLVM_VERSION=3.7.0 $SOURCE_DIR/source/llvm/build.sh
     LLVM_VERSION=3.8.0 $SOURCE_DIR/source/llvm/build.sh
@@ -307,6 +306,7 @@ FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
 (
   export BOOST_VERSION=1.57.0-p3
   export KUDU_VERSION=9ba901a
+  export PYTHON_VERSION=2.7.16
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else
