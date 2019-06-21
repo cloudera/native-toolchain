@@ -1,0 +1,217 @@
+diff -ur a/avro-src-1.7.4/lang/c/src/avro/basics.h b/avro-src-1.7.4/lang/c/src/avro/basics.h
+--- a/avro-src-1.7.4/lang/c/src/avro/basics.h	2019-06-21 16:04:25.695537589 +0200
++++ b/avro-src-1.7.4/lang/c/src/avro/basics.h	2019-06-21 10:20:46.255503904 +0200
+@@ -42,6 +42,7 @@
+ 	AVRO_UNION,
+ 	AVRO_LINK,
+ 	AVRO_DECIMAL,
++  AVRO_DATE,
+ };
+ typedef enum avro_type_t avro_type_t;
+ 
+@@ -69,6 +70,7 @@
+ #define is_avro_bytes(obj)    (obj && avro_typeof(obj) == AVRO_BYTES)
+ #define is_avro_decimal(obj)  (obj && avro_typeof(obj) == AVRO_DECIMAL)
+ #define is_avro_int32(obj)    (obj && avro_typeof(obj) == AVRO_INT32)
++#define is_avro_date(obj)     (obj && avro_typeof(obj) == AVRO_DATE)
+ #define is_avro_int64(obj)    (obj && avro_typeof(obj) == AVRO_INT64)
+ #define is_avro_float(obj)    (obj && avro_typeof(obj) == AVRO_FLOAT)
+ #define is_avro_double(obj)   (obj && avro_typeof(obj) == AVRO_DOUBLE)
+@@ -78,6 +80,7 @@
+                              ||is_avro_bytes(obj) \
+                              ||is_avro_decimal(obj) \
+                              ||is_avro_int32(obj) \
++                             ||is_avro_date(obj) \
+                              ||is_avro_int64(obj) \
+                              ||is_avro_float(obj) \
+                              ||is_avro_double(obj) \
+diff -ur a/avro-src-1.7.4/lang/c/src/consume-binary.c b/avro-src-1.7.4/lang/c/src/consume-binary.c
+--- a/avro-src-1.7.4/lang/c/src/consume-binary.c	2019-06-21 16:04:25.695537589 +0200
++++ b/avro-src-1.7.4/lang/c/src/consume-binary.c	2019-06-21 09:53:16.244673402 +0200
+@@ -227,6 +227,15 @@
+ 		}
+ 		break;
+ 
++	 case AVRO_DATE:
++		{
++			int32_t i;
++			check_prefix(rval, enc->read_int(reader, &i),
++				    "Cannot read date value: ");
++			check(rval, avro_consumer_call(consumer, int_value, i, ud));
++		}
++		break;
++
+ 	case AVRO_INT32:
+ 		{
+ 			int32_t i;
+diff -ur a/avro-src-1.7.4/lang/c/src/datum.c b/avro-src-1.7.4/lang/c/src/datum.c
+--- a/avro-src-1.7.4/lang/c/src/datum.c	2019-06-21 16:04:25.695537589 +0200
++++ b/avro-src-1.7.4/lang/c/src/datum.c	2019-06-21 11:03:45.795911269 +0200
+@@ -1066,7 +1066,8 @@
+ 				avro_freet(struct avro_bytes_datum_t, bytes);
+ 			}
+ 			break;
+-		case AVRO_INT32:{
++		case AVRO_INT32:
++		case AVRO_DATE:{
+ 				avro_freet(struct avro_int32_datum_t, datum);
+ 			}
+ 			break;
+diff -ur a/avro-src-1.7.4/lang/c/src/datum_equal.c b/avro-src-1.7.4/lang/c/src/datum_equal.c
+--- a/avro-src-1.7.4/lang/c/src/datum_equal.c	2019-06-21 16:04:25.695537589 +0200
++++ b/avro-src-1.7.4/lang/c/src/datum_equal.c	2019-06-21 11:07:07.380667487 +0200
+@@ -142,6 +142,7 @@
+ 			      avro_datum_to_bytes(b)->bytes,
+ 			      avro_datum_to_bytes(a)->size) == 0;
+ 	case AVRO_INT32:
++	case AVRO_DATE:
+ 		return avro_datum_to_int32(a)->i32 ==
+ 		    avro_datum_to_int32(b)->i32;
+ 	case AVRO_INT64:
+diff -ur a/avro-src-1.7.4/lang/c/src/datum_size.c b/avro-src-1.7.4/lang/c/src/datum_size.c
+--- a/avro-src-1.7.4/lang/c/src/datum_size.c	2019-06-21 16:04:25.695537589 +0200
++++ b/avro-src-1.7.4/lang/c/src/datum_size.c	2019-06-21 09:43:14.966184306 +0200
+@@ -213,10 +213,11 @@
+ 				       avro_datum_to_bytes(datum)->size);
+ 
+ 	case AVRO_INT32:
++	case AVRO_DATE:
+ 	case AVRO_INT64:{
+-			int64_t val = avro_typeof(datum) == AVRO_INT32 ?
+-			    avro_datum_to_int32(datum)->i32 :
+-			    avro_datum_to_int64(datum)->i64;
++			int64_t val = avro_typeof(datum) == AVRO_INT64 ?
++			    avro_datum_to_int64(datum)->i64 :
++			    avro_datum_to_int32(datum)->i32;
+ 			if (is_avro_schema(writers_schema)) {
+ 				/* handle promotion */
+ 				if (is_avro_float(writers_schema)) {
+diff -ur a/avro-src-1.7.4/lang/c/src/datum_skip.c b/avro-src-1.7.4/lang/c/src/datum_skip.c
+--- a/avro-src-1.7.4/lang/c/src/datum_skip.c	2019-06-21 16:04:25.695537589 +0200
++++ b/avro-src-1.7.4/lang/c/src/datum_skip.c	2019-06-21 10:19:38.975225387 +0200
+@@ -139,6 +139,7 @@
+ 		break;
+ 
+ 	case AVRO_INT32:
++ case AVRO_DATE:
+ 		rval = enc->skip_int(reader);
+ 		break;
+ 
+diff -ur a/avro-src-1.7.4/lang/c/src/datum_validate.c b/avro-src-1.7.4/lang/c/src/datum_validate.c
+--- a/avro-src-1.7.4/lang/c/src/datum_validate.c	2019-06-21 16:04:25.695537589 +0200
++++ b/avro-src-1.7.4/lang/c/src/datum_validate.c	2019-06-21 11:33:34.334620737 +0200
+@@ -65,6 +65,9 @@
+ 	case AVRO_DECIMAL:
+ 		return is_avro_bytes(datum);
+ 
++	case AVRO_DATE:
++		return is_avro_int32(datum);
++
+ 	case AVRO_INT32:
+ 		return is_avro_int32(datum)
+ 		    || (is_avro_int64(datum)
+diff -ur a/avro-src-1.7.4/lang/c/src/schema.c b/avro-src-1.7.4/lang/c/src/schema.c
+--- a/avro-src-1.7.4/lang/c/src/schema.c	2019-06-21 16:04:25.695537589 +0200
++++ b/avro-src-1.7.4/lang/c/src/schema.c	2019-06-21 16:02:35.251123271 +0200
+@@ -51,6 +51,7 @@
+ 			if (avro_float_set(datum, json_real_value(json))) return EINVAL;
+ 			return 0;
+ 		case AVRO_INT32:
++		case AVRO_DATE:
+ 			check_param(EINVAL, json_is_integer(json), "JSON integer");
+ 			if (avro_int32_set(datum, json_integer_value(json))) return EINVAL;
+ 			return 0;
+@@ -160,6 +161,7 @@
+ 		case AVRO_STRING:
+ 		case AVRO_BYTES:
+ 		case AVRO_INT32:
++		case AVRO_DATE:
+ 		case AVRO_INT64:
+ 		case AVRO_FLOAT:
+ 		case AVRO_DOUBLE:
+@@ -295,6 +297,16 @@
+ 	return avro_schema_incref(&obj);
+ }
+ 
++avro_schema_t avro_schema_date(void)
++{
++	static struct avro_obj_t obj = {
++		AVRO_DATE,
++		AVRO_SCHEMA,
++		1
++	};
++	return avro_schema_incref(&obj);
++}
++
+ avro_schema_t avro_schema_long(void)
+ {
+ 	static struct avro_obj_t obj = {
+@@ -844,7 +856,13 @@
+       *type = AVRO_BYTES;
+     }
+ 	} else if (strcmp(type_str, "int") == 0) {
+-		*type = AVRO_INT32;
++   json_t *json_logical_type = json_object_get(json, "logicalType");
++   const char *logical_type_str = json_string_value(json_logical_type);
++   if (logical_type_str && strcmp(logical_type_str, "date") == 0) {
++     *type = AVRO_DATE;
++   } else {
++		 *type = AVRO_INT32;
++   }
+ 	} else if (strcmp(type_str, "long") == 0) {
+ 		*type = AVRO_INT64;
+ 	} else if (strcmp(type_str, "float") == 0) {
+@@ -911,6 +929,10 @@
+ 		*schema = avro_schema_int();
+ 		break;
+ 
++	case AVRO_DATE:
++	  *schema = avro_schema_date();
++	  break;
++
+ 	case AVRO_INT64:
+ 		*schema = avro_schema_long();
+ 		break;
+@@ -1292,6 +1314,7 @@
+ 	case AVRO_STRING:
+ 	case AVRO_BYTES:
+ 	case AVRO_INT32:
++	case AVRO_DATE:
+ 	case AVRO_INT64:
+ 	case AVRO_FLOAT:
+ 	case AVRO_DOUBLE:
+@@ -1515,6 +1538,8 @@
+ 		return "map";
+ 	} else if (is_avro_int32(schema)) {
+ 		return "int";
++	} else if (is_avro_date(schema)) {
++		return "date";
+ 	} else if (is_avro_int64(schema)) {
+ 		return "long";
+ 	} else if (is_avro_float(schema)) {
+@@ -1545,6 +1570,7 @@
+     case AVRO_STRING: return "string";
+     case AVRO_BYTES: return "bytes";
+     case AVRO_INT32: return "int";
++    case AVRO_DATE: return "date";
+     case AVRO_INT64: return "long";
+     case AVRO_FLOAT: return "float";
+     case AVRO_DOUBLE: return "double";
+@@ -1575,6 +1601,7 @@
+ 			return avro_givebytes("", 0, NULL);
+ 
+ 		case AVRO_INT32:
++		case AVRO_DATE:
+ 			return avro_int32(0);
+ 
+ 		case AVRO_INT64:
+@@ -1802,6 +1829,9 @@
+ 	case AVRO_INT32:
+ 		check(rval, avro_write_str(out, "int"));
+ 		break;
++  case AVRO_DATE:
++    check(rval, avro_write_str(out, "int\",\"logicalType\":\"date"));
++    break;
+ 	case AVRO_INT64:
+ 		check(rval, avro_write_str(out, "long"));
+ 		break;
