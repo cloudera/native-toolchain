@@ -210,8 +210,9 @@ if (( BUILD_HISTORICAL )); then
   GPERFTOOLS_VERSION=2.3 $SOURCE_DIR/source/gperftools/build.sh
 fi
 # IMPALA-6414: Required until issues with 2.6.3 have been sorted out.
-GPERFTOOLS_VERSION=2.5-p2 $SOURCE_DIR/source/gperftools/build.sh
+GPERFTOOLS_VERSION=2.5-p4 $SOURCE_DIR/source/gperftools/build.sh
 GPERFTOOLS_VERSION=2.6.3 $SOURCE_DIR/source/gperftools/build.sh
+GPERFTOOLS_VERSION=2.8.1-p1 $SOURCE_DIR/source/gperftools/build.sh
 
 ################################################################################
 # Build glog

@@ -1,0 +1,131 @@
+From 9c03b7d4bdc0d9c31bccb73d9a0ff9f8b10fa016 Mon Sep 17 00:00:00 2001
+From: Aliaksey Kandratsenka <alkondratenko@gmail.com>
+Date: Sun, 25 Feb 2018 13:55:53 -0800
+Subject: [PATCH 2/2] refactored handling of reverse span set iterator for
+ correctness
+
+I.e. no more questionable memcpy and we run iterator's destructor when
+we remove span from SpanSet.
+
+(cherry picked from commit f1d3fe4a21e339a3fd6e4592ee7444484a7b92dc)
+---
+ src/page_heap.cc | 10 +++++-----
+ src/span.h       | 55 +++++++++++++++++++++++++++++++++++--------------------
+ 2 files changed, 40 insertions(+), 25 deletions(-)
+
+diff --git a/src/page_heap.cc b/src/page_heap.cc
+index f726127..98a5f02 100644
+--- a/src/page_heap.cc
++++ b/src/page_heap.cc
+@@ -412,8 +412,7 @@ void PageHeap::PrependToFreeList(Span* span) {
+     std::pair<SpanSet::iterator, bool> p =
+         set->insert(SpanPtrWithLength(span));
+     ASSERT(p.second); // We never have duplicates since span->start is unique.
+-    span->rev_ptr.set_iterator(p.first);
+-    ASSERT(span->rev_ptr.get_iterator()->span == span);
++    span->SetSpanSetIterator(p.first);
+     return;
+   }
+ 
+@@ -436,9 +435,10 @@ void PageHeap::RemoveFromFreeList(Span* span) {
+     SpanSet *set = &large_normal_;
+     if (span->location == Span::ON_RETURNED_FREELIST)
+       set = &large_returned_;
+-    ASSERT(span->rev_ptr.get_iterator()->span == span);
+-    ASSERT(set->find(SpanPtrWithLength(span)) == span->rev_ptr.get_iterator());
+-    set->erase(span->rev_ptr.get_iterator());
++    SpanSet::iterator iter = span->ExtractSpanSetIterator();
++    ASSERT(iter->span == span);
++    ASSERT(set->find(SpanPtrWithLength(span)) == iter);
++    set->erase(iter);
+   } else {
+     DLL_Remove(span);
+   }
+diff --git a/src/span.h b/src/span.h
+index 7a1d42d..ca3f710 100644
+--- a/src/span.h
++++ b/src/span.h
+@@ -65,22 +65,6 @@ struct SpanBestFitLess {
+   bool operator()(SpanPtrWithLength a, SpanPtrWithLength b) const;
+ };
+ 
+-// Wrapper which stores a SpanSet::iterator as a POD type.
+-// This allows the iterator to be stored in a union below.
+-struct SpanSetRevPtr {
+-  char data[sizeof(SpanSet::iterator)];
+-
+-  SpanSet::iterator get_iterator() {
+-    SpanSet::iterator ret;
+-    memcpy(&ret, this, sizeof(ret));
+-    return ret;
+-  }
+-
+-  void set_iterator(const SpanSet::iterator& val) {
+-    new (this) SpanSet::iterator(val);
+-  }
+-};
+-
+ // Information kept for a span (a contiguous run of pages).
+ struct Span {
+   PageID        start;          // Starting page number
+@@ -88,15 +72,26 @@ struct Span {
+   Span*         next;           // Used when in link list
+   Span*         prev;           // Used when in link list
+   union {
+-    void*         objects;      // Linked list of free objects
+-    SpanSetRevPtr rev_ptr;      // "pointer" (std::set iterator) to
+-                                // SpanSet entry associated with this
+-                                // Span.
++    void* objects;              // Linked list of free objects
++
++    // Span may contain iterator pointing back at SpanSet entry of
++    // this span into set of large spans. It is used to quickly delete
++    // spans from those sets. span_iter_space is space for such
++    // iterator which lifetime is controlled explicitly.
++    char span_iter_space[sizeof(SpanSet::iterator)];
+   };
+   unsigned int  refcount : 16;  // Number of non-free objects
+   unsigned int  sizeclass : 8;  // Size-class for small objects (or 0)
+   unsigned int  location : 2;   // Is the span on a freelist, and if so, which?
+   unsigned int  sample : 1;     // Sampled object?
++  bool          has_span_iter : 1; // Iff span_iter_space has valid
++                                   // iterator. Only for debug builds.
++
++  // Sets iterator stored in span_iter_space.
++  // Requires has_span_iter == 0.
++  void SetSpanSetIterator(const SpanSet::iterator& iter);
++  // Copies out and destroys iterator stored in span_iter_space.
++  SpanSet::iterator ExtractSpanSetIterator();
+ 
+ #undef SPAN_HISTORY
+ #ifdef SPAN_HISTORY
+@@ -129,6 +124,26 @@ inline bool SpanBestFitLess::operator()(SpanPtrWithLength a, SpanPtrWithLength b
+   return a.span->start < b.span->start;
+ }
+ 
++inline void Span::SetSpanSetIterator(const SpanSet::iterator& iter) {
++  ASSERT(!has_span_iter);
++  has_span_iter = 1;
++
++  new (span_iter_space) SpanSet::iterator(iter);
++}
++
++inline SpanSet::iterator Span::ExtractSpanSetIterator() {
++  typedef SpanSet::iterator iterator_type;
++
++  ASSERT(has_span_iter);
++  has_span_iter = 0;
++
++  iterator_type* this_iter =
++    reinterpret_cast<iterator_type*>(span_iter_space);
++  iterator_type retval = *this_iter;
++  this_iter->~iterator_type();
++  return retval;
++}
++
+ // Allocator/deallocator for spans
+ Span* NewSpan(PageID p, Length len);
+ void DeleteSpan(Span* span);
+-- 
+2.7.4
+
