@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y autoconf \
       flex \
       git \
       groff-base \
+      libffi-dev \
       libkrb5-dev \
       libncurses5-dev \
       libsasl2-dev \

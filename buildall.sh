@@ -54,7 +54,9 @@ BOOST_VERSION=1.57.0-p3 $SOURCE_DIR/source/boost/build.sh
 # Build Python
 ################################################################################
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
+  # For now, provide both Python 2 and 3 until we can switch over to Python 3.
   PYTHON_VERSION=2.7.16 $SOURCE_DIR/source/python/build.sh
+  PYTHON_VERSION=3.7.4 $SOURCE_DIR/source/python/build.sh
 else
   PYTHON_VERSION=2.7.16 build_fake_package "python"
 fi
