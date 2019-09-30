@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Build and tag all docker images. Output to stdout the tags that were succesfully built.
+# Build and tag all docker images (or a single image specified by --docker_image).
+# Output to stdout the tags that were succesfully built.
+import argparse
 import glob
 import logging
 import os
@@ -25,8 +27,18 @@ LOG = logging.getLogger('buildall.py')
 
 def main():
   logging.basicConfig(level=logging.INFO)
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--docker_file", default=None,
+                      help="An individual docker file to build")
+  args = parser.parse_args()
+  if args.docker_file is not None:
+    if not os.path.exists(args.docker_file):
+      sys.exit("Docker file {0} does not exist".format(args.docker_file))
+    docker_file_list = [args.docker_file]
+  else:
+    docker_file_list = glob.glob('*.df')
   procs = []
-  for df in glob.glob('*.df'):
+  for df in docker_file_list:
     tag = 'impala-toolchain-%s' % df[:-3]
     build_cmd = ['docker', 'build', '-f', df, '-t', tag]
     if 'sles12' in df:

@@ -4,6 +4,7 @@
 
 Running `./buildall.py` in the docker directory produces docker images suitable to build
 the toolchain packages. The images are automatically tagged as `impala-toolchain-${distro}`.
+To build a single docker image, use the --docker_file argument for buildall.py.
 
 ## A note on SLES
 

@@ -34,11 +34,11 @@ install_aws() {
 }
 
 install_mvn() {
-  dl_verify https://apache.osuosl.org/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.tar.gz 6a1b346af36a1f1a491c1c1a141667c5de69b42e6611d3687df26868bc0f4637
-  tar xf apache-maven-3.6.0-bin.tar.gz
+  dl_verify https://apache.osuosl.org/maven/maven-3/3.6.2/binaries/apache-maven-3.6.2-bin.tar.gz 3fbc92d1961482d6fbd57fbf3dd6d27a4de70778528ee3fb44aa7d27eb32dfdc
+  tar xf apache-maven-3.6.2-bin.tar.gz
   cat <<"EOF" > /usr/local/bin/mvn
 #!/bin/sh
-export M2_HOME=/usr/local/apache-maven-3.6.0
+export M2_HOME=/usr/local/apache-maven-3.6.2
 export M2=$M2_HOME/bin
 exec $M2/mvn "$@"
 EOF
