@@ -21,7 +21,8 @@ dl_verify() {
   local url=$1
   local sha=$2
   local path=$(basename $url)
-  wget --progress=dot:giga -O - $url| tee $path |sha256sum -wc <(echo "$sha  -")
+  wget --progress=dot:giga -O $path $url
+  sha256sum -wc <(echo "$sha  $path")
   echo $path
 }
 
@@ -46,7 +47,7 @@ EOF
 }
 
 install_ccache() {
-  dl_verify https://www.samba.org/ftp/ccache/ccache-3.3.3.tar.gz 87a399a2267cfac3f36411fbc12ff8959f408cffd050ad15fe423df88e977e8f
+  dl_verify https://github.com/ccache/ccache/releases/download/v3.3.3/ccache-3.3.3.tar.gz 87a399a2267cfac3f36411fbc12ff8959f408cffd050ad15fe423df88e977e8f
   tar xvzf ccache-3.3.3.tar.gz
   (
   cd ccache-3.3.3
@@ -57,7 +58,9 @@ install_ccache() {
 }
 
 cd /usr/local
-install_aws &
-install_mvn &
-install_ccache &
+# NOTE: If we run these in parallel, we need to be careful about keeping the return
+#       codes. Running serial for now, because performance is not important here.
+install_aws
+install_mvn
+install_ccache
 wait

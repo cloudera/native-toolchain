@@ -124,6 +124,16 @@ def check_mvn_works():
   check_output(['mvn', '--version'])
 
 
+def check_ccache_works():
+  # Older versions of ccache can cause build failures and weirdness (e.g. on Redhat 6)
+  # Verify that the version we installed is present.
+  want = '3.3.3'
+  LOG.info('Checking that ccache is correctly installed.')
+  out = check_output(['ccache', '--version'])
+  if want not in out:
+    raise Exception('Unexpected ccache version. Was: %s, expected: %s' % (out, want))
+
+
 def git_clone_works_with_https():
   distro, version, _ = platform.dist()
   if distro == 'centos' and version.startswith('6'):
