@@ -1,6 +1,8 @@
 FROM ubuntu:14.04
 
-RUN apt-get update && apt-get install -y autoconf \
+RUN apt-get update && apt-get install -y software-properties-common && \
+    add-apt-repository ppa:openjdk-r/ppa && \
+    apt-get update && apt-get install -y autoconf \
       bison \
       build-essential \
       ccache \
@@ -16,7 +18,7 @@ RUN apt-get update && apt-get install -y autoconf \
       libtool \
       libz-dev \
       lsb-release \
-      openjdk-7-jdk \
+      openjdk-8-jdk \
       pigz \
       pkg-config \
       python-dev \
