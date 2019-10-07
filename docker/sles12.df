@@ -15,6 +15,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-inter
   automake \
   bison \
   byacc \
+  bzip2 \
   ccache\
   curl \
   cyrus-sasl \
