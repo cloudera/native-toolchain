@@ -134,6 +134,16 @@ def check_ccache_works():
     raise Exception('Unexpected ccache version. Was: %s, expected: %s' % (out, want))
 
 
+def check_java_version():
+  # Building Kudu requires Java 8.
+  want = '1.8.0'
+  LOG.info('Checking that java is correctly installed.')
+  # java -version has multiline output, so combine it into a single string
+  out = "".join(check_output(['java', '-version']))
+  if want not in out:
+    raise Exception('Unexpected java version. Was: %s, expected: %s' % (out, want))
+
+
 def git_clone_works_with_https():
   distro, version, _ = platform.dist()
   if distro == 'centos' and version.startswith('6'):
@@ -151,6 +161,7 @@ def main():
   check_python_headers_present()
   check_aws_works()
   check_mvn_works()
+  check_java_version()
 
 
 if __name__ == '__main__':

@@ -94,6 +94,13 @@ function build {
   # build, "python2.7" needs to be in the PATH.
   OLD_PATH="$PATH"
   PATH="$BUILD_DIR/python-$PYTHON_VERSION/bin:$OLD_PATH"
+
+  # Kudu's thirdparty compilation of curl depends on being able to find krb5-config
+  # on the path. On SLES12, this can be in /usr/lib/mit/bin, so include that directory
+  # if it exists.
+  if [[ -d /usr/lib/mit/bin ]]; then
+    PATH="$PATH:/usr/lib/mit/bin"
+  fi
   wrap ./build-if-necessary.sh
   cd ..
 
