@@ -204,6 +204,8 @@ export ARCH_NAME
 
 if [[ "$ARCH_NAME" == "ppc64le" ]]; then
   export CONFIGURE_FLAG_BUILD_SYS="--build=powerpc64le-unknown-linux-gnu"
+elif [[ "$ARCH_NAME" == "aarch64" ]]; then
+  export CONFIGURE_FLAG_BUILD_SYS="--build=aarch64-unknown-linux-gnu"
 else
   export CONFIGURE_FLAG_BUILD_SYS=
 fi
