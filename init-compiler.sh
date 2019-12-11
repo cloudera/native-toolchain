@@ -33,6 +33,8 @@ if [[ "$OSTYPE" =~ ^linux ]]; then
   # be obeyed by libraries explicitly needing this information.
   if [[ "$ARCH_NAME" == "ppc64le" ]]; then
      ARCH_FLAGS="-mvsx -maltivec"
+  elif [[ "$ARCH_NAME" == "aarch64" ]]; then
+    ARCH_FLAGS="-march=armv8-a"
   else
      ARCH_FLAGS="-mno-avx2"
   fi
@@ -70,7 +72,12 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
   LDFLAGS="$ARCH_FLAGS $FULL_RPATH $FULL_LPATH"
-  CXXFLAGS="$ARCH_FLAGS -fPIC -O3 -m64"
+
+  if [[ "$ARCH_NAME" == "aarch64" ]]; then
+    CXXFLAGS="$ARCH_FLAGS -fPIC -O3"
+  else
+    CXXFLAGS="$ARCH_FLAGS -fPIC -O3 -m64"
+  fi
 else
   if [[ "$OSTYPE" == "darwin"* ]]; then
     CXX="g++ -stdlib=libstdc++"
@@ -78,9 +85,11 @@ else
   LDFLAGS=""
   CXXFLAGS="-fPIC -O3 -m64"
 fi
-
-CFLAGS="-fPIC -O3 -m64"
-
+if [[ "$ARCH_NAME" == "aarch64" ]]; then
+  CFLAGS="-fPIC -O3"
+else
+  CFLAGS="-fPIC -O3 -m64"
+fi
 if [[ $USE_CCACHE -ne 0 ]]; then
   CC=$(setup_ccache $CC)
   CXX=$(setup_ccache $CXX)
