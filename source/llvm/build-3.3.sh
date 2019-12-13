@@ -83,6 +83,8 @@ function build_llvm_33() {
 
   if [[ "$ARCH_NAME" == "ppc64le" ]]; then
     LLVM_BUILD_TARGET+="powerpc,cpp"
+  elif [[ "$ARCH_NAME" == "aarch64" ]]; then
+    LLVM_BUILD_TARGET+="aarch64,cpp"
   else
     LLVM_BUILD_TARGET+="x86_64,cpp"
   fi

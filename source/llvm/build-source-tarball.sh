@@ -90,6 +90,8 @@ function build_llvm() {
 
   if [[ "$ARCH_NAME" == "ppc64le" ]]; then
     LLVM_BUILD_TARGET+="PowerPC"
+  elif [[ "$ARCH_NAME" == "aarch64" ]]; then
+    LLVM_BUILD_TARGET+="AArch64"
   else
     LLVM_BUILD_TARGET+="X86"
   fi
