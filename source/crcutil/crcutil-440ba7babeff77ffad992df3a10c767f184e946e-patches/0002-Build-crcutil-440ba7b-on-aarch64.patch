@@ -1,0 +1,116 @@
+diff --git a/autogen.sh b/autogen.sh
+index e922f20..173ce82 100755
+--- a/autogen.sh
++++ b/autogen.sh
+@@ -93,6 +93,10 @@ elif [[ "$IS_CLANG" = "1" ]]; then
+   crcutil_flags="${crcutil_flags} -msse4.2"
+ fi
+
++if [[ "$ARCH_NAME" == "aarch64" ]]; then
++  crcutil_flags="-DCRCUTIL_USE_MM_CRC32=1 -Wall -march=armv8-a -Icode -Iexamples -Itests -O3"
++fi
++
+ echo>>${target} "AM_CXXFLAGS=${crcutil_flags}"
+ echo>>${target} 'AM_CFLAGS=$(AM_CXXFLAGS)'
+
+diff --git a/code/crc32c_sse4.h b/code/crc32c_sse4.h
+index ac3d842..c4f3044 100644
+--- a/code/crc32c_sse4.h
++++ b/code/crc32c_sse4.h
+@@ -22,7 +22,7 @@
+ #include "gf_util.h"              // base types, gf_util class, etc.
+ #include "crc32c_sse4_intrin.h"   // _mm_crc32_u* intrinsics
+
+-#if HAVE_I386 || HAVE_AMD64 || HAVE_PPC64
++#if HAVE_I386 || HAVE_AMD64 || HAVE_PPC64 || HAVE_AARCH64
+
+ #if CRCUTIL_USE_MM_CRC32
+
+@@ -247,6 +247,6 @@ class RollingCrc32cSSE4 {
+
+ }  // namespace crcutil
+
+-#endif  // HAVE_I386 || HAVE_AMD64 || HAVE_PPC64
++#endif  // HAVE_I386 || HAVE_AMD64 || HAVE_PPC64 || HAVE_AARCH64
+
+ #endif  // CRCUTIL_CRC32C_SSE4_H_
+diff --git a/code/platform.h b/code/platform.h
+index 936cf7d..a0e69d4 100644
+--- a/code/platform.h
++++ b/code/platform.h
+@@ -45,6 +45,13 @@
+ #endif  // defined(__amd64__) || defined(_M_AMD64)
+ #endif  // defined(HAVE_AMD64)
+
++#if !defined(HAVE_AARCH64)
++#if defined(__aarch64__)
++#define HAVE_AARCH64 1
++#else
++#define HAVE_AARCH64 0
++#endif  // defined(__aarch64__)
++#endif  // defined(HAVE_AARCH64)
+
+ #if HAVE_AMD64 || HAVE_I386
+ #if defined(_MSC_VER)
+diff --git a/code/crc32c_sse4.cc b/code/crc32c_sse4.cc
+index c6e1652..5194c6e 100644
+--- a/code/crc32c_sse4.cc
++++ b/code/crc32c_sse4.cc
+@@ -18,7 +18,7 @@
+
+ #include "crc32c_sse4.h"
+
+-#if HAVE_I386 || HAVE_AMD64
++#if HAVE_I386 || HAVE_AMD64 || HAVE_AARCH64
+
+ namespace crcutil {
+
+@@ -363,4 +363,4 @@ void RollingCrc32cSSE4::Init(const Crc32cSSE4 &crc,
+
+ }  // namespace crcutil
+
+-#endif  // HAVE_I386 || HAVE_AMD64
++#endif  // HAVE_I386 || HAVE_AMD64 || HAVE_AARCH64
+diff --git a/code/crc32c_sse4_intrin.h b/code/crc32c_sse4_intrin.h
+index ab7cc3e..9b44ccb 100644
+--- a/code/crc32c_sse4_intrin.h
++++ b/code/crc32c_sse4_intrin.h
+@@ -20,7 +20,7 @@
+ #include "platform.h"
+ #include "base_types.h"
+
+-#if CRCUTIL_USE_MM_CRC32 && (HAVE_I386 || HAVE_AMD64)
++#if CRCUTIL_USE_MM_CRC32 && (HAVE_I386 || HAVE_AMD64 || HAVE_AARCH64)
+
+ #if defined(_MSC_VER) || defined(__SSE4_2__)
+
+@@ -94,6 +94,6 @@ __forceinline uint32 _mm_crc32_u8(uint32 crc, uint8 value) {
+
+ #endif
+
+-#endif  // CRCUTIL_USE_MM_CRC32 && (HAVE_I386 || HAVE_AMD64)
++#endif  // CRCUTIL_USE_MM_CRC32 && (HAVE_I386 || HAVE_AMD64 || HAVE_AARCH64)
+
+ #endif  // CRCUTIL_CRC32C_SSE4_INTRIN_H_
+diff --git a/examples/interface.cc b/examples/interface.cc
+index 69273d3..16d9495 100644
+--- a/examples/interface.cc
++++ b/examples/interface.cc
+@@ -268,7 +268,7 @@ CRC *CRC::Create(UINT64 poly_lo,
+ #endif  // !HAVE_SSE2
+   }
+
+-#if CRCUTIL_USE_MM_CRC32 && (HAVE_I386 || HAVE_AMD64)
++#if CRCUTIL_USE_MM_CRC32 && (HAVE_I386 || HAVE_AMD64 || HAVE_AARCH64)
+   if (use_sse4_2 &&
+       degree == Crc32cSSE4::FixedDegree() &&
+       poly_lo == Crc32cSSE4::FixedGeneratingPolynomial() &&
+@@ -284,7 +284,7 @@ CRC *CRC::Create(UINT64 poly_lo,
+         static_cast<size_t>(roll_length),
+         allocated_memory);
+   }
+-#endif  // CRCUTIL_USE_MM_CRC32 && (HAVE_I386 || HAVE_AMD64)
++#endif  // CRCUTIL_USE_MM_CRC32 && (HAVE_I386 || HAVE_AMD64 || HAVE_AARCH64)
+
+   if (poly_hi != 0 || (degree != 64 && (poly_lo >> degree) != 0)) {
+     return NULL;

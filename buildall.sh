@@ -118,8 +118,10 @@ LIBEV_VERSION=4.20 $SOURCE_DIR/source/libev/build.sh
 if (( BUILD_HISTORICAL )) ; then
   CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e\
     $SOURCE_DIR/source/crcutil/build.sh
+  CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e-p1\
+    $SOURCE_DIR/source/crcutil/build.sh
 fi
-CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e-p1\
+CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e-p2\
   $SOURCE_DIR/source/crcutil/build.sh
 
 ################################################################################
