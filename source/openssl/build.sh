@@ -31,12 +31,16 @@ if needs_build_package ; then
   ARCH_FLAGS=
   if [[ "$OSTYPE" == "darwin"* ]]; then
     ARCH_FLAGS="darwin64-x86_64-cc enable-ec_nistp_64_gcc_128"
+  elif [[ "$ARCH_NAME" == "aarch64" ]]; then
+    ARCH_FLAGS="linux-aarch64 enable-ec_nistp_64_gcc_128"
   else
     ARCH_FLAGS="linux-x86_64 enable-ec_nistp_64_gcc_128"
   fi
 
   if [[ "$ARCH_NAME" == "ppc64le" ]]; then
     CONFIGURE_FLAG_BUILD_SYS="no-asm"
+  elif [[ "$ARCH_NAME" == "aarch64" ]]; then
+    CONFIGURE_FLAG_BUILD_SYS=
   fi
   CFLAGS="$CFLAGS -fPIC -DPIC" \
     CXXFLAGS="$CXXFLAGS -fPIC -DPIC" \
