@@ -43,12 +43,15 @@ source ./init-compiler.sh
 ################################################################################
 # Boost
 ################################################################################
-if (( BUILD_HISTORICAL )) ; then
-  BOOST_VERSION=1.57.0 $SOURCE_DIR/source/boost/build.sh
-  BOOST_VERSION=1.57.0-p1 $SOURCE_DIR/source/boost/build.sh
-  BOOST_VERSION=1.57.0-p2 $SOURCE_DIR/source/boost/build.sh
+if [[ "$ARCH_NAME" != "aarch64" ]]; then
+  if (( BUILD_HISTORICAL )) ; then
+    BOOST_VERSION=1.57.0 $SOURCE_DIR/source/boost/build.sh
+    BOOST_VERSION=1.57.0-p1 $SOURCE_DIR/source/boost/build.sh
+    BOOST_VERSION=1.57.0-p2 $SOURCE_DIR/source/boost/build.sh
+  fi
+  BOOST_VERSION=1.57.0-p3 $SOURCE_DIR/source/boost/build.sh
 fi
-BOOST_VERSION=1.57.0-p3 $SOURCE_DIR/source/boost/build.sh
+BOOST_VERSION=1.61.0 $SOURCE_DIR/source/boost/build.sh
 
 ################################################################################
 # Build Python
