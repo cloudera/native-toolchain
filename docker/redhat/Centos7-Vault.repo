@@ -1,0 +1,8 @@
+# redhat7 docker image is based on centos:7.2 but we need to get java-1.8.0-openjdk-devel
+# from centos:7.4.
+[C7.4-base]
+name=CentOS-7.4 - Base
+baseurl=http://vault.centos.org/centos/7.4.1708/os/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+enabled=0

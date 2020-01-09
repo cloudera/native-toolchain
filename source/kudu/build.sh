@@ -133,6 +133,21 @@ function build {
   install_kudu "$DEBUG_INSTALL_DIR"
   popd
 
+  # Build Java artifacts
+  local JAVA_INSTALL_DIR="$LOCAL_INSTALL/java"
+  mkdir -p "$JAVA_INSTALL_DIR"
+  pushd java
+  export GRADLE_USER_HOME="$(pwd)"
+  wrap ./gradlew :kudu-hive:assemble :kudu-client:assemble
+  # Copy kudu-hive jars to JAVA_INSTALL_DIR.
+  local F
+  for F in kudu-hive/build/libs/kudu-hive-*.jar; do
+    cp "$F" "$JAVA_INSTALL_DIR"
+  done
+  # Install kudu-client artifacts to the Local Maven Repository:
+  wrap ./gradlew -Dmaven.repo.local="${JAVA_INSTALL_DIR}/repository" :kudu-client:install
+  popd
+
   cd $THIS_DIR
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION

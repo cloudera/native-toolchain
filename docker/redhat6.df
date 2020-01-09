@@ -29,7 +29,6 @@ RUN yum-install autoconf \
   gcc-c++ \
   git \
   glibc-devel \
-  java-1.8.0-openjdk-devel \
   krb5-devel \
   libevent-devel \
   libffi-devel \
@@ -52,6 +51,11 @@ RUN yum-install autoconf \
   which \
   xz \
   zlib-devel
+
+# Install a newer java-1.8.0-openjdk-devel from centos:6.8.
+# The java-1.8.0-openjdk-devel version shipped with centos:6.6 is unable to handle ECDHE
+# ciphers.
+RUN yum-install --disablerepo='*' --enablerepo=C6.8-base java-1.8.0-openjdk-devel
 
 COPY ./all/postinstall.sh /usr/local/bin
 RUN postinstall.sh

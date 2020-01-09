@@ -4,6 +4,7 @@ COPY ./redhat/yum-install /usr/local/bin
 # We need to pin our yum updates to keep old library versions.
 # Since we are at 7.2.1511, we'll modify the /etc/yum.repos.d/CentOS-Base.repo file to vault's 7.2.1511.
 COPY ./redhat/CentOS-7.2.1511-Base.repo /etc/yum.repos.d/CentOS-Base.repo
+COPY ./redhat/Centos7-Vault.repo /etc/yum.repos.d/Centos-Vault.repo
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1213602
 RUN yum-install yum-plugin-ovl
@@ -32,7 +33,6 @@ RUN yum-install autoconf \
   gcc-c++ \
   git \
   glibc-devel \
-  java-1.8.0-openjdk-devel \
   krb5-devel \
   libevent-devel \
   libdb4-devel \
@@ -56,6 +56,11 @@ RUN yum-install autoconf \
   which \
   xz \
   zlib-devel
+
+# We get a newer java-1.8.0-openjdk-devel from centos:7.4.
+# The java-1.8.0-openjdk version shipped with centos:7.2 is unable to handle ECDHE
+# ciphers.
+RUN yum-install --disablerepo='*' --enablerepo=C7.4-base java-1.8.0-openjdk-devel
 
 COPY ./all/postinstall.sh /usr/local/bin
 RUN postinstall.sh

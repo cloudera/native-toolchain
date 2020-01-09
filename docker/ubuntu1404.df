@@ -29,6 +29,9 @@ RUN apt-get update && apt-get install -y software-properties-common && \
       vim-common \
       wget
 
+# Create certificate file
+RUN update-ca-certificates -f
+
 COPY ./all/postinstall.sh /usr/local/bin
 RUN postinstall.sh
 

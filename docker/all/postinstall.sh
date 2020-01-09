@@ -31,15 +31,19 @@ install_aws() {
     dl_verify https://raw.githubusercontent.com/pypa/get-pip/fee32c376da1ff6496a798986d7939cd51e1644f/get-pip.py efe99298f3fbb1f56201ce6b81d2658067d2f7d7dfc2d412e0d3cacc9a397c61
     python get-pip.py
   fi
-  pip install --upgrade awscli==1.16.96
+  # Explicitly install docutils-0.15 which is the last docutils release that works with
+  # python-2.6. We have to stay compatible with python-2.6 because that's what centos:6
+  # ships with.
+  pip install docutils==0.15
+  pip install awscli==1.16.96
 }
 
 install_mvn() {
-  dl_verify https://apache.osuosl.org/maven/maven-3/3.6.2/binaries/apache-maven-3.6.2-bin.tar.gz 3fbc92d1961482d6fbd57fbf3dd6d27a4de70778528ee3fb44aa7d27eb32dfdc
-  tar xf apache-maven-3.6.2-bin.tar.gz
+  dl_verify https://apache.osuosl.org/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz 26ad91d751b3a9a53087aefa743f4e16a17741d3915b219cf74112bf87a438c5
+  tar xf apache-maven-3.6.3-bin.tar.gz
   cat <<"EOF" > /usr/local/bin/mvn
 #!/bin/sh
-export M2_HOME=/usr/local/apache-maven-3.6.2
+export M2_HOME=/usr/local/apache-maven-3.6.3
 export M2=$M2_HOME/bin
 exec $M2/mvn "$@"
 EOF
