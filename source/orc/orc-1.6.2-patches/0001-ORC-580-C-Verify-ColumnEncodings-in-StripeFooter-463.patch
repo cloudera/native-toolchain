@@ -1,0 +1,36 @@
+From fef521d0ee95f400d1c99143d984e5b6a337c787 Mon Sep 17 00:00:00 2001
+From: Quanlong Huang <huangquanlong@gmail.com>
+Date: Fri, 3 Jan 2020 10:33:49 +0800
+Subject: [PATCH 1/6] ORC-580:[C++] Verify ColumnEncodings in StripeFooter
+ (#463)
+
+ORC-580: [C++] Verify ColumnEncodings in StripeFooter
+
+ColumnEncodings parsed from the StripeFooter could be corrupt. We should verify it before using it to avoid crash.
+
+This fixes #463
+---
+ c++/src/Reader.cc                                       |   7 +++++++
+ 1 files changed, 7 insertions(+)
+
+diff --git a/c++/src/Reader.cc b/c++/src/Reader.cc
+index ef39a58..149c28f 100644
+--- a/c++/src/Reader.cc
++++ b/c++/src/Reader.cc
+@@ -395,6 +395,13 @@ namespace orc {
+       throw ParseError(std::string("bad StripeFooter from ") +
+                        pbStream->getName());
+     }
++    // Verify StripeFooter in case it's corrupt
++    if (result.columns_size() != contents.footer->types_size()) {
++      std::stringstream msg;
++      msg << "bad number of ColumnEncodings in StripeFooter: expected="
++          << contents.footer->types_size() << ", actual=" << result.columns_size();
++      throw ParseError(msg.str());
++    }
+     return result;
+   }
+ 
+-- 
+2.7.4
+

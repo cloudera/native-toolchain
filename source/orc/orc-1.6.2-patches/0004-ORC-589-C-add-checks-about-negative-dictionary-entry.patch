@@ -1,0 +1,33 @@
+From 384fd553a5b71ba04b70f0537c624e67d21ec4fd Mon Sep 17 00:00:00 2001
+From: boroknagyz <boroknagyz@gmail.com>
+Date: Wed, 15 Jan 2020 03:18:11 +0100
+Subject: [PATCH 4/6] ORC-589: [C++] add checks about negative dictionary entry
+ lengths
+
+The library used to have a check for negative dictionary entry lengths.
+However we don't have it on current master. It causes a problem because
+it will use a negative value (casted to unsigned) to allocate a
+DataBuffer. This commit adds the missing check.
+
+This fixes #468
+---
+ c++/src/ColumnReader.cc                          |   3 +++
+ 3 files changed, 3 insertions(+)
+
+diff --git a/c++/src/ColumnReader.cc b/c++/src/ColumnReader.cc
+index 87d358e..d77de5c 100644
+--- a/c++/src/ColumnReader.cc
++++ b/c++/src/ColumnReader.cc
+@@ -581,6 +581,9 @@ namespace orc {
+     lengthDecoder->next(lengthArray + 1, dictSize, nullptr);
+     lengthArray[0] = 0;
+     for(uint32_t i = 1; i < dictSize + 1; ++i) {
++      if (lengthArray[i] < 0) {
++        throw ParseError("Negative dictionary entry length");
++      }
+       lengthArray[i] += lengthArray[i - 1];
+     }
+     dictionary->dictionaryBlob.resize(
+-- 
+2.7.4
+

@@ -347,8 +347,11 @@ KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
   export SNAPPY_VERSION=1.1.4
   export ZLIB_VERSION=1.2.8
   export GOOGLETEST_VERSION=1.8.0
-  ORC_VERSION=1.4.3-p3 $SOURCE_DIR/source/orc/build.sh
-  ORC_VERSION=1.5.5-p1 $SOURCE_DIR/source/orc/build.sh
+  if (( BUILD_HISTORICAL )); then
+    ORC_VERSION=1.4.3-p3 $SOURCE_DIR/source/orc/build.sh
+    ORC_VERSION=1.5.5-p1 $SOURCE_DIR/source/orc/build.sh
+  fi
+  ORC_VERSION=1.6.2-p6 $SOURCE_DIR/source/orc/build.sh
 )
 
 ################################################################################
