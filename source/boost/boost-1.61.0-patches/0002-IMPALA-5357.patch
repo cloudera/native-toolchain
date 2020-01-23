@@ -1,0 +1,34 @@
+commit 48511bddf4ad90b0f04842949b7edd5617209e25
+Author: James E. King, III <jim.king@simplivity.com>
+Date:   Tue Feb 21 16:37:53 2017 -0500
+
+    4543: fix ptime 2038 issue
+    
+    (cherry picked from commit 818dea52f3f0c8b4f5172df13c5fa4f57340625f)
+    
+    Conflicts:
+    	include/boost/date_time/posix_time/conversion.hpp
+    	include/boost/date_time/time_resolution_traits.hpp
+
+diff --git a/boost/date_time/time_resolution_traits.hpp b/boost/date_time/time_resolution_traits.hpp
+index 37785d0..3df147b 100644
+--- a/boost/date_time/time_resolution_traits.hpp
++++ b/boost/date_time/time_resolution_traits.hpp
+@@ -9,7 +9,7 @@
+  * $Date$
+  */
+ 
+-
++#include <ctime>
+ #include <boost/cstdint.hpp>
+ #include <boost/date_time/time_defs.hpp>
+ #include <boost/date_time/int_adapter.hpp>
+@@ -68,7 +68,7 @@ namespace date_time {
+            typename frac_sec_type::int_type resolution_adjust,
+ #endif
+            unsigned short frac_digits,
+-           typename var_type = boost::int32_t >
++           typename var_type = std::time_t >
+   class time_resolution_traits {
+   public:
+     typedef typename frac_sec_type::int_type fractional_seconds_type;
