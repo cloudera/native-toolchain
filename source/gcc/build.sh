@@ -33,7 +33,8 @@ elif [[ $GCC_VERSION = '6.3.0' ]]; then
   MPC_VERSION=0.8.1
   ISL_VERSION=0.15
   CLOOG_VERSION=0.18.1
-elif [[ $GCC_VERSION = '7.1.0' ]]; then
+elif [[ $GCC_VERSION = '7.1.0' || $GCC_VERSION = '7.4.0' || $GCC_VERSION = '7.5.0' || \
+        $GCC_VERSION = '8.3.0' || $GCC_VERSION = '9.2.0' ]]; then
   MPFR_VERSION=3.1.4
   GMP_VERSION=6.1.0
   MPC_VERSION=1.0.3
