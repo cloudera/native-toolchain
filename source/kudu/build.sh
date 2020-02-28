@@ -87,6 +87,8 @@ function build {
   setup_package_build $PACKAGE $PACKAGE_VERSION
   add_gcc_to_ld_library_path
 
+  export GRADLE_USER_HOME="$(pwd)"
+
   # Kudu's dependencies are not in the toolchain. They could be added later.
   cd thirdparty
   # For some reason python 2.7 from Kudu's thirdparty doesn't build on CentOS 6. It's
@@ -137,7 +139,6 @@ function build {
   local JAVA_INSTALL_DIR="$LOCAL_INSTALL/java"
   mkdir -p "$JAVA_INSTALL_DIR"
   pushd java
-  export GRADLE_USER_HOME="$(pwd)"
   wrap ./gradlew :kudu-hive:assemble :kudu-client:assemble
   # Copy kudu-hive jars to JAVA_INSTALL_DIR.
   local F
