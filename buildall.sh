@@ -94,15 +94,6 @@ fi
 )
 
 ################################################################################
-# SASL
-################################################################################
-if [[ ! "$OSTYPE" == "darwin"* ]]; then
-  CYRUS_SASL_VERSION=2.1.23 $SOURCE_DIR/source/cyrus-sasl/build.sh
-else
-  CYRUS_SASL_VERSION=2.1.26 $SOURCE_DIR/source/cyrus-sasl/build.sh
-fi
-
-################################################################################
 # Build protobuf
 ################################################################################
 PROTOBUF_VERSION=3.5.1 $SOURCE_DIR/source/protobuf/build.sh
