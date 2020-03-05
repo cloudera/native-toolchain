@@ -133,13 +133,13 @@ ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
 ################################################################################
 # Build Bison
 ################################################################################
-BISON_VERSION=3.0.4 $SOURCE_DIR/source/bison/build.sh
+BISON_VERSION=3.0.4-p1 $SOURCE_DIR/source/bison/build.sh
 
 ################################################################################
 # Build Thrift
 #  * depends on bison, boost, zlib and openssl
 ################################################################################
-export BISON_VERSION=3.0.4
+export BISON_VERSION=3.0.4-p1
 export BOOST_VERSION=1.61.0-p2
 export ZLIB_VERSION=1.2.8
 export OPENSSL_VERSION=1.0.2l
