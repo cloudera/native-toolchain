@@ -36,7 +36,10 @@ def check_output(cmd):
   ret = p.communicate()
   if p.poll():
     raise Exception('%s returned' % cmd, p.returncode)
-  return ret
+  out, err = ret
+  out = out.decode('utf-8')
+  err = err.decode('utf-8')
+  return out, err
 
 
 def regex_in_list(regex, l):
@@ -129,7 +132,7 @@ def check_ccache_works():
   # Verify that the version we installed is present.
   want = '3.3.3'
   LOG.info('Checking that ccache is correctly installed.')
-  out = check_output(['ccache', '--version'])
+  out = check_output(['ccache', '--version'])[0]
   if want not in out:
     raise Exception('Unexpected ccache version. Was: %s, expected: %s' % (out, want))
 
