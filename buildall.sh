@@ -143,6 +143,7 @@ export BISON_VERSION=3.0.4-p1
 export BOOST_VERSION=1.61.0-p2
 export ZLIB_VERSION=1.2.8
 export OPENSSL_VERSION=1.0.2l
+export PYTHON_VERSION=2.7.16
 
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
   if (( BUILD_HISTORICAL )); then
@@ -171,6 +172,7 @@ export -n BISON_VERSION
 export -n BOOST_VERSION
 export -n ZLIB_VERSION
 export -n OPENSSL_VERSION
+export -n PYTHON_VERSION
 
 ################################################################################
 # gflags

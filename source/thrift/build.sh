@@ -34,6 +34,7 @@ if needs_build_package ; then
   BOOST_ROOT="${BUILD_DIR}"/boost-"${BOOST_VERSION}"
   OPENSSL_ROOT="${BUILD_DIR}"/openssl-"${OPENSSL_VERSION}"
   ZLIB_ROOT="${BUILD_DIR}"/zlib-"${ZLIB_VERSION}"
+  PYTHON_ROOT="${BUILD_DIR}"/python-"${PYTHON_VERSION}"
 
   read OPENSSL_MAJ_VER OPENSSL_MIN_VER OPENSSL_PATCH_VER <<< `openssl version |  \
       sed -r 's/^OpenSSL ([0-9]+)\.([0-9]+)\.([0-9a-z]+).*/\1 \2 \3/'`
@@ -66,8 +67,10 @@ if needs_build_package ; then
 
 
   # LEXLIB= is a Workaround /usr/lib64/libfl.so: undefined reference to `yylex'
+  PYTHON="${PYTHON_ROOT}"/bin/python
   PY_PREFIX="${LOCAL_INSTALL}"/python
   PATH="${BISON_ROOT}"/bin:"${PATH}" \
+    PYTHON="${PYTHON}" \
     PY_PREFIX="${PY_PREFIX}" \
     wrap ./configure \
     LEXLIB= \
@@ -111,7 +114,7 @@ if needs_build_package ; then
   chmod 755 ./bootstrap.sh
   wrap ./bootstrap.sh --with-boost="${BOOST_ROOT}"
   wrap chmod 755 configure
-  CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX="${LOCAL_INSTALL}"/python wrap ./configure \
+  CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX="${LOCAL_INSTALL}"/python PYTHON="${PYTHON_ROOT}"/bin/python wrap ./configure \
     --with-boost="${BOOST_ROOT}" \
     --with-java=no --with-php=no --prefix="${LOCAL_INSTALL}" \
     --with-thriftpath="${LOCAL_INSTALL}" ${OPENSSL_ARGS}
@@ -120,6 +123,6 @@ if needs_build_package ; then
   # Ensure that we've compiled the fastbinary shared object
   # Some distros place site-packages on lib and others do so in lib64
   PYTHONPATH=$(find $PY_PREFIX -type d -name 'site-packages' -type d|tr '\n' ':') \
-    python -c 'import thrift.protocol.fastbinary'
+    wrap python -c 'import thrift.protocol.fastbinary'
   finalize_package_build "${PACKAGE}" "${PACKAGE_VERSION}"
 fi

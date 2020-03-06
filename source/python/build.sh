@@ -39,7 +39,9 @@ if needs_build_package ; then
   CC=$(basename ${CC})
   CXX=$(basename ${CXX})
 
-  LDFLAGS= wrap ./configure --prefix=$LOCAL_INSTALL
+  # fastbinary expects usc4. Without this, we get:
+  # ImportError: /mnt/build/thrift-0.11.0-p2/python/lib/python2.7/site-packages/thrift/protocol/fastbinary.so: undefined symbol: PyUnicodeUCS2_DecodeUTF8
+  LDFLAGS= wrap ./configure --prefix=$LOCAL_INSTALL --enable-unicode=ucs4
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
