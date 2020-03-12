@@ -16,11 +16,8 @@ BUILD_DIR=build_docker
 STAMP_DIR=$(BUILD_DIR)/stamp
 SHELL=/bin/bash -o pipefail
 DISTROS = debian8 \
-	redhat6 \
 	redhat7 \
 	sles12 \
-	ubuntu1204 \
-	ubuntu1404 \
 	ubuntu1604 \
 	ubuntu1804
 

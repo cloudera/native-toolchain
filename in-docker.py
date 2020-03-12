@@ -59,11 +59,8 @@ LOG = logging.getLogger()
 # in bin/bootstrap_toolchain.py, which depends on these strings.
 KNOWN_DOCKER_TAGS = {'impala-toolchain-debian7': 'ec2-package-debian-7',
                      'impala-toolchain-debian8': 'ec2-package-debian-8',
-                     'impala-toolchain-redhat6': 'ec2-package-centos-6',
                      'impala-toolchain-redhat7': 'ec2-package-centos-7',
                      'impala-toolchain-sles12': 'ec2-package-sles-12',
-                     'impala-toolchain-ubuntu1204': 'ec2-package-ubuntu-12-04',
-                     'impala-toolchain-ubuntu1404': 'ec2-package-ubuntu-14-04',
                      'impala-toolchain-ubuntu1604': 'ec2-package-ubuntu-16-04',
                      'impala-toolchain-ubuntu1804': 'ec2-package-ubuntu-18-04'}
 
