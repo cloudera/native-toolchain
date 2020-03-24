@@ -1,0 +1,27 @@
+From c4d7478a6d48c0b721520aa1671280ecaf4141ff Mon Sep 17 00:00:00 2001
+From: Andrew Sherman <asherman@cloudera.com>
+Date: Mon, 23 Mar 2020 18:11:22 -0700
+Subject: [PATCH] THRIFT-1857: don't send duplicate Host headers
+
+This is a very small part of THRIFT-1857. Many http servers will not
+accept an http request that has multiple copies of the Host header.
+Remove the extraneous call which adds an unnecessary header.
+---
+ lib/py/src/transport/THttpClient.py | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/lib/py/src/transport/THttpClient.py b/lib/py/src/transport/THttpClient.py
+index 46ce9c9..eec6ceb 100644
+--- a/lib/py/src/transport/THttpClient.py
++++ b/lib/py/src/transport/THttpClient.py
+@@ -131,7 +131,6 @@ class THttpClient(TTransportBase):
+     self.__http.putrequest('POST', self.path)
+ 
+     # Write headers
+-    self.__http.putheader('Host', self.host)
+     self.__http.putheader('Content-Type', 'application/x-thrift')
+     self.__http.putheader('Content-Length', str(len(data)))
+ 
+-- 
+2.7.4
+
