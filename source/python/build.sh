@@ -24,11 +24,15 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
+
 if needs_build_package ; then
   ARCHIVE_FILE="${PACKAGE_STRING}.tar.xz"
   download_dependency $PACKAGE $ARCHIVE_FILE $THIS_DIR
 
   setup_package_build $PACKAGE $PACKAGE_VERSION $ARCHIVE_FILE "Python-${PYTHON_VERSION}"
+
+  # build Python with bzip2
+  BZIP2_ROOT="${BUILD_DIR}"/bzip2-"${BZIP2_VERSION}"
 
   # Python bakes the name of the C and C++ compilers into the package to be used for
   # building native packages. We want the defaults to be just the name of the compiler,
@@ -39,10 +43,14 @@ if needs_build_package ; then
   CC=$(basename ${CC})
   CXX=$(basename ${CXX})
 
+  export CFLAGS="-I${BZIP2_ROOT}/include"
+  export LDFLAGS="-L${BZIP2_ROOT}/lib"
+  export LD_LIBRARY_PATH="${BZIP2_ROOT}/lib:${LD_LIBRARY_PATH:-}"
   # fastbinary expects usc4. Without this, we get:
   # ImportError: /mnt/build/thrift-0.11.0-p2/python/lib/python2.7/site-packages/thrift/protocol/fastbinary.so: undefined symbol: PyUnicodeUCS2_DecodeUTF8
-  LDFLAGS= wrap ./configure --prefix=$LOCAL_INSTALL --enable-unicode=ucs4
+  wrap ./configure --prefix=$LOCAL_INSTALL --enable-unicode=ucs4
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
+  wrap python -c 'import bz2'
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

@@ -30,5 +30,7 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
   CFLAGS="-fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" wrap make install PREFIX=$LOCAL_INSTALL
+  CFLAGS="-fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" wrap make -f Makefile-libbz2_so CFLAGS="-fPIC -DPIC"
+  wrap cp -a libbz2.so* ${LOCAL_INSTALL}/lib/
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

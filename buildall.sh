@@ -54,8 +54,17 @@ fi
 BOOST_VERSION=1.61.0-p2 $SOURCE_DIR/source/boost/build.sh
 
 ################################################################################
+# Build BZip2
+################################################################################
+if (( BUILD_HISTORICAL )); then
+  BZIP2_VERSION=1.0.6-p1 $SOURCE_DIR/source/bzip2/build.sh
+fi
+BZIP2_VERSION=1.0.6-p2 $SOURCE_DIR/source/bzip2/build.sh
+
+################################################################################
 # Build Python
 ################################################################################
+export BZIP2_VERSION=1.0.6-p2
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
   # For now, provide both Python 2 and 3 until we can switch over to Python 3.
   PYTHON_VERSION=2.7.16 $SOURCE_DIR/source/python/build.sh
@@ -64,6 +73,7 @@ else
   PYTHON_VERSION=2.7.16 build_fake_package "python"
 fi
 
+export -n BZIP2_VERSION
 ################################################################################
 # LLVM
 ################################################################################
@@ -266,14 +276,6 @@ AVRO_VERSION=1.7.4-p5 $SOURCE_DIR/source/avro/build.sh
 # Build two versions for now - the build time and size is fairly minimal.
 RAPIDJSON_VERSION=0.11 $SOURCE_DIR/source/rapidjson/build.sh
 RAPIDJSON_VERSION=1.1.0 $SOURCE_DIR/source/rapidjson/build.sh
-
-################################################################################
-# Build BZip2
-################################################################################
-if (( BUILD_HISTORICAL )); then
-  BZIP2_VERSION=1.0.6-p1 $SOURCE_DIR/source/bzip2/build.sh
-fi
-BZIP2_VERSION=1.0.6-p2 $SOURCE_DIR/source/bzip2/build.sh
 
 ################################################################################
 # Build GDB
