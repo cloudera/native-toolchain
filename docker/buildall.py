@@ -42,7 +42,8 @@ def main():
     tag = 'impala-toolchain-%s' % df[:-3]
     build_cmd = ['docker', 'build', '-f', df, '-t', tag]
     if 'sles12' in df:
-      if 'SLES_MIRROR' in os.environ:
+      # SLES_MIRROR must be non=empty if defined
+      if 'SLES_MIRROR' in os.environ and os.environ['SLES_MIRROR']:
         build_cmd += ['--build-arg=SLES_MIRROR=%s' % os.environ['SLES_MIRROR']]
       else:
         LOG.warning('Skipping sles12 because SLES_MIRROR is empty')
