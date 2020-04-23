@@ -43,14 +43,17 @@ if needs_build_package ; then
   CC=$(basename ${CC})
   CXX=$(basename ${CXX})
 
-  export CFLAGS="-I${BZIP2_ROOT}/include"
+  # SLES12 puts the ncurses includes into a separate subdirectory under /usr/include,
+  # which break readline if not put explicitly on the include path
+  export CFLAGS="-I/usr/include/ncurses -I${BZIP2_ROOT}/include"
   export LDFLAGS="-L${BZIP2_ROOT}/lib"
   export LD_LIBRARY_PATH="${BZIP2_ROOT}/lib:${LD_LIBRARY_PATH:-}"
-  # fastbinary expects usc4. Without this, we get:
+  # fastbinary expects ucs4. Without this, we get:
   # ImportError: /mnt/build/thrift-0.11.0-p2/python/lib/python2.7/site-packages/thrift/protocol/fastbinary.so: undefined symbol: PyUnicodeUCS2_DecodeUTF8
   wrap ./configure --prefix=$LOCAL_INSTALL --enable-unicode=ucs4
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
-  wrap python -c 'import bz2'
+  # Assert that important packages were built successfully
+  wrap python -c 'import bz2; import readline; from urllib2 import HTTPSHandler; from httplib import HTTPConnection'
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

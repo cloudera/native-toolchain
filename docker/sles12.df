@@ -43,6 +43,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-inter
   patch \
   python \
   python-devel \
+  readline-devel \
   rsync \
   unzip \
   vim \

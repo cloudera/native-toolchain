@@ -35,6 +35,7 @@ RUN dnf -y install autoconf \
   postgresql-server \
   python2-devel \
   python36-devel \
+  readline-devel \
   redhat-lsb \
   rsync \
   unzip \

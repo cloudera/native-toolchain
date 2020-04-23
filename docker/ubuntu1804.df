@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y autoconf \
       libfl2 \
       libfl-dev \
       libncurses5-dev \
+      libreadline-dev\
       libsasl2-dev \
       libssl-dev \
       libtool-bin \
