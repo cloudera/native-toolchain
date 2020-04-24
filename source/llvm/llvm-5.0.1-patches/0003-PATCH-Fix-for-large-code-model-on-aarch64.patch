@@ -1,0 +1,12 @@
+diff --git a/lib/MC/MCObjectFileInfo.cpp b/lib/MC/MCObjectFileInfo.cpp
+index 21c55167..a1e70d45 100644
+--- a/lib/MC/MCObjectFileInfo.cpp
++++ b/lib/MC/MCObjectFileInfo.cpp
+@@ -284,6 +284,7 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(const Triple &T) {
+   case Triple::mips64el:
+     FDECFIEncoding = dwarf::DW_EH_PE_sdata8;
+     break;
++  case Triple::aarch64:
+   case Triple::x86_64:
+     FDECFIEncoding = dwarf::DW_EH_PE_pcrel |
+                      ((CMModel == CodeModel::Large) ? dwarf::DW_EH_PE_sdata8

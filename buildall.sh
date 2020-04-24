@@ -99,8 +99,8 @@ fi
     LLVM_VERSION=5.0.1 $SOURCE_DIR/source/llvm/build.sh
     LLVM_VERSION=5.0.1-asserts $SOURCE_DIR/source/llvm/build.sh
   fi
-  LLVM_VERSION=5.0.1-p2 $SOURCE_DIR/source/llvm/build.sh
-  LLVM_VERSION=5.0.1-asserts-p2 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=5.0.1-p3 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=5.0.1-asserts-p3 $SOURCE_DIR/source/llvm/build.sh
 )
 
 ################################################################################
