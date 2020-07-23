@@ -57,9 +57,7 @@ LOG = logging.getLogger()
 # Maps docker images to BUILD_TARGET_LABELs which is ultimately included
 # in the path for each built package. The mapping that follows is also present
 # in bin/bootstrap_toolchain.py, which depends on these strings.
-KNOWN_DOCKER_TAGS = {'impala-toolchain-debian7': 'ec2-package-debian-7',
-                     'impala-toolchain-debian8': 'ec2-package-debian-8',
-                     'impala-toolchain-redhat7': 'ec2-package-centos-7',
+KNOWN_DOCKER_TAGS = {'impala-toolchain-redhat7': 'ec2-package-centos-7',
                      'impala-toolchain-redhat8': 'ec2-package-centos-8',
                      'impala-toolchain-sles12': 'ec2-package-sles-12',
                      'impala-toolchain-ubuntu1604': 'ec2-package-ubuntu-16-04',

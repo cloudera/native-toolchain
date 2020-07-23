@@ -46,7 +46,7 @@ install_aws() {
 }
 
 install_mvn() {
-  dl_verify https://apache.osuosl.org/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz 26ad91d751b3a9a53087aefa743f4e16a17741d3915b219cf74112bf87a438c5
+  dl_verify https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz 26ad91d751b3a9a53087aefa743f4e16a17741d3915b219cf74112bf87a438c5
   tar xf apache-maven-3.6.3-bin.tar.gz
   cat <<"EOF" > /usr/local/bin/mvn
 #!/bin/sh

@@ -1,7 +1,0 @@
-deb [check-valid-until=no] http://archive.debian.org/debian/ jessie main
-deb-src [check-valid-until=no] http://archive.debian.org/debian/ jessie main
-
-deb http://security.debian.org/ jessie/updates main
-deb-src http://security.debian.org/ jessie/updates main
-
-deb [check-valid-until=no] http://archive.debian.org/debian/ jessie-backports main
