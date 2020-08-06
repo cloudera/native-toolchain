@@ -30,9 +30,26 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
-  #./autogen.sh
-  wrap ./configure --with-pic --prefix=$LOCAL_INSTALL
-  wrap make -j${BUILD_THREADS:-4} install
+  # Snappy switched to CMake. Detect this and use CMake for newer releases.
+  if [ -e CMakeLists.txt ]; then
+    # Snappy's CMake builds either shared or static but not both. Build
+    # each separately.
+    mkdir -p build_shared
+    pushd build_shared
+    wrap cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RELEASE \
+               -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL ..
+    wrap make -C . -j${BUILD_THREADS:-4} install
+    popd
+
+    mkdir -p build_static
+    pushd build_static
+    wrap cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL ..
+    wrap make -C . -j${BUILD_THREADS:-4} install
+    popd
+  else
+    wrap ./configure --with-pic --prefix=$LOCAL_INSTALL
+    wrap make -j${BUILD_THREADS:-4} install
+  fi
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

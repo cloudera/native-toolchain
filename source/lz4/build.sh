@@ -28,9 +28,13 @@ if needs_build_package ; then
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
-  if [ "${LZ4_VERSION}" != "svn" ]; then
+  if [ "${LZ4_VERSION}" == "1.7.5" ]; then
       CFLAGS=-fPIC
       cd contrib/cmake_unofficial
+  elif [ "${LZ4_VERSION}" != "svn" ]; then
+      # In 1.9.3, the cmake directory moved to build/cmake
+      CFLAGS=-fPIC
+      cd build/cmake
   fi
   wrap cmake -DBUILD_STATIC_LIBS=ON -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE .
   wrap make -j${BUILD_THREADS:-4} install

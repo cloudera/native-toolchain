@@ -58,13 +58,14 @@ BOOST_VERSION=1.61.0-p2 $SOURCE_DIR/source/boost/build.sh
 ################################################################################
 if (( BUILD_HISTORICAL )); then
   BZIP2_VERSION=1.0.6-p1 $SOURCE_DIR/source/bzip2/build.sh
+  BZIP2_VERSION=1.0.6-p2 $SOURCE_DIR/source/bzip2/build.sh
 fi
-BZIP2_VERSION=1.0.6-p2 $SOURCE_DIR/source/bzip2/build.sh
+BZIP2_VERSION=1.0.8-p2 $SOURCE_DIR/source/bzip2/build.sh
 
 ################################################################################
 # Build Python
 ################################################################################
-export BZIP2_VERSION=1.0.6-p2
+export BZIP2_VERSION=1.0.8-p2
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
   # For now, provide both Python 2 and 3 until we can switch over to Python 3.
   PYTHON_VERSION=2.7.16 $SOURCE_DIR/source/python/build.sh
@@ -147,7 +148,10 @@ OPENSSL_VERSION=1.0.2l $SOURCE_DIR/source/openssl/build.sh
 ################################################################################
 # Build ZLib
 ################################################################################
-ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
+if (( BUILD_HISTORICAL )); then
+    ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
+fi
+ZLIB_VERSION=1.2.11 $SOURCE_DIR/source/zlib/build.sh
 
 
 ################################################################################
@@ -161,7 +165,7 @@ BISON_VERSION=3.0.4-p1 $SOURCE_DIR/source/bison/build.sh
 ################################################################################
 export BISON_VERSION=3.0.4-p1
 export BOOST_VERSION=1.61.0-p2
-export ZLIB_VERSION=1.2.8
+export ZLIB_VERSION=1.2.11
 export OPENSSL_VERSION=1.0.2l
 export PYTHON_VERSION=2.7.16
 
@@ -242,21 +246,26 @@ GOOGLETEST_VERSION=1.8.0 $SOURCE_DIR/source/googletest/build.sh
 if (( BUILD_HISTORICAL )); then
   SNAPPY_VERSION=1.0.5 $SOURCE_DIR/source/snappy/build.sh
   SNAPPY_VERSION=1.1.3 $SOURCE_DIR/source/snappy/build.sh
+  SNAPPY_VERSION=1.1.4 $SOURCE_DIR/source/snappy/build.sh
 fi
-SNAPPY_VERSION=1.1.4 $SOURCE_DIR/source/snappy/build.sh
+SNAPPY_VERSION=1.1.8 $SOURCE_DIR/source/snappy/build.sh
 
 ################################################################################
 # Build Lz4
 ################################################################################
 if (( BUILD_HISTORICAL )); then
-    LZ4_VERSION=svn $SOURCE_DIR/source/lz4/build.sh
+  LZ4_VERSION=svn $SOURCE_DIR/source/lz4/build.sh
+  LZ4_VERSION=1.7.5 $SOURCE_DIR/source/lz4/build.sh
 fi
-LZ4_VERSION=1.7.5 $SOURCE_DIR/source/lz4/build.sh
+LZ4_VERSION=1.9.3 $SOURCE_DIR/source/lz4/build.sh
 
 ################################################################################
 # Build Zstd
 ################################################################################
-ZSTD_VERSION=1.4.0 $SOURCE_DIR/source/zstd/build.sh
+if (( BUILD_HISTORICAL )); then
+  ZSTD_VERSION=1.4.0 $SOURCE_DIR/source/zstd/build.sh
+fi
+ZSTD_VERSION=1.4.9 $SOURCE_DIR/source/zstd/build.sh
 
 ################################################################################
 # Build re2
@@ -347,10 +356,10 @@ KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
 # Build ORC
 ################################################################################
 (
-  export LZ4_VERSION=1.7.5
+  export LZ4_VERSION=1.9.3
   export PROTOBUF_VERSION=3.5.1
-  export SNAPPY_VERSION=1.1.4
-  export ZLIB_VERSION=1.2.8
+  export SNAPPY_VERSION=1.1.8
+  export ZLIB_VERSION=1.2.11
   export GOOGLETEST_VERSION=1.8.0
   if (( BUILD_HISTORICAL )); then
     ORC_VERSION=1.4.3-p3 $SOURCE_DIR/source/orc/build.sh
