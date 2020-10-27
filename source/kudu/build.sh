@@ -86,6 +86,11 @@ function build {
   setup_package_build $PACKAGE $PACKAGE_VERSION
   add_gcc_to_ld_library_path
 
+  # Modify the version.txt file to use a commit hash rather than a SNAPSHOT version
+  # Verify version.txt exists, then overwrite it.
+  [[ -f version.txt ]]
+  echo $PACKAGE_VERSION > version.txt
+
   export GRADLE_USER_HOME="$(pwd)"
 
   # Kudu's dependencies are not in the toolchain. They could be added later.
