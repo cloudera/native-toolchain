@@ -1,0 +1,27 @@
+From 890190a1552486df3bb5841ca11f04e9edb46b50 Mon Sep 17 00:00:00 2001
+From: Emmanuel Brard <emmanuel.brard@getyourguide.com>
+Date: Mon, 22 Jun 2020 10:40:11 +0200
+Subject: [PATCH 3/4] THRIFT-2087 Python compiler replace non utf-8 char with
+ default Client: py Patch: Emmanuel Brard
+
+This closes #2184
+---
+ compiler/cpp/src/thrift/generate/t_py_generator.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/compiler/cpp/src/thrift/generate/t_py_generator.cc b/compiler/cpp/src/thrift/generate/t_py_generator.cc
+index 9078da8..a0b718d 100644
+--- a/compiler/cpp/src/thrift/generate/t_py_generator.cc
++++ b/compiler/cpp/src/thrift/generate/t_py_generator.cc
+@@ -2170,7 +2170,7 @@ void t_py_generator::generate_deserialize_field(ofstream& out,
+         } else if(!gen_utf8strings_) {
+           out << "readString()";
+         } else {
+-          out << "readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()";
++          out << "readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()";
+         }
+         break;
+       case t_base_type::TYPE_BOOL:
+-- 
+2.7.4
+

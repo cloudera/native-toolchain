@@ -1,0 +1,27 @@
+From 8160fadece0b875ca4320fd35aab1d825dcb2ac7 Mon Sep 17 00:00:00 2001
+From: stiga-huang <huangquanlong@gmail.com>
+Date: Fri, 30 Oct 2020 20:07:31 +0800
+Subject: [PATCH 4/4] THRIFT-5303 Fix missing error handling in using
+ PyUnicode_DecodeUTF8 Client: py Patch: stiga-huang
+
+This closes #2269
+---
+ lib/py/src/ext/protocol.tcc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/py/src/ext/protocol.tcc b/lib/py/src/ext/protocol.tcc
+index c025d0c..1fbfe3a 100644
+--- a/lib/py/src/ext/protocol.tcc
++++ b/lib/py/src/ext/protocol.tcc
+@@ -705,7 +705,7 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
+       return NULL;
+     }
+     if (isUtf8(typeargs)) {
+-      return PyUnicode_DecodeUTF8(buf, len, 0);
++      return PyUnicode_DecodeUTF8(buf, len, "replace");
+     } else {
+       return PyBytes_FromStringAndSize(buf, len);
+     }
+-- 
+2.7.4
+
