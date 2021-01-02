@@ -1,0 +1,70 @@
+From a0b9f0c6ca39fc24b456da11707b7e0dd3f7d05d Mon Sep 17 00:00:00 2001
+From: Joe McDonnell <joemcdonnell@cloudera.com>
+Date: Tue, 12 Apr 2022 14:07:47 -0700
+Subject: [PATCH] Add basic support for dwz dwarf extension
+
+The dwz tool [1] can be used to compress symbols that occur in multiple object files by moving them into a shared object file. It introduces new DWARF macros to reference to those symbols.
+
+Breakpad currently does not support those macros, which can lead to
+crashes.
+
+This change makes breakpad ignore these symbols.
+
+[1] https://sourceware.org/git/?p=dwz.git;a=summary
+
+BUG:google-breakpad:615
+---
+ src/common/dwarf/dwarf2enums.h   |  7 ++++++-
+ src/common/dwarf/dwarf2reader.cc | 11 +++++++++++
+ 2 files changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/src/common/dwarf/dwarf2enums.h b/src/common/dwarf/dwarf2enums.h
+index 7d84f35e..401c3abe 100644
+--- a/src/common/dwarf/dwarf2enums.h
++++ b/src/common/dwarf/dwarf2enums.h
+@@ -192,7 +192,12 @@ enum DwarfForm {
+ 
+   // Extensions for Fission.  See http://gcc.gnu.org/wiki/DebugFission.
+   DW_FORM_GNU_addr_index = 0x1f01,
+-  DW_FORM_GNU_str_index = 0x1f02
++  DW_FORM_GNU_str_index = 0x1f02,
++
++  // Extensions for dwz compression tool. See
++  // https://fedoraproject.org/wiki/Features/DwarfCompressor
++  DW_FORM_GNU_ref_alt = 0x1f20,
++  DW_FORM_GNU_strp_alt = 0x1f21
+ };
+ 
+ // Attribute names and codes
+diff --git a/src/common/dwarf/dwarf2reader.cc b/src/common/dwarf/dwarf2reader.cc
+index bf6758d8..1cd1f9e5 100644
+--- a/src/common/dwarf/dwarf2reader.cc
++++ b/src/common/dwarf/dwarf2reader.cc
+@@ -257,6 +257,10 @@ const uint8_t* CompilationUnit::SkipAttribute(const uint8_t* start,
+       }
+       break;
+ 
++    case DW_FORM_GNU_ref_alt:
++    case DW_FORM_GNU_strp_alt:
++      return start + reader_->OffsetSize();
++
+     case DW_FORM_block1:
+       return start + 1 + reader_->ReadOneByte(start);
+     case DW_FORM_block2:
+@@ -531,6 +535,13 @@ const uint8_t* CompilationUnit::ProcessOffsetBaseAttribute(
+         reader_->ReadOffset(start);
+       return start + reader_->OffsetSize();
+ 
++    case DW_FORM_GNU_ref_alt:
++      // TODO: This effectively ignores attributes stored in alternate object
++      // files. We should process them properly instead.
++      return start + reader_->OffsetSize();
++    case DW_FORM_GNU_strp_alt:
++      return start + reader_->OffsetSize();
++
+     case DW_FORM_ref1:
+       return start + 1;
+     case DW_FORM_ref2:
+-- 
+2.17.1
+

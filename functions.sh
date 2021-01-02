@@ -266,7 +266,7 @@ function finalize_package_build() {
   local PKG_BUILD_DIRNAME=${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}
   local PKG_BUILD_DIR="$BUILD_DIR/$PKG_BUILD_DIRNAME"
 
-  if [ $PKG_NAME != gcc ]; then
+  if [[ $PKG_NAME != 'gcc' && $PKG_NAME != 'binutils' ]]; then
     pushd "$BUILD_DIR"
     # Add symlinks to required libraries.
     # Make sure that libstdc++ and libgcc are linked where they will be on the RPATH.

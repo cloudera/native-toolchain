@@ -28,6 +28,18 @@ set -o pipefail
 # variables.
 ################################################################################
 
+# OS X doesn't use binutils.
+if [[ "$OSTYPE" != "darwin"* ]]; then
+  # Build binutils against the system OS libraries. We only need the executables,
+  # and it is hard to set RPATH properly for binutils, so it is better to avoid
+  # using our custom gcc/libstdc++.
+  "$SOURCE_DIR"/source/binutils/build.sh
+  # In order to build GCC with LTO (which is only for improving the GCC binary
+  # itself), GCC needs a new binutils. This puts the new binutils on the path
+  # for the GCC compilation and subsequent builds.
+  PATH="$BUILD_DIR/binutils-$BINUTILS_VERSION/bin:$PATH"
+fi
+
 if [[ "$OSTYPE" =~ ^linux ]]; then
   # ARCH_FLAGS are used to convey architectur dependent flags that should
   # be obeyed by libraries explicitly needing this information.
@@ -103,13 +115,6 @@ export CXX
 export CXXFLAGS
 export LDFLAGS
 export CFLAGS
-
-# OS X doesn't use binutils.
-if [[ "$OSTYPE" != "darwin"* ]]; then
-  "$SOURCE_DIR"/source/binutils/build.sh
-  # Add ld from binutils to the path so it'll be used.
-  PATH="$BUILD_DIR/binutils-$BINUTILS_VERSION/bin:$PATH"
-fi
 
 # Build and export toolchain cmake
 if [[ $SYSTEM_CMAKE -eq 0 ]]; then

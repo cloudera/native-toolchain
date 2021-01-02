@@ -101,8 +101,8 @@ fi
     LLVM_VERSION=5.0.1 $SOURCE_DIR/source/llvm/build.sh
     LLVM_VERSION=5.0.1-asserts $SOURCE_DIR/source/llvm/build.sh
   fi
-  LLVM_VERSION=5.0.1-p4 $SOURCE_DIR/source/llvm/build.sh
-  LLVM_VERSION=5.0.1-asserts-p4 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=5.0.1-p5 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=5.0.1-asserts-p5 $SOURCE_DIR/source/llvm/build.sh
 )
 
 ################################################################################
@@ -128,8 +128,10 @@ if (( BUILD_HISTORICAL )) ; then
     $SOURCE_DIR/source/crcutil/build.sh
   CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e-p1\
     $SOURCE_DIR/source/crcutil/build.sh
+  CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e-p2\
+    $SOURCE_DIR/source/crcutil/build.sh
 fi
-CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e-p2\
+CRCUTIL_VERSION=2903870057d2f1f109b245650be29e856dc8b646\
   $SOURCE_DIR/source/crcutil/build.sh
 
 ################################################################################
@@ -301,29 +303,39 @@ RAPIDJSON_VERSION=1.1.0 $SOURCE_DIR/source/rapidjson/build.sh
 ################################################################################
 # Build GDB
 ################################################################################
-if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
+if (( BUILD_HISTORICAL )); then
   GDB_VERSION=7.9.1-p1 $SOURCE_DIR/source/gdb/build.sh
-else
-  GDB_VERSION=7.9.1-p1 build_fake_package "gdb"
 fi
+# This builds multiple versions to have flexibility if any issues are
+# seen. Once we decide on this version, we can remove the others.
+GDB_VERSION=10.2 $SOURCE_DIR/source/gdb/build.sh
+GDB_VERSION=11.2 $SOURCE_DIR/source/gdb/build.sh
+GDB_VERSION=12.1 $SOURCE_DIR/source/gdb/build.sh
 
 ################################################################################
 # Build Libunwind
 ################################################################################
-LIBUNWIND_VERSION=1.3-rc1-p3 $SOURCE_DIR/source/libunwind/build.sh
+if (( BUILD_HISTORICAL )); then
+  LIBUNWIND_VERSION=1.3-rc1-p3 $SOURCE_DIR/source/libunwind/build.sh
+fi
+LIBUNWIND_VERSION=1.5.0-p1 $SOURCE_DIR/source/libunwind/build.sh
 
 ################################################################################
 # Build Breakpad
 ################################################################################
 if (( BUILD_HISTORICAL )); then
   BREAKPAD_VERSION=20150612-p1 $SOURCE_DIR/source/breakpad/build.sh
+  BREAKPAD_VERSION=97a98836768f8f0154f8f86e5e14c2bb7e74132e-p2 $SOURCE_DIR/source/breakpad/build.sh
 fi
-BREAKPAD_VERSION=97a98836768f8f0154f8f86e5e14c2bb7e74132e-p2 $SOURCE_DIR/source/breakpad/build.sh
+BREAKPAD_VERSION=e09741c609dcd5f5274d40182c5e2cc9a002d5ba-p2 $SOURCE_DIR/source/breakpad/build.sh
 
 ################################################################################
 # Build Flatbuffers
 ################################################################################
-FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
+if (( BUILD_HISTORICAL )); then
+  FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
+fi
+FLATBUFFERS_VERSION=1.12.0 $SOURCE_DIR/source/flatbuffers/build.sh
 
 ################################################################################
 # Build Kudu
@@ -351,7 +363,7 @@ TPC_H_VERSION=2.17.0 $SOURCE_DIR/source/tpc-h/build.sh
 ################################################################################
 # Build TPC-DS
 ################################################################################
-TPC_DS_VERSION=2.1.0 $SOURCE_DIR/source/tpc-ds/build.sh
+TPC_DS_VERSION=2.1.0-p1 $SOURCE_DIR/source/tpc-ds/build.sh
 
 ################################################################################
 # Build KRB5

@@ -1,0 +1,12 @@
+diff -Naur v2.1.0/tools/makefile v2.1.0-patched/tools/makefile
+--- v2.1.0/tools/makefile	2015-11-11 18:21:30.000000000 -0800
++++ v2.1.0-patched/tools/makefile	2022-01-07 13:30:01.723040978 -0800
+@@ -59,7 +59,7 @@
+ NCR_CFLAGS		= -g 
+ SOLARIS_CFLAGS	= -O3 -Wall
+ SOL86_CFLAGS	= -O3 
+-BASE_CFLAGS    = -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DYYDEBUG #-maix64 -DMEM_TEST 
++BASE_CFLAGS    = -fcommon -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DYYDEBUG #-maix64 -DMEM_TEST 
+ CFLAGS			= $(BASE_CFLAGS) -D$(OS) $($(OS)_CFLAGS)
+ # EXE
+ AIX_EXE	= 

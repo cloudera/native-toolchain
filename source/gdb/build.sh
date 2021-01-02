@@ -30,7 +30,18 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
-  ./configure --prefix=$LOCAL_INSTALL > $BUILD_LOG 2>&1
+  # New versions of GDB require GMP. GCC already has a dependency on
+  # gmp and hosts a source tarball, so this downloads from GCC's location.
+  GMP_VERSION=6.1.0
+  download_dependency gcc "gmp-${GMP_VERSION}.tar.bz2" .
+  tar -xjf "gmp-${GMP_VERSION}.tar.bz2"
+  pushd "gmp-${GMP_VERSION}"
+  GMP_INSTALL=$(pwd)/install
+  ./configure --prefix=${GMP_INSTALL} > $BUILD_LOG 2>&1
+  wrap make -j${BUILD_THREADS:-4} install
+  popd
+
+  ./configure --prefix=$LOCAL_INSTALL --with-libgmp-prefix=${GMP_INSTALL} > $BUILD_LOG 2>&1
 
   # Some build machines might not have makeinfo
   EXTENSION=
