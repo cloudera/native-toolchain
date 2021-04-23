@@ -1,0 +1,954 @@
+IMPALA-2729: Support default values for DECIMAL in Avro.
+
+1. Merged necessary patch from Jansson.
+     Support '\0' in the middle of string:
+       https://github.com/akheron/jansson/commit/9c259c07aa53381df5819ef61627342c932d626f
+
+2. Merged useful fixes from Jansson.
+     Fix NUL byte check for object keys:
+       https://github.com/akheron/jansson/commit/4d5aead31cbc783915a1e0fe2e240316e5d71631
+     json_string_set* functions should set the length too:
+       https://github.com/akheron/jansson/commit/a76dc45512acf8182f4fad5d3a9d5db6e08bbe9e
+
+
+diff --git a/avro-src-1.7.4/lang/c/jansson/src/dump.c b/avro-src-1.7.4/lang/c/jansson/src/dump.c
+index 5e40b86..c7a1275 100644
+--- a/avro-src-1.7.4/lang/c/jansson/src/dump.c
++++ b/avro-src-1.7.4/lang/c/jansson/src/dump.c
+@@ -66,24 +66,25 @@ static int dump_indent(size_t flags, int depth, int space, dump_func dump, void
+     return 0;
+ }
+ 
+-static int dump_string(const char *str, int ascii, dump_func dump, void *data)
++static int dump_string(const char *str, size_t len, dump_func dump, void *data, size_t flags)
+ {
+-    const char *pos, *end;
++    const char *pos, *end, *lim;
+     int32_t codepoint;
+ 
+     if(dump("\"", 1, data))
+         return -1;
+ 
+     end = pos = str;
++    lim = str + len;
+     while(1)
+     {
+         const char *text;
+         char seq[13];
+         int length;
+ 
+-        while(*end)
++        while(end < lim)
+         {
+-            end = utf8_iterate(pos, &codepoint);
++            end = utf8_iterate(pos, lim - pos, &codepoint);
+             if(!end)
+                 return -1;
+ 
+@@ -91,8 +92,12 @@ static int dump_string(const char *str, int ascii, dump_func dump, void *data)
+             if(codepoint == '\\' || codepoint == '"' || codepoint < 0x20)
+                 break;
+ 
++            /* slash */
++            if((flags & JSON_ESCAPE_SLASH) && codepoint == '/')
++                break;
++
+             /* non-ASCII */
+-            if(ascii && codepoint > 0x7F)
++            if((flags & JSON_ENSURE_ASCII) && codepoint > 0x7F)
+                 break;
+ 
+             pos = end;
+@@ -117,6 +122,7 @@ static int dump_string(const char *str, int ascii, dump_func dump, void *data)
+             case '\n': text = "\\n"; break;
+             case '\r': text = "\\r"; break;
+             case '\t': text = "\\t"; break;
++            case '/':  text = "\\/"; break;
+             default:
+             {
+                 /* codepoint is in BMP */
+@@ -168,8 +174,6 @@ static int object_key_compare_serials(const void *key1, const void *key2)
+ static int do_dump(const json_t *json, size_t flags, int depth,
+                    dump_func dump, void *data)
+ {
+-    int ascii = flags & JSON_ENSURE_ASCII ? 1 : 0;
+-
+     switch(json_typeof(json)) {
+         case JSON_NULL:
+             return dump("null", 4, data);
+@@ -222,7 +226,7 @@ static int do_dump(const json_t *json, size_t flags, int depth,
+         }
+ 
+         case JSON_STRING:
+-            return dump_string(json_string_value(json), ascii, dump, data);
++            return dump_string(json_string_value(json), json_string_length(json), dump, data, flags);
+ 
+         case JSON_ARRAY:
+         {
+@@ -342,7 +346,7 @@ static int do_dump(const json_t *json, size_t flags, int depth,
+                     value = json_object_get(json, key);
+                     assert(value);
+ 
+-                    dump_string(key, ascii, dump, data);
++                    dump_string(key, strlen(key), dump, data, flags);
+                     if(dump(separator, separator_length, data) ||
+                        do_dump(value, flags, depth + 1, dump, data))
+                     {
+@@ -378,8 +382,9 @@ static int do_dump(const json_t *json, size_t flags, int depth,
+                 while(iter)
+                 {
+                     void *next = json_object_iter_next((json_t *)json, iter);
++                    const char *key = json_object_iter_key(iter);
+ 
+-                    dump_string(json_object_iter_key(iter), ascii, dump, data);
++                    dump_string(key, strlen(key), dump, data, flags);
+                     if(dump(separator, separator_length, data) ||
+                        do_dump(json_object_iter_value(iter), flags, depth + 1,
+                                dump, data))
+diff --git a/avro-src-1.7.4/lang/c/jansson/src/jansson.h b/avro-src-1.7.4/lang/c/jansson/src/jansson.h
+index 3abb4cf..5793bb3 100644
+--- a/avro-src-1.7.4/lang/c/jansson/src/jansson.h
++++ b/avro-src-1.7.4/lang/c/jansson/src/jansson.h
+@@ -61,23 +61,25 @@ typedef long json_int_t;
+ #endif /* JSON_INTEGER_IS_LONG_LONG */
+ 
+ #define json_typeof(json)      ((json)->type)
+-#define json_is_object(json)   (json && json_typeof(json) == JSON_OBJECT)
+-#define json_is_array(json)    (json && json_typeof(json) == JSON_ARRAY)
+-#define json_is_string(json)   (json && json_typeof(json) == JSON_STRING)
+-#define json_is_integer(json)  (json && json_typeof(json) == JSON_INTEGER)
+-#define json_is_real(json)     (json && json_typeof(json) == JSON_REAL)
++#define json_is_object(json)   ((json) && json_typeof(json) == JSON_OBJECT)
++#define json_is_array(json)    ((json) && json_typeof(json) == JSON_ARRAY)
++#define json_is_string(json)   ((json) && json_typeof(json) == JSON_STRING)
++#define json_is_integer(json)  ((json) && json_typeof(json) == JSON_INTEGER)
++#define json_is_real(json)     ((json) && json_typeof(json) == JSON_REAL)
+ #define json_is_number(json)   (json_is_integer(json) || json_is_real(json))
+-#define json_is_true(json)     (json && json_typeof(json) == JSON_TRUE)
+-#define json_is_false(json)    (json && json_typeof(json) == JSON_FALSE)
++#define json_is_true(json)     ((json) && json_typeof(json) == JSON_TRUE)
++#define json_is_false(json)    ((json) && json_typeof(json) == JSON_FALSE)
+ #define json_is_boolean(json)  (json_is_true(json) || json_is_false(json))
+-#define json_is_null(json)     (json && json_typeof(json) == JSON_NULL)
++#define json_is_null(json)     ((json) && json_typeof(json) == JSON_NULL)
+ 
+ /* construction, destruction, reference counting */
+ 
+ json_t *json_object(void);
+ json_t *json_array(void);
+ json_t *json_string(const char *value);
++json_t *json_stringn(const char *value, size_t len);
+ json_t *json_string_nocheck(const char *value);
++json_t *json_stringn_nocheck(const char *value, size_t len);
+ json_t *json_integer(json_int_t value);
+ json_t *json_real(double value);
+ json_t *json_true(void);
+@@ -179,12 +181,15 @@ int json_array_insert(json_t *array, size_t index, json_t *value)
+ }
+ 
+ const char *json_string_value(const json_t *string);
++size_t json_string_length(const json_t *string);
+ json_int_t json_integer_value(const json_t *integer);
+ double json_real_value(const json_t *real);
+ double json_number_value(const json_t *json);
+ 
+ int json_string_set(json_t *string, const char *value);
++int json_string_setn(json_t *string, const char *value, size_t len);
+ int json_string_set_nocheck(json_t *string, const char *value);
++int json_string_setn_nocheck(json_t *string, const char *value, size_t len);
+ int json_integer_set(json_t *integer, json_int_t value);
+ int json_real_set(json_t *real, double value);
+ 
+@@ -233,6 +238,7 @@ json_t *json_load_file(const char *path, size_t flags, json_error_t *error);
+ #define JSON_SORT_KEYS      0x80
+ #define JSON_PRESERVE_ORDER 0x100
+ #define JSON_ENCODE_ANY     0x200
++#define JSON_ESCAPE_SLASH   0x400
+ 
+ char *json_dumps(const json_t *json, size_t flags);
+ int json_dumpf(const json_t *json, FILE *output, size_t flags);
+diff --git a/avro-src-1.7.4/lang/c/jansson/src/jansson_private.h b/avro-src-1.7.4/lang/c/jansson/src/jansson_private.h
+index 339f5b1..869ac81 100644
+--- a/avro-src-1.7.4/lang/c/jansson/src/jansson_private.h
++++ b/avro-src-1.7.4/lang/c/jansson/src/jansson_private.h
+@@ -58,6 +58,7 @@ typedef struct {
+ typedef struct {
+     json_t json;
+     char *value;
++    size_t length;
+ } json_string_t;
+ 
+ typedef struct {
+@@ -73,7 +74,7 @@ typedef struct {
+ #define json_to_object(json_)  container_of(json_, json_object_t, json)
+ #define json_to_array(json_)   container_of(json_, json_array_t, json)
+ #define json_to_string(json_)  container_of(json_, json_string_t, json)
+-#define json_to_real(json_)   container_of(json_, json_real_t, json)
++#define json_to_real(json_)    container_of(json_, json_real_t, json)
+ #define json_to_integer(json_) container_of(json_, json_integer_t, json)
+ 
+ size_t jsonp_hash_str(const void *ptr);
+@@ -86,6 +87,10 @@ typedef struct {
+ 
+ const object_key_t *jsonp_object_iter_fullkey(void *iter);
+ 
++/* Create a string by taking ownership of an existing buffer */
++json_t *jsonp_stringn_nocheck_own(const char *value, size_t len);
++
++/* Error message formatting */
+ void jsonp_error_init(json_error_t *error, const char *source);
+ void jsonp_error_set_source(json_error_t *error, const char *source);
+ void jsonp_error_set(json_error_t *error, int line, int column,
+@@ -97,6 +102,7 @@ void jsonp_error_vset(json_error_t *error, int line, int column,
+ void* jsonp_malloc(size_t size);
+ void jsonp_free(void *ptr);
+ char *jsonp_strdup(const char *str);
++char *jsonp_strndup(const char *str, size_t len);
+ 
+ CLOSE_EXTERN
+ #endif
+diff --git a/avro-src-1.7.4/lang/c/jansson/src/load.c b/avro-src-1.7.4/lang/c/jansson/src/load.c
+index 67092cf..7210a96 100644
+--- a/avro-src-1.7.4/lang/c/jansson/src/load.c
++++ b/avro-src-1.7.4/lang/c/jansson/src/load.c
+@@ -53,7 +53,10 @@ typedef struct {
+     strbuffer_t saved_text;
+     int token;
+     union {
+-        char *string;
++        struct {
++            char *val;
++            size_t len;
++        } string;
+         json_int_t integer;
+         double real;
+     } value;
+@@ -257,6 +260,13 @@ static void lex_save_cached(lex_t *lex)
+     }
+ }
+ 
++static void lex_free_string(lex_t *lex)
++{
++    jsonp_free(lex->value.string.val);
++    lex->value.string.val = NULL;
++    lex->value.string.len = 0;
++}
++
+ /* assumes that str points to 'u' plus at least 4 valid hex digits */
+ static int32_t decode_unicode_escape(const char *str)
+ {
+@@ -275,7 +285,7 @@ static int32_t decode_unicode_escape(const char *str)
+         else if(isupper(c))
+             value += c - 'A' + 10;
+         else
+-            assert(0);
++            return -1;
+     }
+ 
+     return value;
+@@ -288,7 +298,7 @@ static void lex_scan_string(lex_t *lex, json_error_t *error)
+     char *t;
+     int i;
+ 
+-    lex->value.string = NULL;
++    lex->value.string.val = NULL;
+     lex->token = TOKEN_INVALID;
+ 
+     c = lex_get_save(lex, error);
+@@ -343,14 +353,13 @@ static void lex_scan_string(lex_t *lex, json_error_t *error)
+          - two \uXXXX escapes (length 12) forming an UTF-16 surrogate pair
+            are converted to 4 bytes
+     */
+-    lex->value.string = (char *) jsonp_malloc(lex->saved_text.length + 1);
+-    if(!lex->value.string) {
++    t = jsonp_malloc(lex->saved_text.length + 1);
++    if(!t) {
+         /* this is not very nice, since TOKEN_INVALID is returned */
+         goto out;
+     }
+ 
+-    /* the target */
+-    t = lex->value.string;
++    lex->value.string.val = t;
+ 
+     /* + 1 to skip the " */
+     p = strbuffer_value(&lex->saved_text) + 1;
+@@ -359,17 +368,24 @@ static void lex_scan_string(lex_t *lex, json_error_t *error)
+         if(*p == '\\') {
+             p++;
+             if(*p == 'u') {
+-                char buffer[4];
+-                int length;
++                size_t length;
+                 int32_t value;
+ 
+                 value = decode_unicode_escape(p);
++                if(value < 0) {
++                    error_set(error, lex, "invalid Unicode escape '%.6s'", p - 1);
++                    goto out;
++                }
+                 p += 5;
+ 
+                 if(0xD800 <= value && value <= 0xDBFF) {
+                     /* surrogate pair */
+                     if(*p == '\\' && *(p + 1) == 'u') {
+                         int32_t value2 = decode_unicode_escape(++p);
++                        if(value2 < 0) {
++                            error_set(error, lex, "invalid Unicode escape '%.6s'", p - 1);
++                            goto out;
++                        }
+                         p += 5;
+ 
+                         if(0xDC00 <= value2 && value2 <= 0xDFFF) {
+@@ -398,15 +414,10 @@ static void lex_scan_string(lex_t *lex, json_error_t *error)
+                     error_set(error, lex, "invalid Unicode '\\u%04X'", value);
+                     goto out;
+                 }
+-                else if(value == 0)
+-                {
+-                    continue;
+-                }
+ 
+-                if(utf8_encode(value, buffer, &length))
++                if(utf8_encode(value, t, &length))
+                     assert(0);
+ 
+-                memcpy(t, buffer, length);
+                 t += length;
+             }
+             else {
+@@ -428,11 +439,12 @@ static void lex_scan_string(lex_t *lex, json_error_t *error)
+             *(t++) = *(p++);
+     }
+     *t = '\0';
++    lex->value.string.len = t - lex->value.string.val;
+     lex->token = TOKEN_STRING;
+     return;
+ 
+ out:
+-    jsonp_free(lex->value.string);
++    lex_free_string(lex);
+ }
+ 
+ #if JSON_INTEGER_IS_LONG_LONG
+@@ -551,10 +563,8 @@ static int lex_scan(lex_t *lex, json_error_t *error)
+ 
+     strbuffer_clear(&lex->saved_text);
+ 
+-    if(lex->token == TOKEN_STRING) {
+-        jsonp_free(lex->value.string);
+-        lex->value.string = NULL;
+-    }
++    if(lex->token == TOKEN_STRING)
++        lex_free_string(lex);
+ 
+     c = lex_get(lex, error);
+     while(c == ' ' || c == '\t' || c == '\n' || c == '\r')
+@@ -615,13 +625,14 @@ out:
+     return lex->token;
+ }
+ 
+-static char *lex_steal_string(lex_t *lex)
++static char *lex_steal_string(lex_t *lex, size_t *out_len)
+ {
+     char *result = NULL;
+-    if(lex->token == TOKEN_STRING)
+-    {
+-        result = lex->value.string;
+-        lex->value.string = NULL;
++    if(lex->token == TOKEN_STRING) {
++        result = lex->value.string.val;
++        *out_len = lex->value.string.len;
++        lex->value.string.val = NULL;
++        lex->value.string.len = 0;
+     }
+     return result;
+ }
+@@ -639,7 +650,7 @@ static int lex_init(lex_t *lex, get_func get, void *data)
+ static void lex_close(lex_t *lex)
+ {
+     if(lex->token == TOKEN_STRING)
+-        jsonp_free(lex->value.string);
++        lex_free_string(lex);
+     strbuffer_close(&lex->saved_text);
+ }
+ 
+@@ -660,6 +671,7 @@ static json_t *parse_object(lex_t *lex, size_t flags, json_error_t *error)
+ 
+     while(1) {
+         char *key;
++        size_t len;
+         json_t *value;
+ 
+         if(lex->token != TOKEN_STRING) {
+@@ -667,9 +679,14 @@ static json_t *parse_object(lex_t *lex, size_t flags, json_error_t *error)
+             goto error;
+         }
+ 
+-        key = lex_steal_string(lex);
++        key = lex_steal_string(lex, &len);
+         if(!key)
+             return NULL;
++        if (memchr(key, '\0', len)) {
++            jsonp_free(key);
++            error_set(error, lex, "nul char in object key not supported");
++            goto error;
++        }
+ 
+         if(flags & JSON_REJECT_DUPLICATES) {
+             if(json_object_get(object, key)) {
+@@ -767,7 +784,11 @@ static json_t *parse_value(lex_t *lex, size_t flags, json_error_t *error)
+ 
+     switch(lex->token) {
+         case TOKEN_STRING: {
+-            json = json_string_nocheck(lex->value.string);
++            json = jsonp_stringn_nocheck_own(lex->value.string.val, lex->value.string.len);
++            if(json) {
++                lex->value.string.val = NULL;
++                lex->value.string.len = 0;
++            }
+             break;
+         }
+ 
+diff --git a/avro-src-1.7.4/lang/c/jansson/src/memory.c b/avro-src-1.7.4/lang/c/jansson/src/memory.c
+index 0ed3de6..869bc38 100644
+--- a/avro-src-1.7.4/lang/c/jansson/src/memory.c
++++ b/avro-src-1.7.4/lang/c/jansson/src/memory.c
+@@ -9,6 +9,10 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++/* C89 allows these to be macros */
++#undef malloc
++#undef free
++
+ #include <jansson.h>
+ #include "jansson_private.h"
+ 
+@@ -34,13 +38,19 @@ void jsonp_free(void *ptr)
+ 
+ char *jsonp_strdup(const char *str)
+ {
++    return jsonp_strndup(str, strlen(str));
++}
++
++char *jsonp_strndup(const char *str, size_t len)
++{
+     char *new_str;
+ 
+     new_str = (char *) jsonp_malloc(strlen(str) + 1);
+     if(!new_str)
+         return NULL;
+ 
+-    strcpy(new_str, str);
++    memcpy(new_str, str, len);
++    new_str[len] = '\0';
+     return new_str;
+ }
+ 
+diff --git a/avro-src-1.7.4/lang/c/jansson/src/utf.c b/avro-src-1.7.4/lang/c/jansson/src/utf.c
+index f48c2e7..1905ef3 100644
+--- a/avro-src-1.7.4/lang/c/jansson/src/utf.c
++++ b/avro-src-1.7.4/lang/c/jansson/src/utf.c
+@@ -8,7 +8,7 @@
+ #include <string.h>
+ #include "utf.h"
+ 
+-int utf8_encode(int32_t codepoint, char *buffer, int *size)
++int utf8_encode(int32_t codepoint, char *buffer, size_t *size)
+ {
+     if(codepoint < 0)
+         return -1;
+@@ -44,7 +44,7 @@ int utf8_encode(int32_t codepoint, char *buffer, int *size)
+     return 0;
+ }
+ 
+-int utf8_check_first(char byte)
++size_t utf8_check_first(char byte)
+ {
+     unsigned char u = (unsigned char)byte;
+ 
+@@ -80,9 +80,9 @@ int utf8_check_first(char byte)
+     }
+ }
+ 
+-int utf8_check_full(const char *buffer, int size, int32_t *codepoint)
++size_t utf8_check_full(const char *buffer, size_t size, int32_t *codepoint)
+ {
+-    int i;
++    size_t i;
+     int32_t value = 0;
+     unsigned char u = (unsigned char)buffer[0];
+ 
+@@ -136,12 +136,12 @@ int utf8_check_full(const char *buffer, int size, int32_t *codepoint)
+     return 1;
+ }
+ 
+-const char *utf8_iterate(const char *buffer, int32_t *codepoint)
++const char *utf8_iterate(const char *buffer, size_t bufsize, int32_t *codepoint)
+ {
+-    int count;
++    size_t count;
+     int32_t value;
+ 
+-    if(!*buffer)
++    if(!bufsize)
+         return buffer;
+ 
+     count = utf8_check_first(buffer[0]);
+@@ -152,7 +152,7 @@ const char *utf8_iterate(const char *buffer, int32_t *codepoint)
+         value = (unsigned char)buffer[0];
+     else
+     {
+-        if(!utf8_check_full(buffer, count, &value))
++        if(count > bufsize || !utf8_check_full(buffer, count, &value))
+             return NULL;
+     }
+ 
+@@ -162,16 +162,13 @@ const char *utf8_iterate(const char *buffer, int32_t *codepoint)
+     return buffer + count;
+ }
+ 
+-int utf8_check_string(const char *string, int length)
++int utf8_check_string(const char *string, size_t length)
+ {
+-    int i;
+-
+-    if(length == -1)
+-        length = strlen(string);
++    size_t i;
+ 
+     for(i = 0; i < length; i++)
+     {
+-        int count = utf8_check_first(string[i]);
++        size_t count = utf8_check_first(string[i]);
+         if(count == 0)
+             return 0;
+         else if(count > 1)
+diff --git a/avro-src-1.7.4/lang/c/jansson/src/utf.h b/avro-src-1.7.4/lang/c/jansson/src/utf.h
+index 92bc4a3..3cb0e3a 100644
+--- a/avro-src-1.7.4/lang/c/jansson/src/utf.h
++++ b/avro-src-1.7.4/lang/c/jansson/src/utf.h
+@@ -34,13 +34,13 @@ typedef int int32_t;
+ 
+ #endif /* HAVE_CONFIG_H */
+ 
+-int utf8_encode(int32_t codepoint, char *buffer, int *size);
++int utf8_encode(int codepoint, char *buffer, size_t *size);
+ 
+-int utf8_check_first(char byte);
+-int utf8_check_full(const char *buffer, int size, int32_t *codepoint);
+-const char *utf8_iterate(const char *buffer, int32_t *codepoint);
++size_t utf8_check_first(char byte);
++size_t utf8_check_full(const char *buffer, size_t size, int32_t *codepoint);
++const char *utf8_iterate(const char *buffer, size_t size, int32_t *codepoint);
+ 
+-int utf8_check_string(const char *string, int length);
++int utf8_check_string(const char *string, size_t length);
+ 
+ CLOSE_EXTERN
+ #endif
+diff --git a/avro-src-1.7.4/lang/c/jansson/src/value.c b/avro-src-1.7.4/lang/c/jansson/src/value.c
+index daffbbd..1bbe625 100644
+--- a/avro-src-1.7.4/lang/c/jansson/src/value.c
++++ b/avro-src-1.7.4/lang/c/jansson/src/value.c
+@@ -158,7 +158,7 @@ int json_object_set_new_nocheck(json_t *json, const char *key, json_t *value)
+ 
+ int json_object_set_new(json_t *json, const char *key, json_t *value)
+ {
+-    if(!key || !utf8_check_string(key, -1))
++    if(!key || !utf8_check_string(key, strlen(key)))
+     {
+         json_decref(value);
+         return -1;
+@@ -661,33 +661,68 @@ static json_t *json_array_deep_copy(json_t *array)
+ 
+ /*** string ***/
+ 
+-json_t *json_string_nocheck(const char *value)
++static json_t *string_create(const char *value, size_t len, int own)
+ {
++    char *v;
+     json_string_t *string;
+ 
+     if(!value)
+         return NULL;
+ 
++    if(own)
++        v = (char *)value;
++    else {
++        v = jsonp_strndup(value, len);
++        if(!v)
++            return NULL;
++    }
++
+     string = (json_string_t *) jsonp_malloc(sizeof(json_string_t));
+-    if(!string)
++    if(!string) {
++        if(!own)
++            jsonp_free(v);
+         return NULL;
++    }
+     json_init(&string->json, JSON_STRING);
++    string->value = v;
++    string->length = len;
++
++    return &string->json;
++}
+ 
+-    string->value = jsonp_strdup(value);
+-    if(!string->value) {
+-        jsonp_free(string);
++json_t *json_string_nocheck(const char *value)
++{
++    if(!value)
+         return NULL;
+-    }
+ 
+-    return &string->json;
++    return string_create(value, strlen(value), 0);
++}
++
++json_t *json_stringn_nocheck(const char *value, size_t len)
++{
++    return string_create(value, len, 0);
++}
++
++/* this is private; "steal" is not a public API concept */
++json_t *jsonp_stringn_nocheck_own(const char *value, size_t len)
++{
++    return string_create(value, len, 1);
+ }
+ 
+ json_t *json_string(const char *value)
+ {
+-    if(!value || !utf8_check_string(value, -1))
++    if(!value)
++        return NULL;
++
++    return json_stringn(value, strlen(value));
++}
++
++json_t *json_stringn(const char *value, size_t len)
++{
++    if(!value || !utf8_check_string(value, len))
+         return NULL;
+ 
+-    return json_string_nocheck(value);
++    return json_stringn_nocheck(value, len);
+ }
+ 
+ const char *json_string_value(const json_t *json)
+@@ -698,28 +733,56 @@ const char *json_string_value(const json_t *json)
+     return json_to_string(json)->value;
+ }
+ 
++size_t json_string_length(const json_t *json)
++{
++    if(!json_is_string(json))
++        return 0;
++
++    return json_to_string(json)->length;
++}
++
+ int json_string_set_nocheck(json_t *json, const char *value)
+ {
++    if(!value)
++        return -1;
++
++    return json_string_setn_nocheck(json, value, strlen(value));
++}
++
++int json_string_setn_nocheck(json_t *json, const char *value, size_t len)
++{
+     char *dup;
+     json_string_t *string;
+ 
+-    dup = jsonp_strdup(value);
++    if(!json_is_string(json) || !value)
++        return -1;
++
++    dup = jsonp_strndup(value, len);
+     if(!dup)
+         return -1;
+ 
+     string = json_to_string(json);
+     jsonp_free(string->value);
+     string->value = dup;
++    string->length = len;
+ 
+     return 0;
+ }
+ 
+ int json_string_set(json_t *json, const char *value)
+ {
+-    if(!value || !utf8_check_string(value, -1))
++    if(!value)
++        return -1;
++
++    return json_string_setn(json, value, strlen(value));
++}
++
++int json_string_setn(json_t *json, const char *value, size_t len)
++{
++    if(!value || !utf8_check_string(value, len))
+         return -1;
+ 
+-    return json_string_set_nocheck(json, value);
++    return json_string_setn_nocheck(json, value, len);
+ }
+ 
+ static void json_delete_string(json_string_t *string)
+@@ -730,12 +793,25 @@ static void json_delete_string(json_string_t *string)
+ 
+ static int json_string_equal(json_t *string1, json_t *string2)
+ {
+-    return strcmp(json_string_value(string1), json_string_value(string2)) == 0;
++    json_string_t *s1, *s2;
++
++    if(!json_is_string(string1) || !json_is_string(string2))
++        return 0;
++
++    s1 = json_to_string(string1);
++    s2 = json_to_string(string2);
++    return s1->length == s2->length && !memcmp(s1->value, s2->value, s1->length);
+ }
+ 
+ static json_t *json_string_copy(json_t *string)
+ {
+-    return json_string_nocheck(json_string_value(string));
++    json_string_t *s;
++
++    if(!json_is_string(string))
++        return NULL;
++
++    s = json_to_string(string);
++    return json_stringn_nocheck(s->value, s->length);
+ }
+ 
+ 
+diff --git a/avro-src-1.7.4/lang/c/src/avro/legacy.h b/avro-src-1.7.4/lang/c/src/avro/legacy.h
+index 52d2a0c..43e5408 100644
+--- a/avro-src-1.7.4/lang/c/src/avro/legacy.h
++++ b/avro-src-1.7.4/lang/c/src/avro/legacy.h
+@@ -42,6 +42,8 @@ extern "C" {
+  * defining your own avro_value_t implementation for them.
+  */
+ 
++// Same definition as in Impala
++typedef __int128_t int128_t;
+ /**
+  * A function used to free a bytes, string, or fixed buffer once it is
+  * no longer needed by the datum that wraps it.
+@@ -89,6 +91,7 @@ avro_datum_t avro_map(avro_schema_t schema);
+ avro_datum_t avro_array(avro_schema_t schema);
+ avro_datum_t avro_union(avro_schema_t schema,
+ 			int64_t discriminant, const avro_datum_t datum);
++avro_datum_t avro_decimal(avro_schema_t schema);
+ 
+ /**
+  * Returns the schema that the datum is an instance of.
+@@ -117,6 +120,7 @@ const char *avro_enum_get_name(const avro_datum_t datum);
+ int avro_fixed_get(avro_datum_t datum, char **bytes, int64_t * size);
+ int avro_record_get(const avro_datum_t record, const char *field_name,
+ 		    avro_datum_t * value);
++int avro_decimal_get(const avro_datum_t datum, int128_t *i);
+ 
+ /*
+  * A helper macro that extracts the value of the given field of a
+@@ -178,6 +182,7 @@ int avro_fixed_set(avro_datum_t datum, const char *bytes, const int64_t size);
+ int avro_givefixed_set(avro_datum_t datum, const char *bytes,
+ 		       const int64_t size,
+ 		       avro_free_func_t free);
++int avro_decimal_set(const avro_datum_t datum, char *string, size_t len);
+ 
+ int avro_record_set(avro_datum_t record, const char *field_name,
+ 		    avro_datum_t value);
+@@ -258,6 +263,9 @@ avro_datum_class(void);
+ int
+ avro_datum_as_value(avro_value_t *value, avro_datum_t src);
+ 
++/* Convert utf8 encoded bytes from Jansson to original Bytes array. */
++int dump_bytes_from_utf8_inplace(char *str, size_t len, size_t *new_len);
++
+ 
+ CLOSE_EXTERN
+ #endif
+diff --git a/avro-src-1.7.4/lang/c/src/datum.c b/avro-src-1.7.4/lang/c/src/datum.c
+index 7d84cf2..b02f3f4 100644
+--- a/avro-src-1.7.4/lang/c/src/datum.c
++++ b/avro-src-1.7.4/lang/c/src/datum.c
+@@ -28,6 +28,7 @@
+ #include "datum.h"
+ #include "schema.h"
+ #include "encoding.h"
++#include "utf.h"
+ 
+ #define DEFAULT_TABLE_SIZE 32
+ 
+@@ -136,6 +137,87 @@ int avro_givestring_set(avro_datum_t datum, const char *p,
+ 	return avro_string_set_private(datum, p, size, free);
+ }
+ 
++int dump_bytes_from_utf8_inplace(char *str, size_t len, size_t *new_len) {
++	const char *pos, *end, *lim;
++	int32_t codepoint;
++	end = pos = str;
++	lim = str + len;
++	while (end < lim) {
++		end = utf8_iterate(pos, lim - pos, &codepoint);
++		/* Error in decoding */
++		if (!end)
++			return -1;
++
++		/* Not a valid byte */
++		if (codepoint > 0xff)
++			return -2;
++
++		*str = (char)codepoint;
++		str++;
++		(*new_len)++;
++
++		pos = end;
++	}
++	return 0;
++}
++
++avro_datum_t avro_decimal(avro_schema_t schema) {
++	struct impala_avro_decimal_datum_t *datum;
++	datum = (struct impala_avro_decimal_datum_t *) avro_new(struct impala_avro_decimal_datum_t);
++	if (!datum) {
++		avro_set_error("Cannot create new decimal datum");
++		return NULL;
++	}
++	datum->schema = avro_schema_incref(schema);
++	datum->i128 = 0;
++
++	avro_datum_init(&datum->obj, AVRO_DECIMAL);
++	return &datum->obj;
++}
++
++int avro_decimal_set(avro_datum_t datum, char *string, size_t len)
++{
++	check_param(EINVAL, is_avro_datum(datum), "datum");
++	check_param(EINVAL, is_avro_decimal(datum), "decimal datum");
++	// *string is utf-8 encoded, decode now
++	size_t bytes_len = 0;
++	if (len < 1 || dump_bytes_from_utf8_inplace(string, len, &bytes_len) < 0) {
++		avro_set_error("Invalid default decimal value written in byte");
++		return EINVAL;
++	}
++
++	if (bytes_len > IMPALA_DECIMAL_BYTES_LIMIT) {
++		avro_set_error("Byte string length %zu exceeds Impala's limit %zu",
++				bytes_len, IMPALA_DECIMAL_BYTES_LIMIT);
++		return EINVAL;
++	}
++	size_t i = 0;
++	int128_t *result = &avro_datum_to_decimal(datum)->i128;
++	// bytes in big endian format
++	if (AVRO_PLATFORM_IS_BIG_ENDIAN) {
++		char temp;
++		for ( ; i < bytes_len/2; i++) {
++			temp = string[i];
++			string[i] = string[bytes_len-i-1];
++			string[bytes_len-i-1] = temp;
++		}
++	}
++	size_t bytes_offset = sizeof(*result) - bytes_len;
++	memcpy((void*)result + bytes_offset, string, bytes_len);
++	*result >>= bytes_offset * 8;
++	return 0;
++}
++
++int avro_decimal_get(avro_datum_t datum, int128_t *i)
++{
++	check_param(EINVAL, is_avro_datum(datum), "datum");
++	check_param(EINVAL, is_avro_decimal(datum), "decimal datum");
++	check_param(EINVAL, i, "value pointer");
++
++	*i = avro_datum_to_decimal(datum)->i128;
++	return 0;
++}
++
+ static avro_datum_t avro_bytes_private(char *bytes, int64_t size,
+ 				       avro_free_func_t bytes_free)
+ {
+@@ -1056,8 +1138,7 @@ static void avro_datum_free(avro_datum_t datum)
+ 				avro_freet(struct avro_string_datum_t, string);
+ 			}
+ 			break;
+-		case AVRO_BYTES:
+-		case AVRO_DECIMAL: {
++		case AVRO_BYTES:{
+ 				struct avro_bytes_datum_t *bytes;
+ 				bytes = avro_datum_to_bytes(datum);
+ 				if (bytes->free) {
+@@ -1148,6 +1229,10 @@ static void avro_datum_free(avro_datum_t datum)
+ 				avro_freet(struct avro_union_datum_t, unionp);
+ 			}
+ 			break;
++		case AVRO_DECIMAL:{
++				avro_freet(struct impala_avro_decimal_datum_t, datum);
++			}
++			break;
+ 		case AVRO_LINK:{
+ 				/* TODO */
+ 			}
+diff --git a/avro-src-1.7.4/lang/c/src/datum.h b/avro-src-1.7.4/lang/c/src/datum.h
+index e429989..087049b 100644
+--- a/avro-src-1.7.4/lang/c/src/datum.h
++++ b/avro-src-1.7.4/lang/c/src/datum.h
+@@ -106,6 +106,14 @@ struct avro_union_datum_t {
+ 	avro_datum_t value;
+ };
+ 
++// Specific and simplified for use in Impala
++static const size_t IMPALA_DECIMAL_BYTES_LIMIT = sizeof(int128_t);
++struct impala_avro_decimal_datum_t {
++	struct avro_obj_t obj;
++	avro_schema_t schema;
++	int128_t i128;
++};
++
+ #define avro_datum_to_string(datum_)    (container_of(datum_, struct avro_string_datum_t, obj))
+ #define avro_datum_to_bytes(datum_)     (container_of(datum_, struct avro_bytes_datum_t, obj))
+ #define avro_datum_to_int32(datum_)     (container_of(datum_, struct avro_int32_datum_t, obj))
+@@ -118,6 +126,7 @@ struct avro_union_datum_t {
+ #define avro_datum_to_record(datum_)    (container_of(datum_, struct avro_record_datum_t, obj))
+ #define avro_datum_to_enum(datum_)      (container_of(datum_, struct avro_enum_datum_t, obj))
+ #define avro_datum_to_array(datum_)     (container_of(datum_, struct avro_array_datum_t, obj))
+-#define avro_datum_to_union(datum_)	(container_of(datum_, struct avro_union_datum_t, obj))
++#define avro_datum_to_union(datum_)     (container_of(datum_, struct avro_union_datum_t, obj))
++#define avro_datum_to_decimal(datum_)   (container_of(datum_, struct impala_avro_decimal_datum_t, obj))
+ 
+ #endif
+diff --git a/avro-src-1.7.4/lang/c/src/schema.c b/avro-src-1.7.4/lang/c/src/schema.c
+index 917a54a..b05d56a 100644
+--- a/avro-src-1.7.4/lang/c/src/schema.c
++++ b/avro-src-1.7.4/lang/c/src/schema.c
+@@ -66,6 +66,11 @@ static int json_t_to_avro_value_helper(
+ 			if (avro_string_set(datum, json_string_value(json))) return EINVAL;
+ 			return 0;
+ 		}
++		case AVRO_DECIMAL: {
++			check_param(EINVAL, json_is_string(json), "JSON string");
++			if (avro_decimal_set(datum, json_string_value(json), json_string_length(json))) return EINVAL;
++			return 0;
++		}
+ 		case AVRO_BYTES:
+ 		case AVRO_ARRAY:
+ 		case AVRO_ENUM:
+@@ -1571,9 +1576,11 @@ avro_datum_t avro_datum_from_schema(const avro_schema_t schema)
+ 			return avro_givestring("", NULL);
+ 
+ 		case AVRO_BYTES:
+-		case AVRO_DECIMAL:
+ 			return avro_givebytes("", 0, NULL);
+ 
++		case AVRO_DECIMAL:
++			return avro_decimal(schema);
++
+ 		case AVRO_INT32:
+ 			return avro_int32(0);
+ 
