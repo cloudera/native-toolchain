@@ -1,0 +1,514 @@
+From 65fa51129fcb0d2aa20ec734acc56a5f7728a6fd Mon Sep 17 00:00:00 2001
+From: boroknagyz <boroknagyz@gmail.com>
+Date: Tue, 20 Apr 2021 16:53:21 +0200
+Subject: [PATCH 11/11] ORC-781: [C++] Make type annotations available from C++
+
+ORC-522 added support for type annotations, but only to the Java ORC
+library. This patch adds support for type annotations for the C++
+ORC library.
+
+Both reads and writes are supported. orc-metadata now also prints out
+the type attriburtes.
+
+This closes #682
+---
+ c++/include/orc/Type.hh           |   6 ++
+ c++/src/TypeImpl.cc               |  63 +++++++++--
+ c++/src/TypeImpl.hh               |  12 +++
+ c++/src/Writer.cc                 |   7 ++
+ c++/test/CMakeLists.txt           |   1 +
+ c++/test/TestAttributes.cc        | 215 ++++++++++++++++++++++++++++++++++++++
+ tools/src/FileMetadata.cc         |  45 ++++++++
+ tools/test/TestFileMetadata.cc    |  65 +++++++++++-
+ 9 files changed, 405 insertions(+), 9 deletions(-)
+ create mode 100644 c++/test/TestAttributes.cc
+
+diff --git a/c++/include/orc/Type.hh b/c++/include/orc/Type.hh
+index d02a965..a7df830 100644
+--- a/c++/include/orc/Type.hh
++++ b/c++/include/orc/Type.hh
+@@ -59,6 +59,12 @@ namespace orc {
+     virtual uint64_t getMaximumLength() const = 0;
+     virtual uint64_t getPrecision() const = 0;
+     virtual uint64_t getScale() const = 0;
++    virtual Type& setAttribute(const std::string& key,
++                               const std::string& value) = 0;
++    virtual bool hasAttributeKey(const std::string& key) const = 0;
++    virtual Type& removeAttribute(const std::string& key) = 0;
++    virtual std::vector<std::string> getAttributeKeys() const = 0;
++    virtual std::string getAttributeValue(const std::string& key) const = 0;
+     virtual std::string toString() const = 0;
+ 
+     /**
+diff --git a/c++/src/TypeImpl.cc b/c++/src/TypeImpl.cc
+index df24c52..4d5a5a9 100644
+--- a/c++/src/TypeImpl.cc
++++ b/c++/src/TypeImpl.cc
+@@ -121,6 +121,42 @@ namespace orc {
+     return scale;
+   }
+ 
++  Type& TypeImpl::setAttribute(const std::string& key,
++                     const std::string& value) {
++    attributes[key] = value;
++    return *this;
++  }
++
++  bool TypeImpl::hasAttributeKey(const std::string& key) const {
++    return attributes.find(key) != attributes.end();
++  }
++
++  Type& TypeImpl::removeAttribute(const std::string& key) {
++    auto it = attributes.find(key);
++    if (it == attributes.end()) {
++      throw std::range_error("Key not found: " + key);
++    }
++    attributes.erase(it);
++    return *this;
++  }
++
++  std::vector<std::string> TypeImpl::getAttributeKeys() const {
++    std::vector<std::string> ret;
++    ret.reserve(attributes.size());
++    for (auto& attribute : attributes) {
++      ret.push_back(attribute.first);
++    }
++    return ret;
++  }
++
++  std::string TypeImpl::getAttributeValue(const std::string& key) const {
++    auto it = attributes.find(key);
++    if (it == attributes.end()) {
++      throw std::range_error("Key not found: " + key);
++    }
++    return it->second;
++  }
++
+   void TypeImpl::setIds(uint64_t _columnId, uint64_t _maxColumnId) {
+     columnId = static_cast<int64_t>(_columnId);
+     maximumColumnId = static_cast<int64_t>(_maxColumnId);
+@@ -355,6 +391,7 @@ namespace orc {
+   std::string printProtobufMessage(const google::protobuf::Message& message);
+   std::unique_ptr<Type> convertType(const proto::Type& type,
+                                     const proto::Footer& footer) {
++    std::unique_ptr<Type> ret;
+     switch (static_cast<int64_t>(type.kind())) {
+ 
+     case proto::Type_Kind_BOOLEAN:
+@@ -369,24 +406,27 @@ namespace orc {
+     case proto::Type_Kind_TIMESTAMP:
+     case proto::Type_Kind_TIMESTAMP_INSTANT:
+     case proto::Type_Kind_DATE:
+-      return std::unique_ptr<Type>
++      ret = std::unique_ptr<Type>
+         (new TypeImpl(static_cast<TypeKind>(type.kind())));
++      break;
+ 
+     case proto::Type_Kind_CHAR:
+     case proto::Type_Kind_VARCHAR:
+-      return std::unique_ptr<Type>
++      ret = std::unique_ptr<Type>
+         (new TypeImpl(static_cast<TypeKind>(type.kind()),
+                       type.maximumlength()));
++      break;
+ 
+     case proto::Type_Kind_DECIMAL:
+-      return std::unique_ptr<Type>
++      ret = std::unique_ptr<Type>
+         (new TypeImpl(DECIMAL, type.precision(), type.scale()));
++      break;
+ 
+     case proto::Type_Kind_LIST:
+     case proto::Type_Kind_MAP:
+     case proto::Type_Kind_UNION: {
+       TypeImpl* result = new TypeImpl(static_cast<TypeKind>(type.kind()));
+-      std::unique_ptr<Type> return_value = std::unique_ptr<Type>(result);
++      ret = std::unique_ptr<Type>(result);
+       if (type.kind() == proto::Type_Kind_LIST && type.subtypes_size() != 1)
+         throw ParseError("Illegal LIST type that doesn't contain one subtype");
+       if (type.kind() == proto::Type_Kind_MAP && type.subtypes_size() != 2)
+@@ -398,23 +438,28 @@ namespace orc {
+                                                        (type.subtypes(i))),
+                                           footer));
+       }
+-      return return_value;
++      break;
+     }
+ 
+     case proto::Type_Kind_STRUCT: {
+       TypeImpl* result = new TypeImpl(STRUCT);
+-      std::unique_ptr<Type> return_value = std::unique_ptr<Type>(result);
++      ret = std::unique_ptr<Type>(result);
+       for(int i=0; i < type.subtypes_size(); ++i) {
+         result->addStructField(type.fieldnames(i),
+                                convertType(footer.types(static_cast<int>
+                                                         (type.subtypes(i))),
+                                            footer));
+       }
+-      return return_value;
++      break;
+     }
+     default:
+       throw NotImplementedYet("Unknown type kind");
+     }
++    for (int i = 0; i < type.attributes_size(); ++i) {
++      const auto& attribute = type.attributes(i);
++      ret->setAttribute(attribute.key(), attribute.value());
++    }
++    return ret;
+   }
+ 
+   /**
+@@ -501,6 +546,10 @@ namespace orc {
+       throw NotImplementedYet("Unknown type kind");
+     }
+     result->setIds(fileType->getColumnId(), fileType->getMaximumColumnId());
++    for (auto& key : fileType->getAttributeKeys()) {
++      const auto& value = fileType->getAttributeValue(key);
++      result->setAttribute(key, value);
++    }
+     return std::unique_ptr<Type>(result);
+   }
+ 
+diff --git a/c++/src/TypeImpl.hh b/c++/src/TypeImpl.hh
+index c42d80a..18a3e71 100644
+--- a/c++/src/TypeImpl.hh
++++ b/c++/src/TypeImpl.hh
+@@ -40,6 +40,7 @@ namespace orc {
+     uint64_t maxLength;
+     uint64_t precision;
+     uint64_t scale;
++    std::map<std::string, std::string> attributes;
+ 
+   public:
+     /**
+@@ -76,6 +77,17 @@ namespace orc {
+ 
+     uint64_t getScale() const override;
+ 
++    Type& setAttribute(const std::string& key,
++                       const std::string& value) override;
++
++    bool hasAttributeKey(const std::string& key) const override;
++
++    Type& removeAttribute(const std::string& key) override;
++
++    std::vector<std::string> getAttributeKeys() const override;
++
++    std::string getAttributeValue(const std::string& key) const override;
++
+     std::string toString() const override;
+ 
+     Type* addStructField(const std::string& fieldName,
+diff --git a/c++/src/Writer.cc b/c++/src/Writer.cc
+index b662464..fda5f5c 100644
+--- a/c++/src/Writer.cc
++++ b/c++/src/Writer.cc
+@@ -625,6 +625,13 @@ namespace orc {
+       throw std::logic_error("Unknown type.");
+     }
+ 
++    for (auto& key : t.getAttributeKeys()) {
++      const auto& value = t.getAttributeValue(key);
++      auto protoAttr = protoType.add_attributes();
++      protoAttr->set_key(key);
++      protoAttr->set_value(value);
++    }
++
+     int pos = static_cast<int>(index);
+     *footer.add_types() = protoType;
+ 
+diff --git a/c++/test/CMakeLists.txt b/c++/test/CMakeLists.txt
+index ea39023..397bc3d 100644
+--- a/c++/test/CMakeLists.txt
++++ b/c++/test/CMakeLists.txt
+@@ -25,6 +25,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS} ${WARN_FLAGS}")
+ add_executable (orc-test
+   MemoryInputStream.cc
+   MemoryOutputStream.cc
++  TestAttributes.cc
+   TestBufferedOutputStream.cc
+   TestBloomFilter.cc
+   TestByteRle.cc
+diff --git a/c++/test/TestAttributes.cc b/c++/test/TestAttributes.cc
+new file mode 100644
+index 0000000..f7d0b47
+--- /dev/null
++++ b/c++/test/TestAttributes.cc
+@@ -0,0 +1,181 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements.  See the NOTICE file
++ * distributed with this work for additional information
++ * regarding copyright ownership.  The ASF licenses this file
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License.  You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "orc/OrcFile.hh"
++
++#include "MemoryInputStream.hh"
++#include "MemoryOutputStream.hh"
++
++#include "wrap/gmock.h"
++#include "wrap/gtest-wrapper.h"
++
++#include <cmath>
++#include <sstream>
++
++namespace orc {
++  const int DEFAULT_MEM_STREAM_SIZE = 10 * 1024 * 1024; // 10M
++
++  class TypeAttributes : public ::testing::Test {
++  public:
++    ~TypeAttributes();
++  protected:
++    static void SetUpTestCase() {
++      memStream.reset();
++    }
++
++    static void TearDownTestCase() {}
++
++    std::unique_ptr<Reader> createReader() {
++      std::unique_ptr<InputStream> inStream(
++        new MemoryInputStream (memStream.getData(), memStream.getLength()));
++      ReaderOptions options;
++      return orc::createReader(std::move(inStream), options);
++    }
++
++    std::unique_ptr<RowReader> createRowReader(
++        const std::unique_ptr<Reader>& reader) {
++      RowReaderOptions rowReaderOpts;
++      return reader->createRowReader(rowReaderOpts);
++    }
++
++    std::unique_ptr<RowReader> createRowReader(
++        const std::unique_ptr<Reader>& reader,
++        const std::list<uint64_t>& includeTypes) {
++      RowReaderOptions rowReaderOpts;
++      rowReaderOpts.includeTypes(includeTypes);
++      return reader->createRowReader(rowReaderOpts);
++    }
++
++    void writeFileWithType(Type& type) {
++      WriterOptions options;
++      auto writer = createWriter(type, &memStream, options);
++      writer->close();
++    }
++
++    const Type* getTypeByPath(const Type* root,
++                              const std::vector<uint64_t>& path) {
++      const Type* ret = root;
++      for (uint64_t idx : path) {
++        ret = ret->getSubtype(idx);
++      }
++      return ret;
++    }
++
++  private:
++    static MemoryOutputStream memStream;
++  };
++
++  TypeAttributes::~TypeAttributes() {}
++  MemoryOutputStream TypeAttributes::memStream(DEFAULT_MEM_STREAM_SIZE);
++
++  TEST_F(TypeAttributes, writeSimple) {
++    auto intType = createPrimitiveType(INT);
++    intType->setAttribute("id", "1");
++    auto structType = createStructType();
++    structType->addStructField("i", std::move(intType));
++    writeFileWithType(*structType);
++
++    auto reader = createReader();
++    auto& root = reader->getType();
++    auto i = root.getSubtype(0);
++    EXPECT_EQ("1", i->getAttributeValue("id"));
++
++    auto rowReader = createRowReader(reader, {1});
++    auto& selectedRoot = rowReader->getSelectedType();
++    auto selectedCol = selectedRoot.getSubtype(0);
++    EXPECT_EQ("1", selectedCol->getAttributeValue("id"));
++  }
++
++  TEST_F(TypeAttributes, writeMultipleAttributes) {
++    auto stringType = createPrimitiveType(STRING);
++    stringType->setAttribute("foo", "xfoo");
++    stringType->setAttribute("bar", "xbar");
++    stringType->setAttribute("baz", "xbaz");
++    // Let's also test removing an attribute.
++    stringType->removeAttribute("bar");
++    auto structType = createStructType();
++    structType->addStructField("str", std::move(stringType));
++    writeFileWithType(*structType);
++
++    auto reader = createReader();
++    auto rowReader = createRowReader(reader, {1});
++    auto& root = rowReader->getSelectedType();
++    auto col = root.getSubtype(0);
++    auto attributeKeys = col->getAttributeKeys();
++
++    EXPECT_EQ(2, attributeKeys.size());
++    EXPECT_FALSE(col->hasAttributeKey("bar"));
++    EXPECT_TRUE(col->hasAttributeKey("foo"));
++    EXPECT_TRUE(col->hasAttributeKey("baz"));
++    EXPECT_EQ("xfoo", col->getAttributeValue("foo"));
++    EXPECT_EQ("xbaz", col->getAttributeValue("baz"));
++  }
++
++  // Tests that type and all descendants have only a single attribute,
++  // and the attibute value equals to 'x' + <attribute key>.
++  void testTypeHasXAttr(const Type* type) {
++    auto keys = type->getAttributeKeys();
++    EXPECT_EQ(1, keys.size());
++    auto& key = keys.front();
++    EXPECT_EQ('x' + key, type->getAttributeValue(key));
++    for (uint64_t i = 0; i < type->getSubtypeCount(); ++i) {
++      testTypeHasXAttr(type->getSubtype(i));
++    }
++  }
++
++  TEST_F(TypeAttributes, writeAttributesForNestedTypes) {
++    // Let's create struct<list:array<struct<myMap:map<int,union<long, float>>>>>
++    auto intType = createPrimitiveType(INT);
++    intType->setAttribute("i", "xi");
++    auto longType = createPrimitiveType(FLOAT);
++    longType->setAttribute("l", "xl");
++    auto floatType = createPrimitiveType(FLOAT);
++    floatType->setAttribute("f", "xf");
++    auto unionType = createUnionType();
++    unionType->setAttribute("u", "xu");
++    unionType->addUnionChild(std::move(longType));
++    unionType->addUnionChild(std::move(floatType));
++    auto mapType = createMapType(std::move(intType), std::move(unionType));
++    mapType->setAttribute("m", "xm");
++    auto innerStructType = createStructType();
++    innerStructType->setAttribute("is", "xis");
++    innerStructType->addStructField("myMap", std::move(mapType));
++    auto listType = createListType(std::move(innerStructType));
++    listType->setAttribute("l", "xl");
++    auto rootStructType = createStructType();
++    rootStructType->addStructField("list", std::move(listType));
++    writeFileWithType(*rootStructType);
++
++    auto reader = createReader();
++    auto rowReader = createRowReader(reader);
++    auto& root = rowReader->getSelectedType();
++
++    auto getVal = [this, &root] (const std::vector<uint64_t>& path,
++                                 const std::string& key) {
++      auto t = getTypeByPath(&root, path);
++      return t->getAttributeValue(key);
++    };
++    EXPECT_EQ("xl", getVal({0}, "l"));
++    EXPECT_EQ("xis", getVal({0, 0}, "is"));
++    EXPECT_EQ("xm", getVal({0, 0, 0}, "m"));
++    EXPECT_EQ("xi", getVal({0, 0, 0, 0}, "i"));
++    EXPECT_EQ("xu", getVal({0, 0, 0, 1}, "u"));
++    EXPECT_EQ("xl", getVal({0, 0, 0, 1, 0}, "l"));
++    EXPECT_EQ("xf", getVal({0, 0, 0, 1, 1}, "f"));
++  }
++}
+
+diff --git a/tools/src/FileMetadata.cc b/tools/src/FileMetadata.cc
+index c4784fd..292979a 100644
+--- a/tools/src/FileMetadata.cc
++++ b/tools/src/FileMetadata.cc
+@@ -93,6 +93,47 @@ void printRawTail(std::ostream& out,
+   out << tail.DebugString();
+ }
+ 
++void printAttributes(std::ostream& out, const orc::Type& type,
++    const std::string name, bool* hasAnyAttributes) {
++  const auto& attributeKeys = type.getAttributeKeys();
++  bool typeHasAttrs = !attributeKeys.empty();
++  if (typeHasAttrs) {
++    // 'hasAnyAttributes' is only needed to deal with commas properly.
++    if (*hasAnyAttributes) {
++      out << ',';
++    } else {
++      *hasAnyAttributes = true;
++    }
++    out << "\n    \"" << name << "\": {";
++  }
++  for (uint64_t i = 0; i < attributeKeys.size(); ++i) {
++    const auto& key = attributeKeys[i];
++    const auto& value = type.getAttributeValue(key);
++    out << "\"" << key << "\": \"" << value << "\"";
++    if (i < attributeKeys.size() - 1) {
++      out << ", ";
++    }
++  }
++  if (typeHasAttrs) {
++    out << '}';
++  }
++  for (uint64_t i = 0; i < type.getSubtypeCount(); ++i) {
++    const auto& child = *type.getSubtype(i);
++    std::string fieldName;
++    if (type.getKind() == orc::STRUCT) {
++      fieldName = type.getFieldName(i);
++    } else if (type.getKind() == orc::LIST) {
++      fieldName = "_elem";
++    } else if (type.getKind() == orc::MAP) {
++      fieldName = i == 0 ? "_key" : "_value";
++    } else {
++      fieldName = "_field_" + std::to_string(i);
++    }
++    std::string childName = (name.empty() ? "" : name + '.') + fieldName;
++    printAttributes(out, child, childName, hasAnyAttributes);
++  }
++}
++
+ void printMetadata(std::ostream & out, const char*filename, bool verbose) {
+   std::unique_ptr<orc::Reader> reader =
+     orc::createReader(orc::readFile(filename), orc::ReaderOptions());
+@@ -100,6 +141,10 @@ void printMetadata(std::ostream & out, const char*filename, bool verbose) {
+   uint64_t numberColumns = reader->getType().getMaximumColumnId() + 1;
+   out << "  \"type\": \""
+             << reader->getType().toString() << "\",\n";
++  out << "  \"attributes\": {";
++  bool hasAnyAttributes = false;
++  printAttributes(out, reader->getType(), /*name=*/"", &hasAnyAttributes);
++  out << "},\n";
+   out << "  \"rows\": " << reader->getNumberOfRows() << ",\n";
+   uint64_t stripeCount = reader->getNumberOfStripes();
+   out << "  \"stripe count\": " << stripeCount << ",\n";
+diff --git a/tools/test/TestFileMetadata.cc b/tools/test/TestFileMetadata.cc
+index 45d6d5b..87f2539 100644
+--- a/tools/test/TestFileMetadata.cc
++++ b/tools/test/TestFileMetadata.cc
+@@ -164,6 +164,7 @@ TEST (TestFileMetadata, testJson) {
+   const std::string expected =
+     "{ \"name\": \"" + file + "\",\n"
+     "  \"type\": \"struct<userid:bigint,string1:string,subtype:double,decimal1:decimal(0,0),ts:timestamp>\",\n"
++    "  \"attributes\": {},\n"
+     "  \"rows\": 25000,\n"
+     "  \"stripe count\": 5,\n"
+     "  \"format\": \"0.12\", \"writer version\": \"original\",\n"
+@@ -205,14 +206,13 @@ TEST (TestFileMetadata, testJson) {
+   EXPECT_EQ("", error);
+ }
+ 
+-
+-
+ TEST (TestFileMetadata, testNoFormat) {
+   const std::string pgm = findProgram("tools/src/orc-metadata");
+   const std::string file = findExample("orc_no_format.orc");
+   const std::string expected =
+     "{ \"name\": \"" + file + "\",\n"
+     "  \"type\": \"struct<_col0:array<string>,_col1:map<int,string>,_col2:struct<name:string,score:int>>\",\n"
++    "  \"attributes\": {},\n"
+     "  \"rows\": 5,\n"
+     "  \"stripe count\": 1,\n"
+     "  \"format\": \"0.11\", \"writer version\": \"original\",\n"
+-- 
+2.7.4
+
