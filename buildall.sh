@@ -50,8 +50,9 @@ if [[ "$ARCH_NAME" != "aarch64" ]]; then
     BOOST_VERSION=1.57.0-p2 $SOURCE_DIR/source/boost/build.sh
   fi
   BOOST_VERSION=1.57.0-p3 $SOURCE_DIR/source/boost/build.sh
+  BOOST_VERSION=1.61.0-p2 $SOURCE_DIR/source/boost/build.sh
 fi
-BOOST_VERSION=1.61.0-p2 $SOURCE_DIR/source/boost/build.sh
+BOOST_VERSION=1.74.0-p1 $SOURCE_DIR/source/boost/build.sh
 
 ################################################################################
 # Build BZip2
@@ -164,7 +165,7 @@ BISON_VERSION=3.0.4-p1 $SOURCE_DIR/source/bison/build.sh
 #  * depends on bison, boost, zlib and openssl
 ################################################################################
 export BISON_VERSION=3.0.4-p1
-export BOOST_VERSION=1.61.0-p2
+export BOOST_VERSION=1.74.0-p1
 export ZLIB_VERSION=1.2.11
 export OPENSSL_VERSION=1.0.2l
 export PYTHON_VERSION=2.7.16
@@ -329,7 +330,7 @@ FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
 # Build Kudu
 ################################################################################
 (
-  export BOOST_VERSION=1.61.0-p2
+  export BOOST_VERSION=1.74.0-p1
   export KUDU_VERSION=f486f0813a
   export PYTHON_VERSION=2.7.16
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then

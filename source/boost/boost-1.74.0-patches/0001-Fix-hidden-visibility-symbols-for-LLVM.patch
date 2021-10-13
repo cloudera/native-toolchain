@@ -1,0 +1,33 @@
+From f33641fb675ce25df197cbd75ca02537f9f721c3 Mon Sep 17 00:00:00 2001
+From: wzhou-code <wzhou@cloudera.com>
+Date: Wed, 3 Nov 2021 14:15:46 -0700
+Subject: [PATCH] Fix hidden visibility symbols for LLVM
+
+boost::locale::generator is used by be/src/exprs/mask-functions-ir.cc.
+We got following error when running backend test "expr-test" and
+end-to-end test "test_utf8_strings.py":
+    "LLVM hit fatal error: Program used external function
+     '_ZN5boost6locale9generatorC1Ev' which could not be resolved!".
+
+This patch made the symbols of boost::locale::generator visible to
+LLVM.
+---
+ boost/locale/generator.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/boost/locale/generator.hpp b/boost/locale/generator.hpp
+index 97a6fb53f..2d22a316f 100644
+--- a/boost/locale/generator.hpp
++++ b/boost/locale/generator.hpp
+@@ -72,7 +72,7 @@ namespace boost {
+         /// caching. This class const member functions are thread safe if locale class implementation is thread safe.
+         ///
+ 
+-        class BOOST_LOCALE_DECL generator {
++        class BOOST_SYMBOL_EXPORT generator {
+         public:
+ 
+             ///
+-- 
+2.17.1
+
