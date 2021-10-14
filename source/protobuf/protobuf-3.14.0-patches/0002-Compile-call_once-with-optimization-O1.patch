@@ -1,0 +1,30 @@
+From d4be233268d9847ca5622fa0990064e9e913f7cc Mon Sep 17 00:00:00 2001
+From: wzhou-code <wzhou@cloudera.com>
+Date: Mon, 27 Dec 2021 20:25:01 -0800
+Subject: [PATCH] Compile call_once with optimization O1
+
+---
+ src/google/protobuf/stubs/once.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/google/protobuf/stubs/once.h b/src/google/protobuf/stubs/once.h
+index 070d36d..690c140 100644
+--- a/src/google/protobuf/stubs/once.h
++++ b/src/google/protobuf/stubs/once.h
+@@ -41,10 +41,13 @@ namespace protobuf {
+ namespace internal {
+ 
+ using once_flag = std::once_flag;
++#pragma GCC push_options
++#pragma GCC optimize ("O1")
+ template <typename... Args>
+ void call_once(Args&&... args ) {
+   std::call_once(std::forward<Args>(args)...);
+ }
++#pragma GCC pop_options
+ 
+ }  // namespace internal
+ }  // namespace protobuf
+-- 
+2.17.1
+

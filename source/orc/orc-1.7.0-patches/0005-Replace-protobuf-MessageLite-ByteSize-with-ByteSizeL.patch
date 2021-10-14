@@ -1,0 +1,57 @@
+From 9539d8a84b8bfe57c16d134a99226a1f76a6fa11 Mon Sep 17 00:00:00 2001
+From: wzhou-code <wzhou@cloudera.com>
+Date: Wed, 13 Oct 2021 21:04:18 -0700
+Subject: [PATCH] Replace protobuf::MessageLite::ByteSize() with ByteSizeLong()
+
+google::protobuf::MessageLite::ByteSize() is deprecated in protobuf
+v3.14.0. Replace it with google::protobuf::MessageLite::ByteSizeLong()
+to avoid build failure when upgrading protobuf library to v3.14.0.
+---
+ c++/test/CreateTestFiles.cc          | 6 +++---
+ c++/test/TestBufferedOutputStream.cc | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/c++/test/CreateTestFiles.cc b/c++/test/CreateTestFiles.cc
+index 2550802..f77fc3b 100644
+--- a/c++/test/CreateTestFiles.cc
++++ b/c++/test/CreateTestFiles.cc
+@@ -45,20 +45,20 @@ void writeCustomOrcFile(const std::string& filename,
+     exit(1);
+   }
+   orc::proto::PostScript ps;
+-  ps.set_footerlength(static_cast<uint64_t>(footer.ByteSize()));
++  ps.set_footerlength(static_cast<uint64_t>(footer.ByteSizeLong()));
+   ps.set_compression(orc::proto::NONE);
+   ps.set_compressionblocksize(64*1024);
+   for(size_t i=0; i < version.size(); ++i) {
+     ps.add_version(version[i]);
+   }
+-  ps.set_metadatalength(static_cast<uint64_t>(metadata.ByteSize()));
++  ps.set_metadatalength(static_cast<uint64_t>(metadata.ByteSizeLong()));
+   ps.set_writerversion(writerVersion);
+   ps.set_magic("ORC");
+   if (!ps.SerializeToOstream(&output)) {
+     std::cerr << "Failed to write postscript for " << filename << "\n";
+     exit(1);
+   }
+-  output.put(static_cast<char>(ps.ByteSize()));
++  output.put(static_cast<char>(ps.ByteSizeLong()));
+ }
+ 
+ /**
+diff --git a/c++/test/TestBufferedOutputStream.cc b/c++/test/TestBufferedOutputStream.cc
+index d1786a6..b47e1e5 100644
+--- a/c++/test/TestBufferedOutputStream.cc
++++ b/c++/test/TestBufferedOutputStream.cc
+@@ -110,7 +110,7 @@ namespace orc {
+ 
+     EXPECT_TRUE(ps.SerializeToZeroCopyStream(&bufStream));
+     bufStream.flush();
+-    EXPECT_EQ(ps.ByteSize(), memStream.getLength());
++    EXPECT_EQ(ps.ByteSizeLong(), memStream.getLength());
+ 
+     proto::PostScript ps2;
+     ps2.ParseFromArray(
+-- 
+2.17.1
+

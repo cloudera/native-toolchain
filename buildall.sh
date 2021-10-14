@@ -118,7 +118,12 @@ GCC_VERSION=9.2.0 $SOURCE_DIR/source/gcc/build.sh
 ################################################################################
 # Build protobuf
 ################################################################################
-PROTOBUF_VERSION=3.5.1 $SOURCE_DIR/source/protobuf/build.sh
+PROTOBUF_VERSION=3.14.0 $SOURCE_DIR/source/protobuf/build.sh
+# Impala Clang builds hit a micro redefinition compiling error and symbol related
+# issue in linking with protobuf 3.14.0. Two patches were created to fix these
+# Clang compatibility issues.
+# 3.14.0-clangcompat-p2 should be used for Impala Clang builds.
+PROTOBUF_VERSION=3.14.0-clangcompat-p2 $SOURCE_DIR/source/protobuf/build.sh
 
 ################################################################################
 # Build libev
@@ -331,7 +336,7 @@ FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
 ################################################################################
 (
   export BOOST_VERSION=1.74.0-p1
-  export KUDU_VERSION=1754f517b2
+  export KUDU_VERSION=67ba3cae45
   export PYTHON_VERSION=2.7.16
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
@@ -360,7 +365,7 @@ KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
 ################################################################################
 (
   export LZ4_VERSION=1.9.3
-  export PROTOBUF_VERSION=3.5.1
+  export PROTOBUF_VERSION=3.14.0
   export SNAPPY_VERSION=1.1.8
   export ZLIB_VERSION=1.2.11
   export GOOGLETEST_VERSION=1.8.0
@@ -370,7 +375,7 @@ KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
     ORC_VERSION=1.6.2-p11 $SOURCE_DIR/source/orc/build.sh
     ORC_VERSION=1.7.0-p3 $SOURCE_DIR/source/orc/build.sh
   fi
-  ORC_VERSION=1.7.0-p4 $SOURCE_DIR/source/orc/build.sh
+  ORC_VERSION=1.7.0-p5 $SOURCE_DIR/source/orc/build.sh
 )
 
 ################################################################################

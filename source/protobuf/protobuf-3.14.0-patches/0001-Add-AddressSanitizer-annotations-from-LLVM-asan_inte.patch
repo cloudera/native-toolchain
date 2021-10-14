@@ -1,0 +1,37 @@
+From 541140b022890c3127a0235f7b700e9e51880669 Mon Sep 17 00:00:00 2001
+From: wzhou-code <wzhou@cloudera.com>
+Date: Sun, 21 Nov 2021 15:38:14 -0800
+Subject: [PATCH] Add AddressSanitizer annotations from LLVM asan_interface.h
+
+---
+ src/google/protobuf/arena_impl.h | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/src/google/protobuf/arena_impl.h b/src/google/protobuf/arena_impl.h
+index 1377268..64b755d 100644
+--- a/src/google/protobuf/arena_impl.h
++++ b/src/google/protobuf/arena_impl.h
+@@ -40,7 +40,19 @@
+ #include <google/protobuf/stubs/logging.h>
+ 
+ #ifdef ADDRESS_SANITIZER
+-#include <sanitizer/asan_interface.h>
++// #include <sanitizer/asan_interface.h>
++/* AddressSanitizer annotations from LLVM asan_interface.h */
++#ifdef __cplusplus
++extern "C" {
++#endif
++void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
++
++#define ASAN_UNPOISON_MEMORY_REGION(addr, size) \
++  __asan_unpoison_memory_region((addr), (size))
++
++#ifdef __cplusplus
++}  // extern "C"
++#endif
+ #endif  // ADDRESS_SANITIZER
+ 
+ #include <google/protobuf/port_def.inc>
+-- 
+2.17.1
+
