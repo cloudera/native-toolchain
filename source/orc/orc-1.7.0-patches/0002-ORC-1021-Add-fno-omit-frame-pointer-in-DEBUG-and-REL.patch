@@ -1,0 +1,41 @@
+From af15c3e220da1d5d12acad0762a3328434a79df6 Mon Sep 17 00:00:00 2001
+From: Quanlong Huang <huangquanlong@gmail.com>
+Date: Sun, 10 Oct 2021 03:05:34 +0800
+Subject: [PATCH 2/3] ORC-1021: Add -fno-omit-frame-pointer in DEBUG and
+ RELWITHDEBINFO builds (#932)
+
+### What changes were proposed in this pull request?
+
+This PR adds -fno-omit-frame-pointer gcc option in DEBUG and RELWITHDEBINFO builds, which helps to generate stacktrace in debugging and profiling. Refs:
+https://www.brendangregg.com/perf.html#StackTraces
+https://issues.apache.org/jira/browse/IMPALA-4132
+
+### Why are the changes needed?
+
+Described as above.
+
+### How was this patch tested?
+
+Built in ubuntu16.04 with gcc 8.4.0.
+---
+ CMakeLists.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7c0e841..bb2ce5a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -84,8 +84,8 @@ endif ()
+ # Compiler specific flags
+ #
+ if (NOT MSVC)
+-  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
++  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-omit-frame-pointer")
++  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG -fno-omit-frame-pointer")
+   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+ endif ()
+ message(STATUS "compiler ${CMAKE_CXX_COMPILER_ID} version ${CMAKE_CXX_COMPILER_VERSION}")
+-- 
+2.7.4
+

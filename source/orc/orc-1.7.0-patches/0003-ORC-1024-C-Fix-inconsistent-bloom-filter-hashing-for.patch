@@ -1,0 +1,779 @@
+From 0e7a9ed5b612f691c2b7a796877f018409b4286c Mon Sep 17 00:00:00 2001
+From: Quanlong Huang <huangquanlong@gmail.com>
+Date: Fri, 15 Oct 2021 13:16:40 +0800
+Subject: [PATCH 3/3] ORC-1024: [C++] Fix inconsistent bloom filter hashing for
+ numeric values (#934)
+
+### What changes were proposed in this pull request?
+
+This PR fixes inconsistent bloom filter hashing for numeric values between the Java client and C++ client. Before this PR, bloom filters written by Java clients will be incorrectly used in the C++ clients due to the hashing inconsistency. There is an example in the JIRA description.
+After this fix, when reading old ORC files that have bloom filters written by old C++ clients, the bloom filters won't be used.
+
+### Why are the changes needed?
+
+In Java codes, hash values are in type "long" which is signed. Bitwise operators like ">>" (shifting) are sign-awared. So we should use "int64_t" instead of "uint64_t" in the corresponding C++ codes.
+
+### How was this patch tested?
+
+Add hashing tests in both Java and C++ codes for numeric values. (TestBloomFilter.java & TestBloomFilter.cc)
+Add hashing tests in C++ codes for string values. (TestMurmur3.cc)
+Add test for reading an ORC file with bloom filters written by C++ client in version 1.6.11. Verified bad bloom filters won't affect the results. (TestReader.cc)
+ORC-1025 will focus on adding more tests.
+---
+ c++/src/BloomFilter.cc                             |  33 ++---
+ c++/src/BloomFilter.hh                             |  18 ++-
+ c++/src/Reader.cc                                  |  35 ++++-
+ c++/src/Reader.hh                                  |   8 ++
+ c++/test/CMakeLists.txt                            |   1 +
+ c++/test/TestBloomFilter.cc                        |  55 +++++++-
+ c++/test/TestMurmur3.cc                            |  41 ++++++
+ c++/test/TestReader.cc                             |  36 +++++
+ .../java/org/apache/orc/impl/RecordReaderImpl.java |  39 +++++-
+ .../src/java/org/apache/orc/util/BloomFilter.java  |  10 +-
+ .../test/org/apache/orc/impl/TestReaderImpl.java   |  34 +++++
+ .../test/org/apache/orc/util/TestBloomFilter.java  | 146 +++++++++++++++++++++
+ 12 files changed, 428 insertions(+), 28 deletions(-)
+ create mode 100644 c++/test/TestMurmur3.cc
+
+diff --git a/c++/src/BloomFilter.cc b/c++/src/BloomFilter.cc
+index 020a271..8a1f188 100644
+--- a/c++/src/BloomFilter.cc
++++ b/c++/src/BloomFilter.cc
+@@ -101,19 +101,6 @@ namespace orc {
+     return static_cast<int32_t>(-n * std::log(fpp) / (std::log(2.0) * std::log(2.0)));
+   }
+ 
+-  // Thomas Wang's integer hash function
+-  // http://web.archive.org/web/20071223173210/http://www.concentric.net/~Ttwang/tech/inthash.htm
+-  inline uint64_t getLongHash(uint64_t key) {
+-    key = (~key) + (key << 21); // key = (key << 21) - key - 1;
+-    key = key ^ (key >> 24);
+-    key = (key + (key << 3)) + (key << 8); // key * 265
+-    key = key ^ (key >> 14);
+-    key = (key + (key << 2)) + (key << 4); // key * 21
+-    key = key ^ (key >> 28);
+-    key = key + (key << 31);
+-    return key;
+-  }
+-
+   // We use the trick mentioned in "Less Hashing, Same Performance:
+   // Building a Better Bloom Filter" by Kirsch et.al. From abstract
+   // 'only two hash functions are necessary to effectively implement
+@@ -148,20 +135,20 @@ namespace orc {
+ 
+   void BloomFilterImpl::addBytes(const char * data, int64_t length) {
+     uint64_t hash64 = getBytesHash(data, length);
+-    addHash(hash64);
++    addHash(static_cast<int64_t>(hash64));
+   }
+ 
+   void BloomFilterImpl::addLong(int64_t data) {
+-    addHash(getLongHash(static_cast<uint64_t>(data)));
++    addHash(getLongHash(data));
+   }
+ 
+   bool BloomFilterImpl::testBytes(const char * data, int64_t length) const {
+     uint64_t hash64 = getBytesHash(data, length);
+-    return testHash(hash64);
++    return testHash(static_cast<int64_t>(hash64));
+   }
+ 
+   bool BloomFilterImpl::testLong(int64_t data) const {
+-    return testHash(getLongHash(static_cast<uint64_t>(data)));
++    return testHash(getLongHash(data));
+   }
+ 
+   uint64_t BloomFilterImpl::sizeInBytes() const {
+@@ -223,9 +210,11 @@ namespace orc {
+ 
+   DIAGNOSTIC_POP
+ 
+-  void BloomFilterImpl::addHash(uint64_t hash64) {
++  void BloomFilterImpl::addHash(int64_t hash64) {
+     int32_t hash1 = static_cast<int32_t>(hash64 & 0xffffffff);
+-    int32_t hash2 = static_cast<int32_t>(hash64 >> 32);
++    // In Java codes, we use "hash64 >>> 32" which is an unsigned shift op.
++    // So we cast hash64 to uint64_t here for an unsigned right shift.
++    int32_t hash2 = static_cast<int32_t>(static_cast<uint64_t>(hash64) >> 32);
+ 
+     for (int32_t i = 1; i <= mNumHashFunctions; ++i) {
+       int32_t combinedHash = hash1 + i * hash2;
+@@ -238,9 +227,11 @@ namespace orc {
+     }
+   }
+ 
+-  bool BloomFilterImpl::testHash(uint64_t hash64) const{
++  bool BloomFilterImpl::testHash(int64_t hash64) const{
+     int32_t hash1 = static_cast<int32_t>(hash64 & 0xffffffff);
+-    int32_t hash2 = static_cast<int32_t>(hash64 >> 32);
++    // In Java codes, we use "hash64 >>> 32" which is an unsigned shift op.
++    // So we cast hash64 to uint64_t here for an unsigned right shift.
++    int32_t hash2 = static_cast<int32_t>(static_cast<uint64_t>(hash64) >> 32);
+ 
+     for (int32_t i = 1; i <= mNumHashFunctions; ++i) {
+       int32_t combinedHash = hash1 + i * hash2;
+diff --git a/c++/src/BloomFilter.hh b/c++/src/BloomFilter.hh
+index 91aa528..cf18a46 100644
+--- a/c++/src/BloomFilter.hh
++++ b/c++/src/BloomFilter.hh
+@@ -162,12 +162,13 @@ namespace orc {
+ 
+   private:
+     friend struct BloomFilterUTF8Utils;
++    friend class TestBloomFilter_testBloomFilterBasicOperations_Test;
+ 
+     // compute k hash values from hash64 and set bits
+-    void addHash(uint64_t hash64);
++    void addHash(int64_t hash64);
+ 
+     // compute k hash values from hash64 and check bits
+-    bool testHash(uint64_t hash64) const;
++    bool testHash(int64_t hash64) const;
+ 
+     void serialize(proto::BloomFilter& bloomFilter) const;
+ 
+@@ -191,6 +192,19 @@ namespace orc {
+                 const proto::BloomFilter& bloomFilter);
+   };
+ 
++  // Thomas Wang's integer hash function
++  // http://web.archive.org/web/20071223173210/http://www.concentric.net/~Ttwang/tech/inthash.htm
++  // Put this in header file so tests can use it as well.
++  inline int64_t getLongHash(int64_t key) {
++    key = (~key) + (key << 21); // key = (key << 21) - key - 1;
++    key = key ^ (key >> 24);
++    key = (key + (key << 3)) + (key << 8); // key * 265
++    key = key ^ (key >> 14);
++    key = (key + (key << 2)) + (key << 4); // key * 21
++    key = key ^ (key >> 28);
++    key = key + (key << 31);
++    return key;
++  }
+ }
+ 
+ #endif //ORC_BLOOMFILTER_IMPL_HH
+diff --git a/c++/src/Reader.cc b/c++/src/Reader.cc
+index c9b1627..878c208 100644
+--- a/c++/src/Reader.cc
++++ b/c++/src/Reader.cc
+@@ -35,6 +35,11 @@
+ #include <set>
+ 
+ namespace orc {
++  // ORC files writen by these versions of cpp writers have inconsistent bloom filter
++  // hashing. Bloom filters of them should not be used.
++  static const char* BAD_CPP_BLOOM_FILTER_VERSIONS[] = {
++    "1.6.0", "1.6.1", "1.6.2", "1.6.3", "1.6.4", "1.6.5", "1.6.6", "1.6.7", "1.6.8",
++    "1.6.9", "1.6.10", "1.6.11", "1.7.0"};
+ 
+   const WriterVersionImpl &WriterVersionImpl::VERSION_HIVE_8732() {
+     static const WriterVersionImpl version(WriterVersion_HIVE_8732);
+@@ -243,6 +248,34 @@ namespace orc {
+                                           footer->rowindexstride(),
+                                           getWriterVersionImpl(_contents.get())));
+     }
++
++    skipBloomFilters = hasBadBloomFilters();
++  }
++
++  // Check if the file has inconsistent bloom filters.
++  bool RowReaderImpl::hasBadBloomFilters() {
++    // Only C++ writer in old releases could have bad bloom filters.
++    if (footer->writer() != ORC_CPP_WRITER) return false;
++    // 'softwareVersion' is added in 1.5.13, 1.6.11, and 1.7.0.
++    // 1.6.x releases before 1.6.11 won't have it. On the other side, the C++ writer
++    // supports writing bloom filters since 1.6.0. So files written by the C++ writer
++    // and with 'softwareVersion' unset would have bad bloom filters.
++    if (!footer->has_softwareversion()) return true;
++
++    const std::string &fullVersion = footer->softwareversion();
++    std::string version;
++    // Deal with snapshot versions, e.g. 1.6.12-SNAPSHOT.
++    if (fullVersion.find('-') != std::string::npos) {
++      version = fullVersion.substr(0, fullVersion.find('-'));
++    } else {
++      version = fullVersion;
++    }
++    for (const char *v : BAD_CPP_BLOOM_FILTER_VERSIONS) {
++      if (version == v) {
++        return true;
++      }
++    }
++    return false;
+   }
+ 
+   CompressionKind RowReaderImpl::getCompression() const {
+@@ -363,7 +396,7 @@ namespace orc {
+             throw ParseError("Failed to parse the row index");
+           }
+           rowIndexes[colId] = rowIndex;
+-        } else { // Stream_Kind_BLOOM_FILTER_UTF8
++        } else if (!skipBloomFilters) { // Stream_Kind_BLOOM_FILTER_UTF8
+           proto::BloomFilterIndex pbBFIndex;
+           if (!pbBFIndex.ParseFromZeroCopyStream(inStream.get())) {
+             throw ParseError("Failed to parse bloom filter index");
+diff --git a/c++/src/Reader.hh b/c++/src/Reader.hh
+index b7b76d4..1bf0cb2 100644
+--- a/c++/src/Reader.hh
++++ b/c++/src/Reader.hh
+@@ -127,6 +127,7 @@ namespace orc {
+     proto::Footer* footer;
+     DataBuffer<uint64_t> firstRowOfStripe;
+     mutable std::unique_ptr<Type> selectedSchema;
++    bool skipBloomFilters;
+ 
+     // reading state
+     uint64_t previousRow;
+@@ -179,6 +180,13 @@ namespace orc {
+      */
+     void seekToRowGroup(uint32_t rowGroupEntryId);
+ 
++    /**
++     * Check if the file has bad bloom filters. We will skip using them in the
++     * following reads.
++     * @return true if it has.
++     */
++    bool hasBadBloomFilters();
++
+   public:
+    /**
+     * Constructor that lets the user specify additional options.
+diff --git a/c++/test/CMakeLists.txt b/c++/test/CMakeLists.txt
+index 8b5ee7b..00aca6b 100644
+--- a/c++/test/CMakeLists.txt
++++ b/c++/test/CMakeLists.txt
+@@ -35,6 +35,7 @@ add_executable (orc-test
+   TestDictionaryEncoding.cc
+   TestDriver.cc
+   TestInt128.cc
++  TestMurmur3.cc
+   TestPredicateLeaf.cc
+   TestPredicatePushdown.cc
+   TestReader.cc
+diff --git a/c++/test/TestBloomFilter.cc b/c++/test/TestBloomFilter.cc
+index 71c9b7b..581897c 100644
+--- a/c++/test/TestBloomFilter.cc
++++ b/c++/test/TestBloomFilter.cc
+@@ -18,7 +18,6 @@
+ 
+ #include "BloomFilter.hh"
+ #include "orc/OrcFile.hh"
+-#include "wrap/gmock.h"
+ #include "wrap/gtest-wrapper.h"
+ 
+ namespace orc {
+@@ -83,6 +82,39 @@ namespace orc {
+     EXPECT_EQ(~0x8040201008040201L, longs[1]);
+   }
+ 
++  // Same test as TestBloomFilter#testLongHash() in Java codes. Make sure the hash values
++  // are consistent between the Java client and C++ client.
++  // TODO(ORC-1025): Add exhaustive test on all numbers.
++  TEST(TestBloomFilter, testLongHash) {
++    EXPECT_EQ(0, orc::getLongHash(0));
++    EXPECT_EQ(6614246905173314819, orc::getLongHash(-1));
++    EXPECT_EQ(-5218250166726157773, orc::getLongHash(-2));
++    EXPECT_EQ(1396019780946710816, orc::getLongHash(-3));
++
++    EXPECT_EQ(3691278333958578070, orc::getLongHash(-9223372036854775805));
++    EXPECT_EQ(-1192099642781211952, orc::getLongHash(-9223372036854775806));
++    EXPECT_EQ(-9102499068535824902, orc::getLongHash(-9223372036854775807));
++
++    EXPECT_EQ(1499534499340523007, orc::getLongHash(790302201));
++    EXPECT_EQ(-5108695154500810163, orc::getLongHash(790302202));
++    EXPECT_EQ(-2450623810987162260, orc::getLongHash(790302203));
++    EXPECT_EQ(-1097054448615658549, orc::getLongHash(18000000000));
++
++    EXPECT_EQ(-4986173376161118712, orc::getLongHash(9223372036064673413));
++    EXPECT_EQ(3785699328822078862, orc::getLongHash(9223372036064673414));
++    EXPECT_EQ(294188322706112357, orc::getLongHash(9223372036064673415));
++  }
++
++#define CheckBitSet(bf, p1, p2, p3, p4, p5) \
++  EXPECT_TRUE(bf.mBitSet->get(p1));         \
++  EXPECT_TRUE(bf.mBitSet->get(p2));         \
++  EXPECT_TRUE(bf.mBitSet->get(p3));         \
++  EXPECT_TRUE(bf.mBitSet->get(p4));         \
++  EXPECT_TRUE(bf.mBitSet->get(p5))
++
++  // Same test as TestBloomFilter#testBasicOperations() in Java codes. We also
++  // verifies the bitSet positions that are set, to make sure both the Java and C++ codes
++  // hash the same value into the same position.
+   TEST(TestBloomFilter, testBloomFilterBasicOperations) {
+     BloomFilterImpl bloomFilter(128);
+ 
+@@ -99,14 +131,23 @@ namespace orc {
+     EXPECT_FALSE(bloomFilter.testLong(-1111));
+ 
+     bloomFilter.addLong(1);
++    CheckBitSet(bloomFilter, 567, 288, 246, 306, 228);
+     bloomFilter.addLong(11);
++    CheckBitSet(bloomFilter, 228, 285, 342, 399, 456);
+     bloomFilter.addLong(111);
++    CheckBitSet(bloomFilter, 802, 630, 458, 545, 717);
+     bloomFilter.addLong(1111);
++    CheckBitSet(bloomFilter, 826, 526, 40, 480, 86);
+     bloomFilter.addLong(0);
++    CheckBitSet(bloomFilter, 0, 0, 0, 0, 0);
+     bloomFilter.addLong(-1);
++    CheckBitSet(bloomFilter, 120, 308, 335, 108, 535);
+     bloomFilter.addLong(-11);
++    CheckBitSet(bloomFilter, 323, 685, 215, 577, 107);
+     bloomFilter.addLong(-111);
++    CheckBitSet(bloomFilter, 357, 318, 279, 15, 54);
+     bloomFilter.addLong(-1111);
++    CheckBitSet(bloomFilter, 572, 680, 818, 434, 232);
+ 
+     EXPECT_TRUE(bloomFilter.testLong(1));
+     EXPECT_TRUE(bloomFilter.testLong(11));
+@@ -131,14 +172,23 @@ namespace orc {
+     EXPECT_FALSE(bloomFilter.testDouble(-1111.1111));
+ 
+     bloomFilter.addDouble(1.1);
++    CheckBitSet(bloomFilter, 522, 692, 12, 370, 753);
+     bloomFilter.addDouble(11.11);
++    CheckBitSet(bloomFilter,  210, 188, 89, 720, 389);
+     bloomFilter.addDouble(111.111);
++    CheckBitSet(bloomFilter, 831, 252, 583, 500, 335);
+     bloomFilter.addDouble(1111.1111);
++    CheckBitSet(bloomFilter, 725, 175, 374, 92, 642);
+     bloomFilter.addDouble(0.0);
++    CheckBitSet(bloomFilter, 0, 0, 0, 0, 0);
+     bloomFilter.addDouble(-1.1);
++    CheckBitSet(bloomFilter, 636, 163, 565, 206, 679);
+     bloomFilter.addDouble(-11.11);
++    CheckBitSet(bloomFilter, 473, 192, 743, 462, 181);
+     bloomFilter.addDouble(-111.111);
++    CheckBitSet(bloomFilter, 167, 152, 472, 295, 24);
+     bloomFilter.addDouble(-1111.1111);
++    CheckBitSet(bloomFilter, 308, 346, 384, 422, 371);
+ 
+     EXPECT_TRUE(bloomFilter.testDouble(1.1));
+     EXPECT_TRUE(bloomFilter.testDouble(11.11));
+@@ -164,8 +214,11 @@ namespace orc {
+                                        static_cast<int64_t>(strlen(cnStr))));
+ 
+     bloomFilter.addBytes(emptyStr, static_cast<int64_t>(strlen(emptyStr)));
++    CheckBitSet(bloomFilter, 656, 807, 480, 151, 304);
+     bloomFilter.addBytes(enStr, static_cast<int64_t>(strlen(enStr)));
++    CheckBitSet(bloomFilter, 576, 221, 68, 729, 392);
+     bloomFilter.addBytes(cnStr, static_cast<int64_t>(strlen(cnStr)));
++    CheckBitSet(bloomFilter, 602, 636, 44, 362, 318);
+ 
+     EXPECT_TRUE(bloomFilter.testBytes(emptyStr,
+                                       static_cast<int64_t>(strlen(emptyStr))));
+diff --git a/c++/test/TestMurmur3.cc b/c++/test/TestMurmur3.cc
+new file mode 100644
+index 0000000..7bf9e05
+--- /dev/null
++++ b/c++/test/TestMurmur3.cc
+@@ -0,0 +1,41 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements.  See the NOTICE file
++ * distributed with this work for additional information
++ * regarding copyright ownership.  The ASF licenses this file
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License.  You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "Murmur3.hh"
++#include "wrap/gtest-wrapper.h"
++
++namespace orc {
++
++  // Same test as TestMurmur3#testHashCodeM3_64() in Java codes. Make sure the hash values
++  // are consistent between the Java client and C++ client.
++  // TODO(ORC-1025): Add exhaustive test on more strings.
++  TEST(TestMurmur3, testHash64) {
++    uint8_t origin[] = "It was the best of times, it was the worst of times,"
++                       " it was the age of wisdom, it was the age of foolishness,"
++                       " it was the epoch of belief, it was the epoch of incredulity,"
++                       " it was the season of Light, it was the season of Darkness,"
++                       " it was the spring of hope, it was the winter of despair,"
++                       " we had everything before us, we had nothing before us,"
++                       " we were all going direct to Heaven,"
++                       " we were all going direct the other way.";
++    uint32_t len = sizeof(origin) / sizeof(uint8_t) - 1;
++    uint64_t hash = Murmur3::hash64(origin, len);
++    EXPECT_EQ(305830725663368540L, hash);
++  }
++
++}
+diff --git a/c++/test/TestReader.cc b/c++/test/TestReader.cc
+index e31ed11..43c1173 100644
+--- a/c++/test/TestReader.cc
++++ b/c++/test/TestReader.cc
+@@ -101,4 +101,40 @@ namespace orc {
+       900, rowsInCurrentStripe, rowIndexStride, includedRowGroups));
+   }
+ 
++  void CheckFileWithSargs(const char* fileName, const char* softwareVersion) {
++    std::stringstream ss;
++    if(const char* example_dir = std::getenv("ORC_EXAMPLE_DIR")) {
++      ss << example_dir;
++    } else {
++      ss << "../../../examples";
++    }
++    // Read a file with bloom filters written by CPP writer in version 1.6.11.
++    ss << "/" << fileName;
++    ReaderOptions readerOpts;
++    std::unique_ptr<Reader> reader =
++      createReader(readLocalFile(ss.str().c_str()), readerOpts);
++    EXPECT_EQ(WriterId::ORC_CPP_WRITER, reader->getWriterId());
++    EXPECT_EQ(softwareVersion, reader->getSoftwareVersion());
++
++    // Create SearchArgument with a EQUALS predicate which can leverage the bloom filters.
++    RowReaderOptions rowReaderOpts;
++    std::unique_ptr<SearchArgumentBuilder> sarg = SearchArgumentFactory::newBuilder();
++    // Integer value 18000000000 has an inconsistent hash before the fix of ORC-1024.
++    sarg->equals(1, PredicateDataType::LONG,Literal(static_cast<int64_t>(18000000000L)));
++    std::unique_ptr<SearchArgument> final_sarg = sarg->build();
++    rowReaderOpts.searchArgument(std::move(final_sarg));
++    std::unique_ptr<RowReader> rowReader = reader->createRowReader(rowReaderOpts);
++
++    // Make sure bad bloom filters won't affect the results.
++    std::unique_ptr<ColumnVectorBatch> batch =
++      rowReader->createRowBatch(1024);
++    EXPECT_TRUE(rowReader->next(*batch));
++    EXPECT_EQ(5, batch->numElements);
++    EXPECT_FALSE(rowReader->next(*batch));
++  }
++
++  TEST(TestRowReader, testSkipBadBloomFilters) {
++    CheckFileWithSargs("bad_bloom_filter_1.6.11.orc", "ORC C++ 1.6.11");
++    CheckFileWithSargs("bad_bloom_filter_1.6.0.orc", "ORC C++");
++  }
+ }  // namespace
+diff --git a/java/core/src/java/org/apache/orc/impl/RecordReaderImpl.java b/java/core/src/java/org/apache/orc/impl/RecordReaderImpl.java
+index 8a9703e..75e36ce 100644
+--- a/java/core/src/java/org/apache/orc/impl/RecordReaderImpl.java
++++ b/java/core/src/java/org/apache/orc/impl/RecordReaderImpl.java
+@@ -109,6 +109,11 @@ public class RecordReaderImpl implements RecordReader {
+   // identifies that follow columns bytes must be read
+   private boolean needsFollowColumnsRead;
+   private final boolean noSelectedVector;
++  // identifies whether the file has bad bloom filters that we should not use.
++  private final boolean skipBloomFilters;
++  static final String[] BAD_CPP_BLOOM_FILTER_VERSIONS = {
++      "1.6.0", "1.6.1", "1.6.2", "1.6.3", "1.6.4", "1.6.5", "1.6.6", "1.6.7", "1.6.8",
++      "1.6.9", "1.6.10", "1.6.11", "1.7.0"};
+ 
+   /**
+    * Given a list of column names, find the given column and return the index.
+@@ -330,6 +335,7 @@ public class RecordReaderImpl implements RecordReader {
+               fileReader.options.getConvertToProlepticGregorian())
+           .setEncryption(encryption);
+     reader = TreeReaderFactory.createRootReader(evolution.getReaderSchema(), readerContext);
++    skipBloomFilters = hasBadBloomFilters(fileReader.getFileTail().getFooter());
+ 
+     int columns = evolution.getFileSchema().getMaximumId() + 1;
+     indexes = new OrcIndex(new OrcProto.RowIndex[columns],
+@@ -351,6 +357,33 @@ public class RecordReaderImpl implements RecordReader {
+     }
+   }
+ 
++  /**
++   * Check if the file has inconsistent bloom filters. We will skip using them
++   * in the following reads.
++   * @return true if it has.
++   */
++  private boolean hasBadBloomFilters(OrcProto.Footer footer) {
++    // Only C++ writer in old releases could have bad bloom filters.
++    if (footer.getWriter() != 1) return false;
++    // 'softwareVersion' is added in 1.5.13, 1.6.11, and 1.7.0.
++    // 1.6.x releases before 1.6.11 won't have it. On the other side, the C++ writer
++    // supports writing bloom filters since 1.6.0. So files written by the C++ writer
++    // and with 'softwareVersion' unset would have bad bloom filters.
++    if (!footer.hasSoftwareVersion()) return true;
++    String fullVersion = footer.getSoftwareVersion();
++    String version = fullVersion;
++    // Deal with snapshot versions, e.g. 1.6.12-SNAPSHOT.
++    if (fullVersion.contains("-")) {
++      version = fullVersion.substring(0, fullVersion.indexOf('-'));
++    }
++    for (String v : BAD_CPP_BLOOM_FILTER_VERSIONS) {
++      if (v.equals(version)) {
++        return true;
++      }
++    }
++    return false;
++  }
++
+   public static final class PositionProviderImpl implements PositionProvider {
+     private final OrcProto.RowIndexEntry entry;
+     private int index;
+@@ -1179,8 +1212,10 @@ public class RecordReaderImpl implements RecordReader {
+     }
+     return sargApp.pickRowGroups(stripes.get(currentStripe),
+         indexes.getRowGroupIndex(),
+-        indexes.getBloomFilterKinds(), stripeFooter.getColumnsList(),
+-        indexes.getBloomFilterIndex(), false);
++        skipBloomFilters ? null : indexes.getBloomFilterKinds(),
++        stripeFooter.getColumnsList(),
++        skipBloomFilters ? null : indexes.getBloomFilterIndex(),
++        false);
+   }
+ 
+   private void clearStreams() {
+diff --git a/java/core/src/java/org/apache/orc/util/BloomFilter.java b/java/core/src/java/org/apache/orc/util/BloomFilter.java
+index 81783c2..3da186c 100644
+--- a/java/core/src/java/org/apache/orc/util/BloomFilter.java
++++ b/java/core/src/java/org/apache/orc/util/BloomFilter.java
+@@ -192,7 +192,7 @@ public class BloomFilter {
+ 
+   // Thomas Wang's integer hash function
+   // http://web.archive.org/web/20071223173210/http://www.concentric.net/~Ttwang/tech/inthash.htm
+-  private long getLongHash(long key) {
++  static long getLongHash(long key) {
+     key = (~key) + (key << 21); // key = (key << 21) - key - 1;
+     key = key ^ (key >> 24);
+     key = (key + (key << 3)) + (key << 8); // key * 265
+@@ -247,6 +247,14 @@ public class BloomFilter {
+   }
+ 
+   /**
++   * Helper method that only used for tests. Check if the given position in the bitSet is
++   * true. Use default visibility.
++   */
++  boolean testBitSetPos(int pos) {
++    return this.bitSet.get(pos);
++  }
++
++  /**
+    * Bare metal bit set implementation. For performance reasons, this implementation does not check
+    * for index bounds nor expand the bit set size if the specified index is greater than the size.
+    */
+diff --git a/java/core/src/test/org/apache/orc/impl/TestReaderImpl.java b/java/core/src/test/org/apache/orc/impl/TestReaderImpl.java
+index e74e5d8..900d5e0 100644
+--- a/java/core/src/test/org/apache/orc/impl/TestReaderImpl.java
++++ b/java/core/src/test/org/apache/orc/impl/TestReaderImpl.java
+@@ -25,6 +25,9 @@ import org.apache.hadoop.fs.PositionedReadable;
+ import org.apache.hadoop.fs.Seekable;
+ import org.apache.hadoop.fs.permission.FsPermission;
+ import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
++import org.apache.hadoop.hive.ql.io.sarg.PredicateLeaf;
++import org.apache.hadoop.hive.ql.io.sarg.SearchArgument;
++import org.apache.hadoop.hive.ql.io.sarg.SearchArgumentFactory;
+ import org.apache.hadoop.io.Text;
+ import org.apache.hadoop.util.Progressable;
+ import org.apache.orc.FileFormatException;
+@@ -51,6 +54,7 @@ import java.util.ArrayList;
+ import java.util.List;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertThrows;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+@@ -411,4 +415,34 @@ public class TestReaderImpl {
+         ReaderImpl.getRawDataSizeFromColIndices(list, types, stats));
+     }
+   }
++
++  private void CheckFileWithSargs(String fileName, String softwareVersion)
++      throws IOException {
++    Configuration conf = new Configuration();
++    Path path = new Path(workDir, fileName);
++    FileSystem fs = path.getFileSystem(conf);
++    try (ReaderImpl reader = (ReaderImpl) OrcFile.createReader(path,
++        OrcFile.readerOptions(conf).filesystem(fs))) {
++      assertEquals(softwareVersion, reader.getSoftwareVersion());
++
++      Reader.Options opt = new Reader.Options();
++      SearchArgument.Builder builder = SearchArgumentFactory.newBuilder(conf);
++      builder.equals("id", PredicateLeaf.Type.LONG, 18000000000L);
++      opt.searchArgument(builder.build(), new String[]{"id"});
++
++      TypeDescription schema = reader.getSchema();
++      VectorizedRowBatch batch = schema.createRowBatch();
++      try (RecordReader rows = reader.rows(opt)) {
++        assertTrue(rows.nextBatch(batch), "No rows read out!");
++        assertEquals(5, batch.size);
++        assertFalse(rows.nextBatch(batch));
++      }
++    }
++  }
++
++  @Test
++  public void testSkipBadBloomFilters() throws IOException {
++    CheckFileWithSargs("bad_bloom_filter_1.6.11.orc", "ORC C++ 1.6.11");
++    CheckFileWithSargs("bad_bloom_filter_1.6.0.orc", "ORC C++ ");
++  }
+ }
+diff --git a/java/core/src/test/org/apache/orc/util/TestBloomFilter.java b/java/core/src/test/org/apache/orc/util/TestBloomFilter.java
+index 5d17413..3fb6358 100644
+--- a/java/core/src/test/org/apache/orc/util/TestBloomFilter.java
++++ b/java/core/src/test/org/apache/orc/util/TestBloomFilter.java
+@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
+ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+ import static org.junit.jupiter.api.Assertions.assertEquals;
+ import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ /**
+  * Tests for BloomFilter
+@@ -61,6 +62,151 @@ public class TestBloomFilter {
+     assertEquals(~0x8040201008040201L, longs[1]);
+   }
+ 
++  /**
++   * Same test as TestBloomFilter_testLongHash in C++ codes. Make sure the hash values
++   * are consistent between the Java client and C++ client.
++   * TODO(ORC-1025): Add exhaustive test on all numbers.
++   */
++  @Test
++  public void testLongHash() {
++    assertEquals(0, BloomFilter.getLongHash(0));
++    assertEquals(6614246905173314819L, BloomFilter.getLongHash(-1));
++    assertEquals(-5218250166726157773L, BloomFilter.getLongHash(-2));
++    assertEquals(1396019780946710816L, BloomFilter.getLongHash(-3));
++
++    assertEquals(3691278333958578070L, BloomFilter.getLongHash(-9223372036854775805L));
++    assertEquals(-1192099642781211952L, BloomFilter.getLongHash(-9223372036854775806L));
++    assertEquals(-9102499068535824902L, BloomFilter.getLongHash(-9223372036854775807L));
++
++    assertEquals(1499534499340523007L, BloomFilter.getLongHash(790302201));
++    assertEquals(-5108695154500810163L, BloomFilter.getLongHash(790302202));
++    assertEquals(-2450623810987162260L, BloomFilter.getLongHash(790302203));
++    assertEquals(-1097054448615658549L, BloomFilter.getLongHash(18000000000L));
++
++    assertEquals(-4986173376161118712L, BloomFilter.getLongHash(9223372036064673413L));
++    assertEquals(3785699328822078862L, BloomFilter.getLongHash(9223372036064673414L));
++    assertEquals(294188322706112357L, BloomFilter.getLongHash(9223372036064673415L));
++  }
++
++  private void checkBitSet(BloomFilter bf, int[] pos) {
++    for (int i : pos) {
++      assertTrue(bf.testBitSetPos(i));
++    }
++  }
++
++  /**
++   * Same test as TestBloomFilter_testBloomFilterBasicOperations in C++ codes. We also
++   * verifies the bitSet positions that are set, to make sure both the Java and C++ codes
++   * hash the same value into the same position.
++   */
++  @Test
++  public void testBasicOperations() {
++    BloomFilter bloomFilter = new BloomFilterUtf8(128, BloomFilter.DEFAULT_FPP);
++
++    // test integers
++    bloomFilter.reset();
++    assertFalse(bloomFilter.testLong(1));
++    assertFalse(bloomFilter.testLong(11));
++    assertFalse(bloomFilter.testLong(111));
++    assertFalse(bloomFilter.testLong(1111));
++    assertFalse(bloomFilter.testLong(0));
++    assertFalse(bloomFilter.testLong(-1));
++    assertFalse(bloomFilter.testLong(-11));
++    assertFalse(bloomFilter.testLong(-111));
++    assertFalse(bloomFilter.testLong(-1111));
++
++    bloomFilter.addLong(1);
++    checkBitSet(bloomFilter, new int[]{567, 288, 246, 306, 228});
++    bloomFilter.addLong(11);
++    checkBitSet(bloomFilter, new int[]{228, 285, 342, 399, 456});
++    bloomFilter.addLong(111);
++    checkBitSet(bloomFilter, new int[]{802, 630, 458, 545, 717});
++    bloomFilter.addLong(1111);
++    checkBitSet(bloomFilter, new int[]{826, 526, 40, 480, 86});
++    bloomFilter.addLong(0);
++    checkBitSet(bloomFilter, new int[]{0, 0, 0, 0, 0});
++    bloomFilter.addLong(-1);
++    checkBitSet(bloomFilter, new int[]{120, 308, 335, 108, 535});
++    bloomFilter.addLong(-11);
++    checkBitSet(bloomFilter, new int[]{323, 685, 215, 577, 107});
++    bloomFilter.addLong(-111);
++    checkBitSet(bloomFilter, new int[]{357, 318, 279, 15, 54});
++    bloomFilter.addLong(-1111);
++    checkBitSet(bloomFilter, new int[]{572, 680, 818, 434, 232});
++
++    assertTrue(bloomFilter.testLong(1));
++    assertTrue(bloomFilter.testLong(11));
++    assertTrue(bloomFilter.testLong(111));
++    assertTrue(bloomFilter.testLong(1111));
++    assertTrue(bloomFilter.testLong(0));
++    assertTrue(bloomFilter.testLong(-1));
++    assertTrue(bloomFilter.testLong(-11));
++    assertTrue(bloomFilter.testLong(-111));
++    assertTrue(bloomFilter.testLong(-1111));
++
++    // test doubles
++    bloomFilter.reset();
++    assertFalse(bloomFilter.testDouble(1.1));
++    assertFalse(bloomFilter.testDouble(11.11));
++    assertFalse(bloomFilter.testDouble(111.111));
++    assertFalse(bloomFilter.testDouble(1111.1111));
++    assertFalse(bloomFilter.testDouble(0.0));
++    assertFalse(bloomFilter.testDouble(-1.1));
++    assertFalse(bloomFilter.testDouble(-11.11));
++    assertFalse(bloomFilter.testDouble(-111.111));
++    assertFalse(bloomFilter.testDouble(-1111.1111));
++
++    bloomFilter.addDouble(1.1);
++    checkBitSet(bloomFilter, new int[]{522, 692, 12, 370, 753});
++    bloomFilter.addDouble(11.11);
++    checkBitSet(bloomFilter,  new int[]{210, 188, 89, 720, 389});
++    bloomFilter.addDouble(111.111);
++    checkBitSet(bloomFilter, new int[]{831, 252, 583, 500, 335});
++    bloomFilter.addDouble(1111.1111);
++    checkBitSet(bloomFilter, new int[]{725, 175, 374, 92, 642});
++    bloomFilter.addDouble(0.0);
++    checkBitSet(bloomFilter, new int[]{0, 0, 0, 0, 0});
++    bloomFilter.addDouble(-1.1);
++    checkBitSet(bloomFilter, new int[]{636, 163, 565, 206, 679});
++    bloomFilter.addDouble(-11.11);
++    checkBitSet(bloomFilter, new int[]{473, 192, 743, 462, 181});
++    bloomFilter.addDouble(-111.111);
++    checkBitSet(bloomFilter, new int[]{167, 152, 472, 295, 24});
++    bloomFilter.addDouble(-1111.1111);
++    checkBitSet(bloomFilter, new int[]{308, 346, 384, 422, 371});
++
++    assertTrue(bloomFilter.testDouble(1.1));
++    assertTrue(bloomFilter.testDouble(11.11));
++    assertTrue(bloomFilter.testDouble(111.111));
++    assertTrue(bloomFilter.testDouble(1111.1111));
++    assertTrue(bloomFilter.testDouble(0.0));
++    assertTrue(bloomFilter.testDouble(-1.1));
++    assertTrue(bloomFilter.testDouble(-11.11));
++    assertTrue(bloomFilter.testDouble(-111.111));
++    assertTrue(bloomFilter.testDouble(-1111.1111));
++
++    // test strings
++    bloomFilter.reset();
++    String emptyStr = "";
++    String enStr = "english";
++    String cnStr = "中国字";
++
++    assertFalse(bloomFilter.testString(emptyStr));
++    assertFalse(bloomFilter.testString(enStr));
++    assertFalse(bloomFilter.testString(cnStr));
++
++    bloomFilter.addString(emptyStr);
++    checkBitSet(bloomFilter, new int[]{656, 807, 480, 151, 304});
++    bloomFilter.addString(enStr);
++    checkBitSet(bloomFilter, new int[]{576, 221, 68, 729, 392});
++    bloomFilter.addString(cnStr);
++    checkBitSet(bloomFilter, new int[]{602, 636, 44, 362, 318});
++
++    assertTrue(bloomFilter.testString(emptyStr));
++    assertTrue(bloomFilter.testString(enStr));
++    assertTrue(bloomFilter.testString(cnStr));
++  }
++
+   @Test
+   public void testBloomFilterSerialize() {
+     long[] bits = new long[]{0x8040201008040201L, ~0x8040201008040201L};
+-- 
+2.7.4
+

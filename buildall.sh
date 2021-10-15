@@ -367,10 +367,9 @@ KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
     ORC_VERSION=1.5.5-p1 $SOURCE_DIR/source/orc/build.sh
     ORC_VERSION=1.6.2-p6 $SOURCE_DIR/source/orc/build.sh
     ORC_VERSION=1.6.2-p7 $SOURCE_DIR/source/orc/build.sh
+    ORC_VERSION=1.6.2-p11 $SOURCE_DIR/source/orc/build.sh
   fi
-  ORC_VERSION=1.6.2-p11 $SOURCE_DIR/source/orc/build.sh
-  # Build a snapshot version of ORC-1.7
-  ORC_VERSION=2667f2996b75e879e52365edfd06b05da4eda941 $SOURCE_DIR/source/orc/build.sh
+  ORC_VERSION=1.7.0-p3 $SOURCE_DIR/source/orc/build.sh
 )
 
 ################################################################################
