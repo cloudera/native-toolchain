@@ -1,0 +1,619 @@
+From 2665e714f7632e1b59e82592af98505b1355d8d2 Mon Sep 17 00:00:00 2001
+From: Quanlong Huang <huangquanlong@gmail.com>
+Date: Fri, 11 Mar 2022 16:04:36 +0800
+Subject: [PATCH] ORC-1122: [C++] Add buffer to decode the whole run in
+ RleDecoderV2 (#1056)
+
+### What changes were proposed in this pull request?
+
+This PR adds a buffer to decode the whole run at once in RleDecoderV2, which leverages the improvement of ORC-1020 (#944) to deal with null values. It also benifits other encodings like PATCHED_BASE and DELTA, and helps to remove the state variables in RleDecoderV2 to improve the code redability.
+
+### Why are the changes needed?
+
+This is a follow up task of ORC-1020 which didn't optimize the code path when the column has nulls.
+
+Tested with random unsigned numbers fitting into bitSize n with a given ratio of nulls. Reading 1B rows for each test.
+
+| bitSize | % nulls | baseline avg(s) | optimized avg(s) | Speedup      |
+|---------|---------|-----------------|------------------|--------------|
+| 4       | 0%      | 3.52            | 2.745            | 1.2823315118 |
+| 4       | 5%      | 7.925           | 7.185            | 1.1029923452 |
+| 4       | 10%     | 8.48            | 6.805            | 1.2461425422 |
+| 4       | 25%     | 11.15           | 6.475            | 1.722007722  |
+| 4       | 50%     | 11.135          | 6.47             | 1.7210200927 |
+| 8       | 0%      | 3.51            | 2.73             | 1.2857142857 |
+| 8       | 5%      | 7.89            | 7.13             | 1.1065918654 |
+| 8       | 10%     | 8.47            | 6.795            | 1.2465047829 |
+| 8       | 25%     | 9.93            | 6.44             | 1.5419254658 |
+| 8       | 50%     | 11.145          | 6.465            | 1.7238979118 |
+| 16      | 0%      | 3.53            | 2.745            | 1.2859744991 |
+| 16      | 5%      | 7.925           | 7.155            | 1.107617051  |
+| 16      | 10%     | 8.46            | 6.8              | 1.2441176471 |
+| 16      | 25%     | 9.92            | 6.41             | 1.5475819033 |
+| 16      | 50%     | 11.2            | 6.47             | 1.7310664606 |
+| 32      | 0%      | 3.515           | 2.745            | 1.2805100182 |
+| 32      | 5%      | 7.915           | 7.15             | 1.106993007  |
+| 32      | 10%     | 8.475           | 6.815            | 1.2435803375 |
+| 32      | 25%     | 9.935           | 6.48             | 1.5331790123 |
+| 32      | 50%     | 11.175          | 6.485            | 1.7232074017 |
+| 32      | 100%    | 2.19            | 2.145            | 1.020979021  |
+
+We can see speedup in all cases.
+
+Tested on Ubuntu16.04 with a 6 cores CPU (12 virtual cores) and 32GB RAM.
+CPU: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+
+### How was this patch tested?
+
+Passed all existing tests.
+---
+ c++/src/RLEv2.hh        |  61 ++++-------
+ c++/src/RleDecoderV2.cc | 265 +++++++++++++++++++++---------------------------
+ c++/src/RleEncoderV2.cc |   1 -
+ 3 files changed, 136 insertions(+), 191 deletions(-)
+
+diff --git a/c++/src/RLEv2.hh b/c++/src/RLEv2.hh
+index 27c645e..4f9922f 100644
+--- a/c++/src/RLEv2.hh
++++ b/c++/src/RLEv2.hh
+@@ -25,6 +25,7 @@
+ 
+ #include <vector>
+ 
++#define MAX_LITERAL_SIZE 512
+ #define MIN_REPEAT 3
+ #define HIST_LEN 32
+ namespace orc {
+@@ -130,25 +131,18 @@ public:
+ 
+ private:
+ 
+-  // Used by PATCHED_BASE
+-  void adjustGapAndPatch() {
+-    curGap = static_cast<uint64_t>(unpackedPatch[patchIdx]) >>
+-      patchBitSize;
+-    curPatch = unpackedPatch[patchIdx] & patchMask;
+-    actualGap = 0;
+-
+-    // special case: gap is >255 then patch value will be 0.
+-    // if gap is <=255 then patch value cannot be 0
+-    while (curGap == 255 && curPatch == 0) {
+-      actualGap += 255;
+-      ++patchIdx;
+-      curGap = static_cast<uint64_t>(unpackedPatch[patchIdx]) >>
+-        patchBitSize;
+-      curPatch = unpackedPatch[patchIdx] & patchMask;
+-    }
+-    // add the left over gap
+-    actualGap += curGap;
+-  }
++  /**
++   * Decode the next gap and patch from 'unpackedPatch' and update the index on it.
++   * Used by PATCHED_BASE.
++   *
++   * @param patchBitSize  bit size of the patch value
++   * @param patchMask     mask for the patch value
++   * @param resGap        result of gap
++   * @param resPatch      result of patch
++   * @param patchIdx      current index in the 'unpackedPatch' buffer
++   */
++  void adjustGapAndPatch(uint32_t patchBitSize, int64_t patchMask,
++                         int64_t* resGap, int64_t* resPatch, uint64_t* patchIdx);
+ 
+   void resetReadLongs() {
+     bitsLeft = 0;
+@@ -157,7 +151,6 @@ private:
+ 
+   void resetRun() {
+     resetReadLongs();
+-    bitSize = 0;
+   }
+ 
+   unsigned char readByte();
+@@ -165,11 +158,9 @@ private:
+   int64_t readLongBE(uint64_t bsz);
+   int64_t readVslong();
+   uint64_t readVulong();
+-  uint64_t readLongs(int64_t *data, uint64_t offset, uint64_t len,
+-                     uint64_t fbs, const char* notNull = nullptr);
++  void readLongs(int64_t *data, uint64_t offset, uint64_t len, uint64_t fbs);
++  void plainUnpackLongs(int64_t *data, uint64_t offset, uint64_t len, uint64_t fbs);
+ 
+-  void readLongsWithoutNulls(int64_t *data, uint64_t offset, uint64_t len,
+-                             uint64_t fbs);
+   void unrolledUnpack4(int64_t *data, uint64_t offset, uint64_t len);
+   void unrolledUnpack8(int64_t *data, uint64_t offset, uint64_t len);
+   void unrolledUnpack16(int64_t *data, uint64_t offset, uint64_t len);
+@@ -189,31 +180,21 @@ private:
+   uint64_t nextDelta(int64_t* data, uint64_t offset, uint64_t numValues,
+                      const char* notNull);
+ 
++  uint64_t copyDataFromBuffer(int64_t* data, uint64_t offset, uint64_t numValues,
++                              const char* notNull);
++
+   const std::unique_ptr<SeekableInputStream> inputStream;
+   const bool isSigned;
+ 
+   unsigned char firstByte;
+-  uint64_t runLength;
+-  uint64_t runRead;
++  uint64_t runLength; // Length of the current run
++  uint64_t runRead; // Number of returned values of the current run
+   const char *bufferStart;
+   const char *bufferEnd;
+-  int64_t deltaBase; // Used by DELTA
+-  uint64_t byteSize; // Used by SHORT_REPEAT and PATCHED_BASE
+-  int64_t firstValue; // Used by SHORT_REPEAT and DELTA
+-  int64_t prevValue; // Used by DELTA
+-  uint32_t bitSize; // Used by DIRECT, PATCHED_BASE and DELTA
+   uint32_t bitsLeft; // Used by readLongs when bitSize < 8
+   uint32_t curByte; // Used by anything that uses readLongs
+-  uint32_t patchBitSize; // Used by PATCHED_BASE
+-  uint64_t unpackedIdx; // Used by PATCHED_BASE
+-  uint64_t patchIdx; // Used by PATCHED_BASE
+-  int64_t base; // Used by PATCHED_BASE
+-  uint64_t curGap; // Used by PATCHED_BASE
+-  int64_t curPatch; // Used by PATCHED_BASE
+-  int64_t patchMask; // Used by PATCHED_BASE
+-  int64_t actualGap; // Used by PATCHED_BASE
+-  DataBuffer<int64_t> unpacked; // Used by PATCHED_BASE
+   DataBuffer<int64_t> unpackedPatch; // Used by PATCHED_BASE
++  DataBuffer<int64_t> literals; // Values of the current run
+ };
+ }  // namespace orc
+ 
+diff --git a/c++/src/RleDecoderV2.cc b/c++/src/RleDecoderV2.cc
+index 324d398..8ab57b1 100644
+--- a/c++/src/RleDecoderV2.cc
++++ b/c++/src/RleDecoderV2.cc
+@@ -64,8 +64,7 @@ uint64_t RleDecoderV2::readVulong() {
+   return ret;
+ }
+ 
+-void RleDecoderV2::readLongsWithoutNulls(int64_t *data, uint64_t offset, uint64_t len,
+-                                         uint64_t fbs) {
++void RleDecoderV2::readLongs(int64_t *data, uint64_t offset, uint64_t len, uint64_t fbs) {
+   switch (fbs) {
+     case 4:
+       unrolledUnpack4(data, offset, len);
+@@ -96,7 +95,7 @@ void RleDecoderV2::readLongsWithoutNulls(int64_t *data, uint64_t offset, uint64_
+       return;
+     default:
+       // Fallback to the default implementation for deprecated bit size.
+-      readLongs(data, offset, len, fbs);
++      plainUnpackLongs(data, offset, len, fbs);
+       return;
+   }
+ }
+@@ -368,15 +367,9 @@ void RleDecoderV2::unrolledUnpack64(int64_t *data, uint64_t offset, uint64_t len
+   }
+ }
+ 
+-uint64_t RleDecoderV2::readLongs(int64_t *data, uint64_t offset, uint64_t len,
+-                                 uint64_t fbs, const char* notNull) {
+-  uint64_t ret = 0;
+-
++void RleDecoderV2::plainUnpackLongs(int64_t *data, uint64_t offset, uint64_t len,
++                                    uint64_t fbs) {
+   for (uint64_t i = offset; i < (offset + len); i++) {
+-    // skip null positions
+-    if (notNull && !notNull[i]) {
+-      continue;
+-    }
+     uint64_t result = 0;
+     uint64_t bitsLeftToRead = fbs;
+     while (bitsLeftToRead > bitsLeft) {
+@@ -394,9 +387,7 @@ uint64_t RleDecoderV2::readLongs(int64_t *data, uint64_t offset, uint64_t len,
+       result |= (curByte >> bitsLeft) & ((1 << bitsLeftToRead) - 1);
+     }
+     data[i] = static_cast<int64_t>(result);
+-    ++ret;
+   }
+-  return ret;
+ }
+ 
+ RleDecoderV2::RleDecoderV2(std::unique_ptr<SeekableInputStream> input,
+@@ -408,23 +399,10 @@ RleDecoderV2::RleDecoderV2(std::unique_ptr<SeekableInputStream> input,
+                               runRead(0),
+                               bufferStart(nullptr),
+                               bufferEnd(bufferStart),
+-                              deltaBase(0),
+-                              byteSize(0),
+-                              firstValue(0),
+-                              prevValue(0),
+-                              bitSize(0),
+                               bitsLeft(0),
+                               curByte(0),
+-                              patchBitSize(0),
+-                              unpackedIdx(0),
+-                              patchIdx(0),
+-                              base(0),
+-                              curGap(0),
+-                              curPatch(0),
+-                              patchMask(0),
+-                              actualGap(0),
+-                              unpacked(pool, 0),
+-                              unpackedPatch(pool, 0) {
++                              unpackedPatch(pool, 0),
++                              literals(pool, MAX_LITERAL_SIZE) {
+   // PASS
+ }
+ 
+@@ -498,7 +476,7 @@ uint64_t RleDecoderV2::nextShortRepeats(int64_t* const data,
+                                         const char* const notNull) {
+   if (runRead == runLength) {
+     // extract the number of fixed bytes
+-    byteSize = (firstByte >> 3) & 0x07;
++    uint64_t byteSize = (firstByte >> 3) & 0x07;
+     byteSize += 1;
+ 
+     runLength = firstByte & 0x07;
+@@ -507,10 +485,10 @@ uint64_t RleDecoderV2::nextShortRepeats(int64_t* const data,
+     runRead = 0;
+ 
+     // read the repeated value which is store using fixed bytes
+-    firstValue = readLongBE(byteSize);
++    literals[0] = readLongBE(byteSize);
+ 
+     if (isSigned) {
+-      firstValue = unZigZag(static_cast<uint64_t>(firstValue));
++      literals[0] = unZigZag(static_cast<uint64_t>(literals[0]));
+     }
+   }
+ 
+@@ -519,13 +497,13 @@ uint64_t RleDecoderV2::nextShortRepeats(int64_t* const data,
+   if (notNull) {
+     for(uint64_t pos = offset; pos < offset + nRead; ++pos) {
+       if (notNull[pos]) {
+-        data[pos] = firstValue;
++        data[pos] = literals[0];
+         ++runRead;
+       }
+     }
+   } else {
+     for(uint64_t pos = offset; pos < offset + nRead; ++pos) {
+-      data[pos] = firstValue;
++      data[pos] = literals[0];
+       ++runRead;
+     }
+   }
+@@ -540,7 +518,7 @@ uint64_t RleDecoderV2::nextDirect(int64_t* const data,
+   if (runRead == runLength) {
+     // extract the number of fixed bits
+     unsigned char fbo = (firstByte >> 1) & 0x1f;
+-    bitSize = decodeBitWidth(fbo);
++    uint32_t bitSize = decodeBitWidth(fbo);
+ 
+     // extract the run length
+     runLength = static_cast<uint64_t>(firstByte & 0x01) << 8;
+@@ -548,33 +526,40 @@ uint64_t RleDecoderV2::nextDirect(int64_t* const data,
+     // runs are one off
+     runLength += 1;
+     runRead = 0;
+-  }
+-
+-  uint64_t nRead = std::min(runLength - runRead, numValues);
+-
+-  // bitSize 1,2 usually have short runs which won't benefit from loop unrolling.
+-  if (notNull || bitSize <= 2) {
+-    runRead += readLongs(data, offset, nRead, bitSize, notNull);
+-  } else {
+-    readLongsWithoutNulls(data, offset, nRead, bitSize);
+-    runRead += nRead;
+-  }
+ 
+-  if (isSigned) {
+-    if (notNull) {
+-      for (uint64_t pos = offset; pos < offset + nRead; ++pos) {
+-        if (notNull[pos]) {
+-          data[pos] = unZigZag(static_cast<uint64_t>(data[pos]));
+-        }
+-      }
+-    } else {
+-      for (uint64_t pos = offset; pos < offset + nRead; ++pos) {
+-        data[pos] = unZigZag(static_cast<uint64_t>(data[pos]));
++    readLongs(literals.data(), 0, runLength, bitSize);
++    if (isSigned) {
++      for (uint64_t i = 0; i < runLength; ++i) {
++        literals[i] = unZigZag(static_cast<uint64_t>(literals[i]));
+       }
+     }
+   }
+ 
+-  return nRead;
++  return copyDataFromBuffer(data, offset, numValues, notNull);
++}
++
++void RleDecoderV2::adjustGapAndPatch(uint32_t patchBitSize, int64_t patchMask,
++                                     int64_t* resGap, int64_t* resPatch,
++                                     uint64_t* patchIdx) {
++  uint64_t idx = *patchIdx;
++  uint64_t gap = static_cast<uint64_t>(unpackedPatch[idx]) >> patchBitSize;
++  int64_t patch = unpackedPatch[idx] & patchMask;
++  int64_t actualGap = 0;
++
++  // special case: gap is >255 then patch value will be 0.
++  // if gap is <=255 then patch value cannot be 0
++  while (gap == 255 && patch == 0) {
++    actualGap += 255;
++    ++idx;
++    gap = static_cast<uint64_t>(unpackedPatch[idx]) >> patchBitSize;
++    patch = unpackedPatch[idx] & patchMask;
++  }
++  // add the left over gap
++  actualGap += gap;
++
++  *resGap = actualGap;
++  *resPatch = patch;
++  *patchIdx = idx;
+ }
+ 
+ uint64_t RleDecoderV2::nextPatched(int64_t* const data,
+@@ -584,7 +569,7 @@ uint64_t RleDecoderV2::nextPatched(int64_t* const data,
+   if (runRead == runLength) {
+     // extract the number of fixed bits
+     unsigned char fbo = (firstByte >> 1) & 0x1f;
+-    bitSize = decodeBitWidth(fbo);
++    uint32_t bitSize = decodeBitWidth(fbo);
+ 
+     // extract the run length
+     runLength = static_cast<uint64_t>(firstByte & 0x01) << 8;
+@@ -595,13 +580,13 @@ uint64_t RleDecoderV2::nextPatched(int64_t* const data,
+ 
+     // extract the number of bytes occupied by base
+     uint64_t thirdByte = readByte();
+-    byteSize = (thirdByte >> 5) & 0x07;
++    uint64_t byteSize = (thirdByte >> 5) & 0x07;
+     // base width is one off
+     byteSize += 1;
+ 
+     // extract patch width
+     uint32_t pwo = thirdByte & 0x1f;
+-    patchBitSize = decodeBitWidth(pwo);
++    uint32_t patchBitSize = decodeBitWidth(pwo);
+ 
+     // read fourth byte and extract patch gap width
+     uint64_t fourthByte = readByte();
+@@ -616,7 +601,7 @@ uint64_t RleDecoderV2::nextPatched(int64_t* const data,
+     }
+ 
+     // read the next base width number of bytes to extract base value
+-    base = readLongBE(byteSize);
++    int64_t base = readLongBE(byteSize);
+     int64_t mask = (static_cast<int64_t>(1) << ((byteSize * 8) - 1));
+     // if mask of base value is 1 then base is negative value else positive
+     if ((base & mask) != 0) {
+@@ -624,16 +609,12 @@ uint64_t RleDecoderV2::nextPatched(int64_t* const data,
+       base = -base;
+     }
+ 
+-    // TODO: something more efficient than resize
+-    unpacked.resize(runLength);
+-    unpackedIdx = 0;
+-    readLongs(unpacked.data(), 0, runLength, bitSize);
++    readLongs(literals.data(), 0, runLength, bitSize);
+     // any remaining bits are thrown out
+     resetReadLongs();
+ 
+     // TODO: something more efficient than resize
+     unpackedPatch.resize(pl);
+-    patchIdx = 0;
+     // TODO: Skip corrupt?
+     //    if ((patchBitSize + pgw) > 64 && !skipCorrupt) {
+     if ((patchBitSize + pgw) > 64) {
+@@ -646,44 +627,39 @@ uint64_t RleDecoderV2::nextPatched(int64_t* const data,
+     resetReadLongs();
+ 
+     // apply the patch directly when decoding the packed data
+-    patchMask = ((static_cast<int64_t>(1) << patchBitSize) - 1);
+-
+-    adjustGapAndPatch();
+-  }
++    int64_t patchMask = ((static_cast<int64_t>(1) << patchBitSize) - 1);
+ 
+-  uint64_t nRead = std::min(runLength - runRead, numValues);
++    int64_t gap = 0;
++    int64_t patch = 0;
++    uint64_t patchIdx = 0;
++    adjustGapAndPatch(patchBitSize, patchMask, &gap, &patch, &patchIdx);
+ 
+-  for(uint64_t pos = offset; pos < offset + nRead; ++pos) {
+-    // skip null positions
+-    if (notNull && !notNull[pos]) {
+-      continue;
+-    }
+-    if (static_cast<int64_t>(unpackedIdx) != actualGap) {
+-      // no patching required. add base to unpacked value to get final value
+-      data[pos] = base + unpacked[unpackedIdx];
+-    } else {
+-      // extract the patch value
+-      int64_t patchedVal = unpacked[unpackedIdx] | (curPatch << bitSize);
++    for (uint64_t i = 0; i < runLength; ++i) {
++      if (static_cast<int64_t>(i) != gap) {
++        // no patching required. add base to unpacked value to get final value
++        literals[i] += base;
++      } else {
++        // extract the patch value
++        int64_t patchedVal = literals[i] | (patch << bitSize);
+ 
+-      // add base to patched value
+-      data[pos] = base + patchedVal;
++        // add base to patched value
++        literals[i] = base + patchedVal;
+ 
+-      // increment the patch to point to next entry in patch list
+-      ++patchIdx;
++        // increment the patch to point to next entry in patch list
++        ++patchIdx;
+ 
+-      if (patchIdx < unpackedPatch.size()) {
+-        adjustGapAndPatch();
++        if (patchIdx < unpackedPatch.size()) {
++          adjustGapAndPatch(patchBitSize, patchMask, &gap, &patch,
++                            &patchIdx);
+ 
+-        // next gap is relative to the current gap
+-        actualGap += unpackedIdx;
++          // next gap is relative to the current gap
++          gap += i;
++        }
+       }
+     }
+-
+-    ++runRead;
+-    ++unpackedIdx;
+   }
+ 
+-  return nRead;
++  return copyDataFromBuffer(data, offset, numValues, notNull);
+ }
+ 
+ uint64_t RleDecoderV2::nextDelta(int64_t* const data,
+@@ -693,6 +669,7 @@ uint64_t RleDecoderV2::nextDelta(int64_t* const data,
+   if (runRead == runLength) {
+     // extract the number of fixed bits
+     unsigned char fbo = (firstByte >> 1) & 0x1f;
++    uint32_t bitSize;
+     if (fbo != 0) {
+       bitSize = decodeBitWidth(fbo);
+     } else {
+@@ -703,79 +680,67 @@ uint64_t RleDecoderV2::nextDelta(int64_t* const data,
+     runLength = static_cast<uint64_t>(firstByte & 0x01) << 8;
+     runLength |= readByte();
+     ++runLength; // account for first value
+-    runRead = deltaBase = 0;
++    runRead = 0;
+ 
++    int64_t prevValue;
+     // read the first value stored as vint
+     if (isSigned) {
+-      firstValue = static_cast<int64_t>(readVslong());
++      prevValue = readVslong();
+     } else {
+-      firstValue = static_cast<int64_t>(readVulong());
++      prevValue = static_cast<int64_t>(readVulong());
+     }
+ 
+-    prevValue = firstValue;
++    literals[0] = prevValue;
+ 
+     // read the fixed delta value stored as vint (deltas can be negative even
+     // if all number are positive)
+-    deltaBase = static_cast<int64_t>(readVslong());
+-  }
+-
+-  uint64_t nRead = std::min(runLength - runRead, numValues);
+-
+-  uint64_t pos = offset;
+-  for ( ; pos < offset + nRead; ++pos) {
+-    // skip null positions
+-    if (!notNull || notNull[pos]) break;
+-  }
+-  if (runRead == 0 && pos < offset + nRead) {
+-    data[pos++] = firstValue;
+-    ++runRead;
+-  }
+-
+-  if (bitSize == 0) {
+-    // add fixed deltas to adjacent values
+-    for ( ; pos < offset + nRead; ++pos) {
+-      // skip null positions
+-      if (notNull && !notNull[pos]) {
+-        continue;
+-      }
+-      prevValue = data[pos] = prevValue + deltaBase;
+-      ++runRead;
+-    }
+-  } else {
+-    for ( ; pos < offset + nRead; ++pos) {
+-      // skip null positions
+-      if (!notNull || notNull[pos]) break;
+-    }
+-    if (runRead < 2 && pos < offset + nRead) {
+-      // add delta base and first value
+-      prevValue = data[pos++] = firstValue + deltaBase;
+-      ++runRead;
+-    }
++    int64_t deltaBase = readVslong();
+ 
+-    // write the unpacked values, add it to previous value and store final
+-    // value to result buffer. if the delta base value is negative then it
+-    // is a decreasing sequence else an increasing sequence
+-    uint64_t remaining = (offset + nRead) - pos;
+-    runRead += readLongs(data, pos, remaining, bitSize, notNull);
+-
+-    if (deltaBase < 0) {
+-      for ( ; pos < offset + nRead; ++pos) {
+-        // skip null positions
+-        if (notNull && !notNull[pos]) {
+-          continue;
+-        }
+-        prevValue = data[pos] = prevValue - data[pos];
++    if (bitSize == 0) {
++      // add fixed deltas to adjacent values
++      for (uint64_t i = 1; i < runLength; ++i) {
++        literals[i] = literals[i - 1] + deltaBase;
+       }
+     } else {
+-      for ( ; pos < offset + nRead; ++pos) {
+-        // skip null positions
+-        if (notNull && !notNull[pos]) {
+-          continue;
++      prevValue = literals[1] = prevValue + deltaBase;
++      if (runLength < 2) {
++        std::stringstream ss;
++        ss << "Illegal run length for delta encoding: " << runLength;
++        throw ParseError(ss.str());
++      }
++      // write the unpacked values, add it to previous value and store final
++      // value to result buffer. if the delta base value is negative then it
++      // is a decreasing sequence else an increasing sequence.
++      // read deltas using the literals buffer.
++      readLongs(literals.data(), 2, runLength - 2, bitSize);
++      if (deltaBase < 0) {
++        for (uint64_t i = 2; i < runLength; ++i) {
++          prevValue = literals[i] = prevValue - literals[i];
++        }
++      } else {
++        for (uint64_t i = 2; i < runLength; ++i) {
++          prevValue = literals[i] = prevValue + literals[i];
+         }
+-        prevValue = data[pos] = prevValue + data[pos];
+       }
+     }
+   }
++
++  return copyDataFromBuffer(data, offset, numValues, notNull);
++}
++
++uint64_t RleDecoderV2::copyDataFromBuffer(int64_t* data, uint64_t offset,
++                                          uint64_t numValues, const char* notNull) {
++  uint64_t nRead = std::min(runLength - runRead, numValues);
++  if (notNull) {
++    for (uint64_t i = offset; i < (offset + nRead); ++i) {
++      if (notNull[i]) {
++        data[i] = literals[runRead++];
++      }
++    }
++  } else {
++    memcpy(data + offset, literals.data() + runRead, nRead * sizeof(int64_t));
++    runRead += nRead;
++  }
+   return nRead;
+ }
+ 
+diff --git a/c++/src/RleEncoderV2.cc b/c++/src/RleEncoderV2.cc
+index f823a3d..8b4cedf 100644
+--- a/c++/src/RleEncoderV2.cc
++++ b/c++/src/RleEncoderV2.cc
+@@ -21,7 +21,6 @@
+ #include "RLEv2.hh"
+ #include "RLEV2Util.hh"
+ 
+-#define MAX_LITERAL_SIZE 512
+ #define MAX_SHORT_REPEAT_LENGTH 10
+ 
+ namespace orc {
+-- 
+2.7.4
+
