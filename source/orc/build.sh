@@ -32,6 +32,7 @@ if needs_build_package ; then
   export PROTOBUF_HOME=$BUILD_DIR/protobuf-${PROTOBUF_VERSION}
   export SNAPPY_HOME=$BUILD_DIR/snappy-${SNAPPY_VERSION}
   export ZLIB_HOME=$BUILD_DIR/zlib-${ZLIB_VERSION}
+  export ZSTD_HOME=$BUILD_DIR/zstd-${ZSTD_VERSION}
 
   # The LZ4 lib dir name varies by distribution. Check the Debian/Ubuntu location and
   # fall back to the lib64 location used by SLES and CentOS.
@@ -58,7 +59,7 @@ if needs_build_package ; then
 
   wrap cmake -DBUILD_SHARED_LIBS=ON -DBUILD_JAVA=OFF -DBUILD_LIBHDFSPP=OFF\
       -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
-      ${VERSION_CMAKE_ARGS}
+      -DBUILD_CPP_TESTS=OFF ${VERSION_CMAKE_ARGS}
   CFLAGS="-fPIC -DPIC" wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
