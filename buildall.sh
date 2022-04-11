@@ -118,7 +118,7 @@ PROTOBUF_VERSION=3.14.0-clangcompat-p2 $SOURCE_DIR/source/protobuf/build.sh
 ################################################################################
 # Build libev
 ################################################################################
-LIBEV_VERSION=4.20 $SOURCE_DIR/source/libev/build.sh
+LIBEV_VERSION=4.20-p1 $SOURCE_DIR/source/libev/build.sh
 
 ################################################################################
 # Build crcutil
