@@ -367,7 +367,7 @@ KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
     ORC_VERSION=1.6.2-p11 $SOURCE_DIR/source/orc/build.sh
     ORC_VERSION=1.7.0-p8 $SOURCE_DIR/source/orc/build.sh
   fi
-  ORC_VERSION=1.7.0-p12 $SOURCE_DIR/source/orc/build.sh
+  ORC_VERSION=1.7.0-p14 $SOURCE_DIR/source/orc/build.sh
 )
 
 ################################################################################
