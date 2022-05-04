@@ -1,0 +1,46 @@
+diff -Naur llvm-5.0.1.src/projects/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.cc llvm-5.0.1.src.patched/projects/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.cc
+--- llvm-5.0.1.src/projects/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.cc	2017-07-05 17:50:57.000000000 -0700
++++ llvm-5.0.1.src.patched/projects/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.cc	2022-05-06 13:14:00.764258804 -0700
+@@ -1138,8 +1138,9 @@
+ CHECK_SIZE_AND_OFFSET(ipc_perm, gid);
+ CHECK_SIZE_AND_OFFSET(ipc_perm, cuid);
+ CHECK_SIZE_AND_OFFSET(ipc_perm, cgid);
+-#if !defined(__aarch64__) || !SANITIZER_LINUX || __GLIBC_PREREQ (2, 21)
+-/* On aarch64 glibc 2.20 and earlier provided incorrect mode field.  */
++#if !SANITIZER_LINUX || __GLIBC_PREREQ (2, 31)
++/* glibc 2.30 and earlier provided 16-bit mode field instead of 32-bit
++   on many architectures.  */
+ CHECK_SIZE_AND_OFFSET(ipc_perm, mode);
+ #endif
+ 
+diff -Naur llvm-5.0.1.src/projects/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.h llvm-5.0.1.src.patched/projects/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.h
+--- llvm-5.0.1.src/projects/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.h	2017-07-05 17:50:57.000000000 -0700
++++ llvm-5.0.1.src.patched/projects/compiler-rt/lib/sanitizer_common/sanitizer_platform_limits_posix.h	2022-05-06 13:11:44.346862055 -0700
+@@ -210,26 +210,13 @@
+     u64 __unused1;
+     u64 __unused2;
+ #elif defined(__sparc__)
+-#if defined(__arch64__)
+     unsigned mode;
+-    unsigned short __pad1;
+-#else
+-    unsigned short __pad1;
+-    unsigned short mode;
+     unsigned short __pad2;
+-#endif
+     unsigned short __seq;
+     unsigned long long __unused1;
+     unsigned long long __unused2;
+-#elif defined(__mips__) || defined(__aarch64__) || defined(__s390x__)
+-    unsigned int mode;
+-    unsigned short __seq;
+-    unsigned short __pad1;
+-    unsigned long __unused1;
+-    unsigned long __unused2;
+ #else
+-    unsigned short mode;
+-    unsigned short __pad1;
++    unsigned int mode;
+     unsigned short __seq;
+     unsigned short __pad2;
+ #if defined(__x86_64__) && !defined(_LP64)

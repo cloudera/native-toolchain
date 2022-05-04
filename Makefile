@@ -19,7 +19,8 @@ DISTROS = redhat7 \
 	redhat8 \
 	sles12 \
 	ubuntu1604 \
-	ubuntu1804
+	ubuntu1804 \
+	ubuntu2004
 
 export TOOLCHAIN_BUILD_ID := $(shell bash -ec 'source functions.sh && generate_build_id')
 UPLOAD_CCACHE ?= 0

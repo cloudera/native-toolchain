@@ -73,11 +73,14 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   # needs to happen before downloading the remaining prerequisites.
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
+  # We apply the patches manually here (instead of bumping the patch level) because
+  # some components (boost) fail to compile with a modified gcc version.
   if [[ $GCC_VERSION = '4.9.2' ]]; then
-    # We apply the patches manually here (instead of bumping the patch level) because
-    # some components (boost) fail to compile with a modified gcc version.
     PATCH_DIR=${THIS_DIR}/gcc-${PACKAGE_VERSION}-patches
     apply_patches 5 $PATCH_DIR
+  elif [[ $GCC_VERSION = '7.5.0' ]]; then
+    PATCH_DIR=${THIS_DIR}/gcc-${PACKAGE_VERSION}-patches
+    apply_patches 1 $PATCH_DIR
   fi
 
   download_gcc_prerequisites

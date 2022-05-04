@@ -1,0 +1,40 @@
+FROM ubuntu:20.04
+
+# The DEBIAN_FRONTEND=noninteractive is necessary to avoid a dialog
+# that would hang waiting for input.
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf \
+      bison \
+      build-essential \
+      ccache \
+      curl \
+      git \
+      groff-base \
+      libffi-dev \
+      libkrb5-dev \
+      libfl2 \
+      libfl-dev \
+      libncurses5-dev \
+      libreadline-dev\
+      libsasl2-dev \
+      libssl-dev \
+      libtool-bin \
+      libz-dev \
+      lsb-release \
+      openjdk-8-jdk \
+      pigz \
+      pkg-config \
+      python \
+      python3-distutils \
+      python-dev \
+      rsync \
+      texinfo \
+      unzip \
+      vim-common \
+      wget
+
+COPY ./all/postinstall.sh /usr/local/bin
+RUN postinstall.sh
+
+COPY ./all/assert-dependencies-present.py /usr/local/bin
+# Asserts that the packages listed above were correctly installed
+RUN assert-dependencies-present.py
