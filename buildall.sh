@@ -106,16 +106,6 @@ fi
 )
 
 ################################################################################
-# GCC (for Impala compilation only)
-################################################################################
-# This builds a newer version of gcc that can be used for compiling Impala.
-# It is not used to build the toolchain. This lets us try new compilers without
-# rebuilding the whole toolchain. Use of this compiler must respect any ABI
-# differences.
-GCC_VERSION=8.3.0 $SOURCE_DIR/source/gcc/build.sh
-GCC_VERSION=9.2.0 $SOURCE_DIR/source/gcc/build.sh
-
-################################################################################
 # Build protobuf
 ################################################################################
 PROTOBUF_VERSION=3.14.0 $SOURCE_DIR/source/protobuf/build.sh
