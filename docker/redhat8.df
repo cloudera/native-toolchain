@@ -1,5 +1,9 @@
 FROM centos:8.2.2004
 
+COPY ./redhat/CentOS-8.2.2004-Base.repo /etc/yum.repos.d/CentOS-Base.repo
+COPY ./redhat/CentOS-8.2.2004-Extras.repo /etc/yum.repos.d/CentOS-Extras.repo
+COPY ./redhat/CentOS-8.2.2004-AppStream.repo /etc/yum.repos.d/CentOS-AppStream.repo
+
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 RUN dnf -y install autoconf \
   automake \

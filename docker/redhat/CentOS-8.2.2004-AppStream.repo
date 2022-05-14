@@ -1,0 +1,13 @@
+# CentOS-AppStream.repo
+#
+# This overwrites the default /etc/yum.repos.d/CentOS-AppStream.repo
+# file with one that uses vauld.epel.cloud to work after
+# Centos 8's EOL.
+
+[AppStream]
+name=CentOS-$releasever - AppStream
+#mirrorlist=http://#mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=AppStream&infra=$infra
+baseurl=http://mirror.nsc.liu.se/centos-store/8.2.2004/AppStream/$basearch/os/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial

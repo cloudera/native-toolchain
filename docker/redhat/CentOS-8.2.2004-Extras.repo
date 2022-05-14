@@ -1,0 +1,14 @@
+# CentOS-Extras.repo
+#
+# This overwrites the default /etc/yum.repos.d/CentOS-Extras.repo
+# file with one that uses vauld.epel.cloud to work after
+# Centos 8's EOL.
+
+#additional packages that may be useful
+[extras]
+name=CentOS-$releasever - Extras
+#mirrorlist=http://#mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=extras&infra=$infra
+baseurl=http://mirror.nsc.liu.se/centos-store/8.2.2004/extras/$basearch/os/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
