@@ -116,9 +116,13 @@ if needs_build_package ; then
   wrap chmod 755 configure
   CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX="${LOCAL_INSTALL}"/python PYTHON="${PYTHON_ROOT}"/bin/python wrap ./configure \
     --with-boost="${BOOST_ROOT}" \
-    --with-java=no --with-php=no --prefix="${LOCAL_INSTALL}" \
+    --with-java=no --with-php=no --with-cpp=no --prefix="${LOCAL_INSTALL}" \
     --with-thriftpath="${LOCAL_INSTALL}" ${OPENSSL_ARGS}
   wrap make -j"${BUILD_THREADS}" install
+
+  # Fake the share/fb303/if
+  mkdir -p ${LOCAL_INSTALL}/share/fb303/if
+  cp if/fb303.thrift ${LOCAL_INSTALL}/share/fb303/if
 
   # Ensure that we've compiled the fastbinary shared object
   # Some distros place site-packages on lib and others do so in lib64

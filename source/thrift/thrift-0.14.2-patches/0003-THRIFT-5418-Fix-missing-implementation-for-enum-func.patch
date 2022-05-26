@@ -1,0 +1,29 @@
+From d3f13f0907dda34dff1ecc7dd7bc4fec2b26f168 Mon Sep 17 00:00:00 2001
+From: Dirk Sandbrink <dsandbrink@gmail.com>
+Date: Mon, 17 Jan 2022 10:56:35 +0100
+Subject: [PATCH] THRIFT-5418: Fix missing implementation for enum functions
+
+If a thrift file only contains an enum, then the c++ source file with
+the implementation for to_string and ostream operator<< is not
+generated.
+This bug was introduced in PR#2095 / THRIFT-5168.
+---
+ compiler/cpp/src/thrift/generate/t_cpp_generator.cc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/compiler/cpp/src/thrift/generate/t_cpp_generator.cc b/compiler/cpp/src/thrift/generate/t_cpp_generator.cc
+index 4ef6acf..7e9d9b0 100644
+--- a/compiler/cpp/src/thrift/generate/t_cpp_generator.cc
++++ b/compiler/cpp/src/thrift/generate/t_cpp_generator.cc
+@@ -620,6 +620,8 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
+ 
+   generate_enum_to_string_helper_function_decl(f_types_, tenum);
+   generate_enum_to_string_helper_function(f_types_impl_, tenum);
++
++  has_members_ = true;
+ }
+ 
+ void t_cpp_generator::generate_enum_ostream_operator_decl(std::ostream& out, t_enum* tenum) {
+-- 
+2.32.1 (Apple Git-133)
+

@@ -176,15 +176,16 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
     THRIFT_VERSION=0.9.0-p8 $SOURCE_DIR/source/thrift/build.sh
     THRIFT_VERSION=0.9.0-p9 $SOURCE_DIR/source/thrift/build.sh
     THRIFT_VERSION=0.9.0-p10 $SOURCE_DIR/source/thrift/build.sh
+    THRIFT_VERSION=0.9.0-p12 $SOURCE_DIR/source/thrift/build.sh
     THRIFT_VERSION=0.9.3-p5 $SOURCE_DIR/source/thrift/build.sh
     THRIFT_VERSION=0.9.3-p6 $SOURCE_DIR/source/thrift/build.sh
+    THRIFT_VERSION=0.9.3-p8 $SOURCE_DIR/source/thrift/build.sh
     THRIFT_VERSION=0.11.0-p4 $SOURCE_DIR/source/thrift/build.sh
   fi
-  # Required until Python 2.6 compatibility issues have been sorted out with
-  # thrift-0.9.3.
-  THRIFT_VERSION=0.9.0-p12 $SOURCE_DIR/source/thrift/build.sh
-  THRIFT_VERSION=0.9.3-p8 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.11.0-p5 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.13.0-p4 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.14.2-p4 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.16.0-p3 $SOURCE_DIR/source/thrift/build.sh
 else
   THRIFT_VERSION=0.9.2-p4 $SOURCE_DIR/source/thrift/build.sh
 fi
