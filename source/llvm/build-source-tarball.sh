@@ -108,11 +108,11 @@ function build_llvm() {
       -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE \
       ${EXTRA_CMAKE_ARGS}
 
-  wrap make -j${BUILD_THREADS:-4} install
+  wrap make -j${BUILD_THREADS:-4} --load-average=${BUILD_THREADS:-4} install
   popd
 
   pushd ${THIS_DIR}/build-$PACKAGE_STRING/tools/clang
-  wrap make -j${BUILD_THREADS:-4} install
+  wrap make -j${BUILD_THREADS:-4} --load-average=${BUILD_THREADS:-4} install
   popd
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION

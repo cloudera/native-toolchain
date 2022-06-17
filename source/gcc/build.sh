@@ -99,7 +99,7 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   wrap ../gcc-$GCC_VERSION/configure --prefix=$LOCAL_INSTALL \
     --enable-languages=c,c++ --disable-multilib \
     --with-build-config=bootstrap-debug
-  wrap make -j${BUILD_THREADS:-4}
+  wrap make -j${BUILD_THREADS:-4} --load-average=${BUILD_THREADS:-4}
   wrap make install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

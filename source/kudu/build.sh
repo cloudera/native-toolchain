@@ -107,7 +107,7 @@ function build {
   if [[ -d /usr/lib/mit/bin ]]; then
     PATH="$PATH:/usr/lib/mit/bin"
   fi
-  wrap ./build-if-necessary.sh
+  EXTRA_MAKEFLAGS="--load-average=${BUILD_THREADS}" wrap ./build-if-necessary.sh
   cd ..
 
   # Update the PATH to include Kudu's toolchain binaries (after our toolchain's Python).
@@ -122,7 +122,7 @@ function build {
       -DCMAKE_BUILD_TYPE=Release \
       -DNO_TESTS=1 \
       -DCMAKE_INSTALL_PREFIX="$RELEASE_INSTALL_DIR" ..
-  wrap make -j$BUILD_THREADS
+  wrap make -j$BUILD_THREADS --load-average=${BUILD_THREADS}
   install_kudu "$RELEASE_INSTALL_DIR"
   popd
 
@@ -135,7 +135,7 @@ function build {
       -DKUDU_LINK=static \
       -DNO_TESTS=1 \
       -DCMAKE_INSTALL_PREFIX="$DEBUG_INSTALL_DIR" ..
-  wrap make -j$BUILD_THREADS
+  wrap make -j$BUILD_THREADS --load-average=${BUILD_THREADS}
   install_kudu "$DEBUG_INSTALL_DIR"
   popd
 
