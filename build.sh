@@ -40,7 +40,7 @@ function build() {
 # Check that command line arguments were passed correctly.
 if [ "$#" == "0" ]; then
   echo "Usage $0 package1 version1 [package2 version2 ...]"
-  echo "      Builds on ore more packages identified by package_name"
+  echo "      Builds one or more packages identified by package_name"
   echo "      and version identifier."
   echo ""
   false

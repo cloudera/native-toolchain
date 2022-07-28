@@ -137,7 +137,7 @@ CRCUTIL_VERSION=440ba7babeff77ffad992df3a10c767f184e946e-p2\
 # Libraries that depend on OpenSSL will only use it if PRODUCTION=1.
 ################################################################################
 if (( BUILD_HISTORICAL )); then
-    OPENSSL_VERSION=1.0.1p $SOURCE_DIR/source/openssl/build.sh
+  OPENSSL_VERSION=1.0.1p $SOURCE_DIR/source/openssl/build.sh
 fi
 OPENSSL_VERSION=1.0.2l $SOURCE_DIR/source/openssl/build.sh
 
@@ -145,9 +145,10 @@ OPENSSL_VERSION=1.0.2l $SOURCE_DIR/source/openssl/build.sh
 # Build ZLib
 ################################################################################
 if (( BUILD_HISTORICAL )); then
-    ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
+  ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
+  ZLIB_VERSION=1.2.11 $SOURCE_DIR/source/zlib/build.sh
 fi
-ZLIB_VERSION=1.2.11 $SOURCE_DIR/source/zlib/build.sh
+ZLIB_VERSION=1.2.12 $SOURCE_DIR/source/zlib/build.sh
 
 
 ################################################################################
@@ -161,7 +162,7 @@ BISON_VERSION=3.0.4-p1 $SOURCE_DIR/source/bison/build.sh
 ################################################################################
 export BISON_VERSION=3.0.4-p1
 export BOOST_VERSION=1.74.0-p1
-export ZLIB_VERSION=1.2.11
+export ZLIB_VERSION=1.2.12
 export OPENSSL_VERSION=1.0.2l
 export PYTHON_VERSION=2.7.16
 
@@ -264,8 +265,9 @@ LZ4_VERSION=1.9.3 $SOURCE_DIR/source/lz4/build.sh
 ################################################################################
 if (( BUILD_HISTORICAL )); then
   ZSTD_VERSION=1.4.0 $SOURCE_DIR/source/zstd/build.sh
+  ZSTD_VERSION=1.4.9 $SOURCE_DIR/source/zstd/build.sh
 fi
-ZSTD_VERSION=1.4.9 $SOURCE_DIR/source/zstd/build.sh
+ZSTD_VERSION=1.5.2 $SOURCE_DIR/source/zstd/build.sh
 
 ################################################################################
 # Build re2
@@ -363,8 +365,8 @@ KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
   export LZ4_VERSION=1.9.3
   export PROTOBUF_VERSION=3.14.0
   export SNAPPY_VERSION=1.1.8
-  export ZLIB_VERSION=1.2.11
-  export ZSTD_VERSION=1.4.9
+  export ZLIB_VERSION=1.2.12
+  export ZSTD_VERSION=1.5.2
   export GOOGLETEST_VERSION=1.8.0
   if (( BUILD_HISTORICAL )); then
     ORC_VERSION=1.4.3-p3 $SOURCE_DIR/source/orc/build.sh
