@@ -171,7 +171,12 @@ function install_kudu {
   mkdir -p "$INSTALL_DIR/bin"
   pushd bin
   for F in kudu-* ; do
-    cp $F "$INSTALL_DIR/bin"
+    # Create symlinks to reduce package size, see: IMPALA-11454
+    if [[ "$F" == "kudu-master" || "$F" == "kudu-tserver" ]]; then
+        ln -s "../sbin/$F" "$INSTALL_DIR/bin/$F"
+    else
+        cp "$F" "$INSTALL_DIR/bin"
+    fi
   done
   popd
 
