@@ -40,6 +40,21 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
   PATH="$BUILD_DIR/binutils-$BINUTILS_VERSION/bin:$PATH"
 fi
 
+################################################################################
+# Build GDB
+################################################################################
+# Build GDB against the system OS libraries. This is the same issue as binutils.
+# We only need the executables and it is hard to set the RPATH properly.
+# It is simpler to compile with the OS compiler/packages.
+if (( BUILD_HISTORICAL )); then
+  GDB_VERSION=7.9.1-p1 $SOURCE_DIR/source/gdb/build.sh
+fi
+# This builds multiple versions to have flexibility if any issues are
+# seen. Once we decide on this version, we can remove the others.
+GDB_VERSION=10.2 "$SOURCE_DIR"/source/gdb/build.sh
+GDB_VERSION=11.2 "$SOURCE_DIR"/source/gdb/build.sh
+GDB_VERSION=12.1 "$SOURCE_DIR"/source/gdb/build.sh
+
 if [[ "$OSTYPE" =~ ^linux ]]; then
   # ARCH_FLAGS are used to convey architectur dependent flags that should
   # be obeyed by libraries explicitly needing this information.
