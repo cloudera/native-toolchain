@@ -323,7 +323,7 @@ BREAKPAD_VERSION=e09741c609dcd5f5274d40182c5e2cc9a002d5ba-p2 $SOURCE_DIR/source/
 if (( BUILD_HISTORICAL )); then
   FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
 fi
-FLATBUFFERS_VERSION=1.12.0 $SOURCE_DIR/source/flatbuffers/build.sh
+FLATBUFFERS_VERSION=1.9.0-p1 $SOURCE_DIR/source/flatbuffers/build.sh
 
 ################################################################################
 # Build Kudu

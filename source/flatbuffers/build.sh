@@ -41,8 +41,11 @@ if needs_build_package ; then
   # /mnt/source/flatbuffers/flatbuffers-1.6.0/samples/sample_binary.cpp:19:25: error: 'Sample' is not a namespace-name
   # ...
   # Disabling build tests gets rid of this flakiness and makes the compilation faster.
+  # Flatbuffers 1.9 has an issue where it will not install flatc unless CMAKE_BUILD_TYPE=Release,
+  # so this adds that flag (which is useful anyway).
   wrap cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} \
-    -DCMAKE_CXX_FLAGS="$CXXFLAGS" -DFLATBUFFERS_BUILD_TESTS="OFF"
+      -DCMAKE_CXX_FLAGS="$CXXFLAGS" -DFLATBUFFERS_BUILD_TESTS="OFF" \
+      -DCMAKE_BUILD_TYPE=Release
   wrap make -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
