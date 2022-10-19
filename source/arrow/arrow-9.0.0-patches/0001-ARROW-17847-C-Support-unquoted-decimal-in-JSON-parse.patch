@@ -1,0 +1,282 @@
+From f7dc0f85ee2730fd84cbc917820b77f0d920b159 Mon Sep 17 00:00:00 2001
+From: Jin Shang <shangjin1997@gmail.com>
+Date: Thu, 29 Sep 2022 00:52:56 +0800
+Subject: [PATCH 1/2] ARROW-17847: [C++] Support unquoted decimal in JSON
+ parser (#14242)
+
+Support both quoted and unquoted decimal in JSON parser automatically.
+
+Merge conflicts to 8.0.0:
+Replace std::string_view with util::string_view
+
+Authored-by: Jin Shang <shangjin1997@gmail.com>
+Signed-off-by: Antoine Pitrou <antoine@python.org>
+---
+ cpp/src/arrow/json/parser.cc      | 42 +++++++++++++++++++++++++------
+ cpp/src/arrow/json/parser.h       | 10 +++++++-
+ cpp/src/arrow/json/parser_test.cc | 19 ++++++++++++++
+ cpp/src/arrow/json/reader_test.cc | 31 +++++++++++++++++++++++
+ cpp/src/arrow/json/test_common.h  | 14 +++++++++++
+ 5 files changed, 108 insertions(+), 8 deletions(-)
+
+diff --git a/cpp/src/arrow/json/parser.cc b/cpp/src/arrow/json/parser.cc
+index 815fa7dc7..7ddbb4a76 100644
+--- a/cpp/src/arrow/json/parser.cc
++++ b/cpp/src/arrow/json/parser.cc
+@@ -57,8 +57,9 @@ static Status ParseError(T&&... t) {
+ }
+ 
+ const std::string& Kind::Name(Kind::type kind) {
+-  static const std::string names[] = {"null",   "boolean", "number",
+-                                      "string", "array",   "object"};
++  static const std::string names[] = {
++      "null", "boolean", "number", "string", "array", "object", "number_or_string",
++  };
+ 
+   return names[kind];
+ }
+@@ -71,6 +72,7 @@ const std::shared_ptr<const KeyValueMetadata>& Kind::Tag(Kind::type kind) {
+       key_value_metadata({{"json_kind", Kind::Name(Kind::kString)}}),
+       key_value_metadata({{"json_kind", Kind::Name(Kind::kArray)}}),
+       key_value_metadata({{"json_kind", Kind::Name(Kind::kObject)}}),
++      key_value_metadata({{"json_kind", Kind::Name(Kind::kNumberOrString)}}),
+   };
+   return tags[kind];
+ }
+@@ -78,7 +80,7 @@ const std::shared_ptr<const KeyValueMetadata>& Kind::Tag(Kind::type kind) {
+ static arrow::internal::Trie MakeFromTagTrie() {
+   arrow::internal::TrieBuilder builder;
+   for (auto kind : {Kind::kNull, Kind::kBoolean, Kind::kNumber, Kind::kString,
+-                    Kind::kArray, Kind::kObject}) {
++                    Kind::kArray, Kind::kObject, Kind::kNumberOrString}) {
+     DCHECK_OK(builder.Append(Kind::Name(kind)));
+   }
+   auto name_to_kind = builder.Finish();
+@@ -104,7 +106,7 @@ Status Kind::ForType(const DataType& type, Kind::type* kind) {
+     Status Visit(const BinaryType&) { return SetKind(Kind::kString); }
+     Status Visit(const LargeBinaryType&) { return SetKind(Kind::kString); }
+     Status Visit(const TimestampType&) { return SetKind(Kind::kString); }
+-    Status Visit(const FixedSizeBinaryType&) { return SetKind(Kind::kString); }
++    Status Visit(const DecimalType&) { return SetKind(Kind::kNumberOrString); }
+     Status Visit(const DictionaryType& dict_type) {
+       return Kind::ForType(*dict_type.value_type(), kind_);
+     }
+@@ -393,6 +395,12 @@ class RawArrayBuilder<Kind::kObject> {
+   TypedBufferBuilder<bool> null_bitmap_builder_;
+ };
+ 
++template <>
++class RawArrayBuilder<Kind::kNumberOrString> : public ScalarBuilder {
++ public:
++  using ScalarBuilder::ScalarBuilder;
++};
++
+ class RawBuilderSet {
+  public:
+   explicit RawBuilderSet(MemoryPool* pool) : pool_(pool) {}
+@@ -432,6 +440,9 @@ class RawBuilderSet {
+       case Kind::kString:
+         return MakeBuilder<Kind::kString>(leading_nulls, builder);
+ 
++      case Kind::kNumberOrString:
++        return MakeBuilder<Kind::kNumberOrString>(leading_nulls, builder);
++
+       case Kind::kArray: {
+         RETURN_NOT_OK(MakeBuilder<Kind::kArray>(leading_nulls, builder));
+         const auto& list_type = checked_cast<const ListType&>(t);
+@@ -493,6 +504,10 @@ class RawBuilderSet {
+       case Kind::kString:
+         return Cast<Kind::kString>(builder)->AppendNull();
+ 
++      case Kind::kNumberOrString: {
++        return Cast<Kind::kNumberOrString>(builder)->AppendNull();
++      }
++
+       case Kind::kArray:
+         return Cast<Kind::kArray>(builder)->AppendNull();
+ 
+@@ -506,6 +521,7 @@ class RawBuilderSet {
+         }
+         return Status::OK();
+       }
++
+       default:
+         return Status::NotImplemented("invalid builder Kind");
+     }
+@@ -532,6 +548,9 @@ class RawBuilderSet {
+       case Kind::kString:
+         return FinishScalar(scalar_values, Cast<Kind::kString>(builder), out);
+ 
++      case Kind::kNumberOrString:
++        return FinishScalar(scalar_values, Cast<Kind::kNumberOrString>(builder), out);
++
+       case Kind::kArray:
+         return Cast<Kind::kArray>(builder)->Finish(std::move(finish_children), out);
+ 
+@@ -565,7 +584,8 @@ class RawBuilderSet {
+              std::vector<RawArrayBuilder<Kind::kNumber>>,
+              std::vector<RawArrayBuilder<Kind::kString>>,
+              std::vector<RawArrayBuilder<Kind::kArray>>,
+-             std::vector<RawArrayBuilder<Kind::kObject>>>
++             std::vector<RawArrayBuilder<Kind::kObject>>,
++             std::vector<RawArrayBuilder<Kind::kNumberOrString>>>
+       arenas_;
+ };
+ 
+@@ -612,12 +632,20 @@ class HandlerBase : public BlockParser,
+   }
+ 
+   bool RawNumber(const char* data, rj::SizeType size, ...) {
+-    status_ = AppendScalar<Kind::kNumber>(builder_, string_view(data, size));
++    if (builder_.kind == Kind::kNumberOrString) {
++      status_ = AppendScalar<Kind::kNumberOrString>(builder_, string_view(data, size));
++    } else {
++      status_ = AppendScalar<Kind::kNumber>(builder_, string_view(data, size));
++    }
+     return status_.ok();
+   }
+ 
+   bool String(const char* data, rj::SizeType size, ...) {
+-    status_ = AppendScalar<Kind::kString>(builder_, string_view(data, size));
++    if (builder_.kind == Kind::kNumberOrString) {
++      status_ = AppendScalar<Kind::kNumberOrString>(builder_, string_view(data, size));
++    } else {
++      status_ = AppendScalar<Kind::kString>(builder_, string_view(data, size));
++    }
+     return status_.ok();
+   }
+ 
+diff --git a/cpp/src/arrow/json/parser.h b/cpp/src/arrow/json/parser.h
+index 4dd14e4b8..e21d09c41 100644
+--- a/cpp/src/arrow/json/parser.h
++++ b/cpp/src/arrow/json/parser.h
+@@ -37,7 +37,15 @@ class ResizableBuffer;
+ namespace json {
+ 
+ struct Kind {
+-  enum type : uint8_t { kNull, kBoolean, kNumber, kString, kArray, kObject };
++  enum type : uint8_t {
++    kNull,
++    kBoolean,
++    kNumber,
++    kString,
++    kArray,
++    kObject,
++    kNumberOrString
++  };
+ 
+   static const std::string& Name(Kind::type);
+ 
+diff --git a/cpp/src/arrow/json/parser_test.cc b/cpp/src/arrow/json/parser_test.cc
+index 2a44ed837..8f2b67f51 100644
+--- a/cpp/src/arrow/json/parser_test.cc
++++ b/cpp/src/arrow/json/parser_test.cc
+@@ -28,6 +28,7 @@
+ #include "arrow/json/test_common.h"
+ #include "arrow/status.h"
+ #include "arrow/testing/gtest_util.h"
++#include "arrow/type_fwd.h"
+ #include "arrow/util/checked_cast.h"
+ #include "arrow/util/string_view.h"
+ 
+@@ -136,6 +137,24 @@ TEST(BlockParserWithSchema, SkipFieldsOutsideSchema) {
+                       "[\"thing\", null, \"\xe5\xbf\x8d\", null]"});
+ }
+ 
++TEST(BlockParserWithSchema, UnquotedDecimal) {
++  auto options = ParseOptions::Defaults();
++  options.explicit_schema =
++      schema({field("price", decimal(9, 2)), field("cost", decimal(9, 3))});
++  AssertParseColumns(options, unquoted_decimal_src(),
++                     {field("price", utf8()), field("cost", utf8())},
++                     {R"(["30.04", "1.23"])", R"(["30.001", "1.229"])"});
++}
++
++TEST(BlockParserWithSchema, MixedDecimal) {
++  auto options = ParseOptions::Defaults();
++  options.explicit_schema =
++      schema({field("price", decimal(9, 2)), field("cost", decimal(9, 3))});
++  AssertParseColumns(options, mixed_decimal_src(),
++                     {field("price", utf8()), field("cost", utf8())},
++                     {R"(["30.04", "1.23"])", R"(["30.001", "1.229"])"});
++}
++
+ class BlockParserTypeError : public ::testing::TestWithParam<UnexpectedFieldBehavior> {
+  public:
+   ParseOptions Options(std::shared_ptr<Schema> explicit_schema) {
+diff --git a/cpp/src/arrow/json/reader_test.cc b/cpp/src/arrow/json/reader_test.cc
+index 976343b52..cccfcf4e0 100644
+--- a/cpp/src/arrow/json/reader_test.cc
++++ b/cpp/src/arrow/json/reader_test.cc
+@@ -27,6 +27,7 @@
+ #include "arrow/json/test_common.h"
+ #include "arrow/table.h"
+ #include "arrow/testing/gtest_util.h"
++#include "arrow/type_fwd.h"
+ 
+ namespace arrow {
+ namespace json {
+@@ -203,6 +204,36 @@ TEST_P(ReaderTest, MultipleChunks) {
+   AssertTablesEqual(*expected_table, *table_);
+ }
+ 
++TEST_P(ReaderTest, UnquotedDecimal) {
++  auto schema =
++      ::arrow::schema({field("price", decimal(9, 2)), field("cost", decimal(9, 3))});
++  parse_options_.explicit_schema = schema;
++  auto src = unquoted_decimal_src();
++  SetUpReader(src);
++  ASSERT_OK_AND_ASSIGN(table_, reader_->Read());
++
++  auto expected_table = TableFromJSON(schema, {R"([
++    { "price": "30.04", "cost":"30.001" },
++    { "price": "1.23", "cost":"1.229" }
++  ])"});
++  AssertTablesEqual(*expected_table, *table_);
++}
++
++TEST_P(ReaderTest, MixedDecimal) {
++  auto schema =
++      ::arrow::schema({field("price", decimal(9, 2)), field("cost", decimal(9, 3))});
++  parse_options_.explicit_schema = schema;
++  auto src = mixed_decimal_src();
++  SetUpReader(src);
++  ASSERT_OK_AND_ASSIGN(table_, reader_->Read());
++
++  auto expected_table = TableFromJSON(schema, {R"([
++    { "price": "30.04", "cost":"30.001" },
++    { "price": "1.23", "cost":"1.229" }
++  ])"});
++  AssertTablesEqual(*expected_table, *table_);
++}
++
+ TEST(ReaderTest, MultipleChunksParallel) {
+   int64_t count = 1 << 10;
+ 
+diff --git a/cpp/src/arrow/json/test_common.h b/cpp/src/arrow/json/test_common.h
+index 508be0c91..498850134 100644
+--- a/cpp/src/arrow/json/test_common.h
++++ b/cpp/src/arrow/json/test_common.h
+@@ -259,5 +259,19 @@ inline static std::string null_src() {
+   )";
+ }
+ 
++inline static std::string unquoted_decimal_src() {
++  return R"(
++    { "price": 30.04, "cost":30.001 }
++    { "price": 1.23, "cost":1.229 }
++  )";
++}
++
++inline static std::string mixed_decimal_src() {
++  return R"(
++    { "price": 30.04, "cost": 30.001 }
++    { "price": "1.23", "cost": "1.229" }
++  )";
++}
++
+ }  // namespace json
+ }  // namespace arrow
+-- 
+2.37.0
+
