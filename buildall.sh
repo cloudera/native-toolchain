@@ -149,9 +149,14 @@ fi
 if (( BUILD_HISTORICAL )); then
   ZLIB_VERSION=1.2.8 $SOURCE_DIR/source/zlib/build.sh
   ZLIB_VERSION=1.2.11 $SOURCE_DIR/source/zlib/build.sh
+  ZLIB_VERSION=1.2.12 $SOURCE_DIR/source/zlib/build.sh
 fi
-ZLIB_VERSION=1.2.12 $SOURCE_DIR/source/zlib/build.sh
+ZLIB_VERSION=1.2.13 $SOURCE_DIR/source/zlib/build.sh
 
+################################################################################
+# Build Cloudflare ZLib
+################################################################################
+CLOUDFLAREZLIB_VERSION=9e601a3f37 $SOURCE_DIR/source/cloudflarezlib/build.sh
 
 ################################################################################
 # Build Bison
@@ -164,7 +169,7 @@ BISON_VERSION=3.0.4-p1 $SOURCE_DIR/source/bison/build.sh
 ################################################################################
 export BISON_VERSION=3.0.4-p1
 export BOOST_VERSION=1.74.0-p1
-export ZLIB_VERSION=1.2.12
+export ZLIB_VERSION=1.2.13
 export PYTHON_VERSION=2.7.16
 
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
@@ -367,7 +372,7 @@ fi
   export LZ4_VERSION=1.9.3
   export PROTOBUF_VERSION=3.14.0
   export SNAPPY_VERSION=1.1.8
-  export ZLIB_VERSION=1.2.12
+  export ZLIB_VERSION=1.2.13
   export ZSTD_VERSION=1.5.2
   export GOOGLETEST_VERSION=1.8.0
   if (( BUILD_HISTORICAL )); then
