@@ -36,7 +36,11 @@ if needs_build_package ; then
       CFLAGS=-fPIC
       cd build/cmake
   fi
-  wrap cmake -DBUILD_STATIC_LIBS=ON -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE .
+  # Adds -fno-omit-frame-pointer to enable frame pointers. Lz4 uses CMAKE_C_FLAGS (instead
+  # of CMAKE_CXX_FLAGS) in its CMake build. Flags set in CFLAGS env variable will be
+  # ignored if CMAKE_C_FLAGS is defined. We should add $CFLAGS in the flags as well.
+  wrap cmake -DBUILD_STATIC_LIBS=ON -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
+      -DCMAKE_C_FLAGS="$CFLAGS -fno-omit-frame-pointer" -DCMAKE_BUILD_TYPE=RELEASE .
   wrap make -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
