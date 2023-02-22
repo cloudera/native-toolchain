@@ -18,6 +18,7 @@ SHELL=/bin/bash -o pipefail
 DISTROS = redhat7 \
 	redhat8 \
 	sles12 \
+	sles15 \
 	ubuntu1604 \
 	ubuntu1804 \
 	ubuntu2004

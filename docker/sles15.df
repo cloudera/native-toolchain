@@ -1,0 +1,56 @@
+FROM registry.suse.com/suse/sle15:15.4
+
+RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-interactive install autoconf \
+  automake \
+  bison \
+  bzip2 \
+  ccache\
+  curl \
+  cyrus-sasl \
+  cyrus-sasl-gssapi \
+  cyrus-sasl-devel \
+  cyrus-sasl-plain \
+  flex \
+  gawk \
+  gcc \
+  gcc-c++ \
+  git \
+  glibc-devel \
+  groff \
+  gzip \
+  hostname \
+  krb5-devel \
+  libdb-4_8-devel \
+  libevent-devel \
+  libffi-devel \
+  libopenssl-devel \
+  libtool \
+  lsb-release \
+  lzo-devel \
+  make \
+  ncurses-devel \
+  patch \
+  pigz \
+  readline-devel \
+  rsync \
+  unzip \
+  vim \
+  wget \
+  which \
+  xz \
+  zlib-devel
+
+# Install select packages from openSUSE Leap 15.4 distribution
+RUN zypper --non-interactive ar -G -c https://download.opensuse.org/distribution/leap/15.4/repo/oss/ opensuse-oss
+RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-interactive install autoconf \
+  java-1_8_0-openjdk-devel \
+  python \
+  python-devel \
+  python-xml
+
+COPY ./all/postinstall.sh /usr/local/bin
+RUN postinstall.sh
+
+COPY ./all/assert-dependencies-present.py /usr/local/bin
+# Asserts that the packages listed above were correctly installed
+RUN assert-dependencies-present.py
