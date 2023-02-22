@@ -114,7 +114,7 @@ if needs_build_package ; then
   chmod 755 ./bootstrap.sh
   wrap ./bootstrap.sh --with-boost="${BOOST_ROOT}"
   wrap chmod 755 configure
-  CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX="${LOCAL_INSTALL}"/python PYTHON="${PYTHON_ROOT}"/bin/python wrap ./configure \
+  CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX="${PY_PREFIX}" PYTHON="${PYTHON}" wrap ./configure \
     --with-boost="${BOOST_ROOT}" \
     --with-java=no --with-php=no --with-cpp=no --prefix="${LOCAL_INSTALL}" \
     --with-thriftpath="${LOCAL_INSTALL}" ${OPENSSL_ARGS}
@@ -126,7 +126,7 @@ if needs_build_package ; then
 
   # Ensure that we've compiled the fastbinary shared object
   # Some distros place site-packages on lib and others do so in lib64
-  PYTHONPATH=$(find $PY_PREFIX -type d -name 'site-packages' -type d|tr '\n' ':') \
-    wrap python -c 'import thrift.protocol.fastbinary'
+  PYTHONPATH=$(find "${PY_PREFIX}" -type d -name 'site-packages' -type d|tr '\n' ':') \
+    wrap "${PYTHON}" -c 'import thrift.protocol.fastbinary'
   finalize_package_build "${PACKAGE}" "${PACKAGE_VERSION}"
 fi

@@ -53,7 +53,11 @@ if needs_build_package ; then
   wrap ./configure --prefix=$LOCAL_INSTALL --enable-unicode=ucs4
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
-  # Assert that important packages were built successfully
-  wrap python -c 'import bz2; import readline; from urllib2 import HTTPSHandler; from httplib import HTTPConnection'
+  # Assert that important packages were built successfully. Some modules are changed in Python 3.
+  if [ "${PYTHON_VERSION:0:1}" = "2" ]; then
+    wrap $LOCAL_INSTALL/bin/python2 -c 'import bz2; import readline; from urllib2 import HTTPSHandler; from httplib import HTTPConnection'
+  else
+    wrap $LOCAL_INSTALL/bin/python3 -c 'import bz2; import readline; from urllib.request import HTTPSHandler; from http.client import HTTPConnection'
+  fi
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
