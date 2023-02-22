@@ -292,6 +292,11 @@ if (( BUILD_HISTORICAL )); then
   AVRO_VERSION=1.7.4-p4 $SOURCE_DIR/source/avro/build.sh
 fi
 AVRO_VERSION=1.7.4-p5 $SOURCE_DIR/source/avro/build.sh
+# Build a new version as well
+(
+  export BOOST_VERSION=1.74.0-p1
+  AVRO_VERSION=1.11.1-p1 $SOURCE_DIR/source/avro/build-cpp.sh
+)
 
 ################################################################################
 # Build Rapidjson
