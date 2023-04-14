@@ -48,9 +48,9 @@ if [[ "$ARCH_NAME" != "aarch64" ]]; then
     BOOST_VERSION=1.57.0 $SOURCE_DIR/source/boost/build.sh
     BOOST_VERSION=1.57.0-p1 $SOURCE_DIR/source/boost/build.sh
     BOOST_VERSION=1.57.0-p2 $SOURCE_DIR/source/boost/build.sh
+    BOOST_VERSION=1.57.0-p3 $SOURCE_DIR/source/boost/build.sh
+    BOOST_VERSION=1.61.0-p2 $SOURCE_DIR/source/boost/build.sh
   fi
-  BOOST_VERSION=1.57.0-p3 $SOURCE_DIR/source/boost/build.sh
-  BOOST_VERSION=1.61.0-p2 $SOURCE_DIR/source/boost/build.sh
 fi
 BOOST_VERSION=1.74.0-p1 $SOURCE_DIR/source/boost/build.sh
 
@@ -140,8 +140,8 @@ CRCUTIL_VERSION=2903870057d2f1f109b245650be29e856dc8b646\
 ################################################################################
 if (( BUILD_HISTORICAL )); then
   OPENSSL_VERSION=1.0.1p $SOURCE_DIR/source/openssl/build.sh
+  OPENSSL_VERSION=1.0.2l $SOURCE_DIR/source/openssl/build.sh
 fi
-OPENSSL_VERSION=1.0.2l $SOURCE_DIR/source/openssl/build.sh
 
 ################################################################################
 # Build ZLib
@@ -165,7 +165,6 @@ BISON_VERSION=3.0.4-p1 $SOURCE_DIR/source/bison/build.sh
 export BISON_VERSION=3.0.4-p1
 export BOOST_VERSION=1.74.0-p1
 export ZLIB_VERSION=1.2.12
-export OPENSSL_VERSION=1.0.2l
 export PYTHON_VERSION=2.7.16
 
 if [[ ! "$OSTYPE" == "darwin"* ]]; then
@@ -184,10 +183,10 @@ if [[ ! "$OSTYPE" == "darwin"* ]]; then
     THRIFT_VERSION=0.9.3-p6 $SOURCE_DIR/source/thrift/build.sh
     THRIFT_VERSION=0.9.3-p8 $SOURCE_DIR/source/thrift/build.sh
     THRIFT_VERSION=0.11.0-p4 $SOURCE_DIR/source/thrift/build.sh
+    THRIFT_VERSION=0.13.0-p4 $SOURCE_DIR/source/thrift/build.sh
+    THRIFT_VERSION=0.14.2-p4 $SOURCE_DIR/source/thrift/build.sh
   fi
   THRIFT_VERSION=0.11.0-p5 $SOURCE_DIR/source/thrift/build.sh
-  THRIFT_VERSION=0.13.0-p4 $SOURCE_DIR/source/thrift/build.sh
-  THRIFT_VERSION=0.14.2-p4 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.16.0-p3 $SOURCE_DIR/source/thrift/build.sh
 else
   THRIFT_VERSION=0.9.2-p4 $SOURCE_DIR/source/thrift/build.sh
@@ -196,7 +195,6 @@ fi
 export -n BISON_VERSION
 export -n BOOST_VERSION
 export -n ZLIB_VERSION
-export -n OPENSSL_VERSION
 export -n PYTHON_VERSION
 
 ################################################################################
@@ -301,8 +299,9 @@ AVRO_VERSION=1.7.4-p5 $SOURCE_DIR/source/avro/build.sh
 ################################################################################
 # Build Rapidjson
 ################################################################################
-# Build two versions for now - the build time and size is fairly minimal.
-RAPIDJSON_VERSION=0.11 $SOURCE_DIR/source/rapidjson/build.sh
+if (( BUILD_HISTORICAL )); then
+  RAPIDJSON_VERSION=0.11 $SOURCE_DIR/source/rapidjson/build.sh
+fi
 RAPIDJSON_VERSION=1.1.0 $SOURCE_DIR/source/rapidjson/build.sh
 
 ################################################################################
@@ -357,7 +356,9 @@ TPC_DS_VERSION=2.1.0-p1 $SOURCE_DIR/source/tpc-ds/build.sh
 ################################################################################
 # Build KRB5
 ################################################################################
-KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
+if (( BUILD_HISTORICAL )) ; then
+  KRB5_VERSION=1.15.1 $SOURCE_DIR/source/krb5/build.sh
+fi
 
 ################################################################################
 # Build ORC
