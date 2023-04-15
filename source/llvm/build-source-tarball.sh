@@ -50,14 +50,10 @@ function build_llvm() {
 
   # COMPILER RT
   # Required for *Sanitizers and for using Clang's own C/C++ runtime.
-  # Skip this on CentOS 5.8 since it depends on perf_event.h.
-  # As a result, we can use clang to cross-compile but not for sanitizers.
-  if [[ ! "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
-    pushd ../projects
-    untar_xz ${THIS_DIR}/compiler-rt-$SOURCE_VERSION.src.tar.xz
-    mv compiler-rt-$SOURCE_VERSION.src compiler-rt
-    popd
-  fi
+  pushd ../projects
+  untar_xz ${THIS_DIR}/compiler-rt-$SOURCE_VERSION.src.tar.xz
+  mv compiler-rt-$SOURCE_VERSION.src compiler-rt
+  popd
 
   popd # tools
   popd # $TARGET_DIR

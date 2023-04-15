@@ -29,10 +29,6 @@ elif [[ $PACKAGE_VERSION =~ "-debug" ]]; then
 fi
 
 ARCHIVE_EXT="tar.xz"
-if [[ "$PACKAGE_VERSION" =~ "3.3" ]]; then
-  # Older versions with distributed in tar.gz archives.
-  ARCHIVE_EXT="tar.gz"
-fi
 
 if needs_build_package ; then
   download_dependency $PACKAGE "cfe-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
@@ -41,13 +37,7 @@ if needs_build_package ; then
   download_dependency $PACKAGE "llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" $THIS_DIR
 
   add_gcc_to_ld_library_path
-  if [[ "$PACKAGE_VERSION" =~ "3.3" ]]; then
-    . $SOURCE_DIR/source/llvm/build-3.3.sh
-    cd $SOURCE_DIR/source/llvm
-    build_llvm_33
-  else
-    . $SOURCE_DIR/source/llvm/build-source-tarball.sh
-    cd $SOURCE_DIR/source/llvm
-    build_llvm
-  fi
+  . $SOURCE_DIR/source/llvm/build-source-tarball.sh
+  cd $SOURCE_DIR/source/llvm
+  build_llvm
 fi

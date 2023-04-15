@@ -6,12 +6,6 @@ first time you run it. If you rerun the script, it checks the `build` and
 `check` directories for preexisting artifacts and only regenerates them
 if not present.
 
-If you want to build all versions of all packages, you can set the
-environment variable `BUILD_HISTORICAL=1`. Be warned this will take a
-long time.
-
-  BUILD_HISTORICAL=1 buildall.sh
-
 # Sources
 By default, the sources for the different packages are downloaded from an S3
 bucket provided by Cloudera. If desired, it's possible to download the exact

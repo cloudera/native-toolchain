@@ -28,14 +28,10 @@ if needs_build_package ; then
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
-  if [ "${LZ4_VERSION}" == "1.7.5" ]; then
-      CFLAGS=-fPIC
-      cd contrib/cmake_unofficial
-  elif [ "${LZ4_VERSION}" != "svn" ]; then
-      # In 1.9.3, the cmake directory moved to build/cmake
-      CFLAGS=-fPIC
-      cd build/cmake
-  fi
+  # In 1.9.3, the cmake directory moved to build/cmake
+  CFLAGS=-fPIC
+  cd build/cmake
+
   # Adds -fno-omit-frame-pointer to enable frame pointers. Lz4 uses CMAKE_C_FLAGS (instead
   # of CMAKE_CXX_FLAGS) in its CMake build. Flags set in CFLAGS env variable will be
   # ignored if CMAKE_C_FLAGS is defined. We should add $CFLAGS in the flags as well.

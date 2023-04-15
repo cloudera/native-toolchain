@@ -120,11 +120,6 @@ set +x
 BUILD_THREADS=$(getconf _NPROCESSORS_ONLN)
 export BUILD_THREADS
 
-# BUILD_HISTORICAL determines whether buildall.sh should build all historical versions.
-# A historical version is one that is not depended on by new development and therefore
-# should not be rebuilt for new platforms, compilers or toolchain revisions.
-: ${BUILD_HISTORICAL=0}
-
 # SOURCE DIR for the current script
 export SOURCE_DIR="$( cd "$( dirname "$0" )" && pwd )"
 

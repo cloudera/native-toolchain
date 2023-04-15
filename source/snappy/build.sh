@@ -30,30 +30,24 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
-  # Snappy switched to CMake. Detect this and use CMake for newer releases.
-  if [ -e CMakeLists.txt ]; then
-    # Snappy's CMake builds either shared or static but not both. Build each separately.
-    # Adds -fno-omit-frame-pointer to enable frame pointers. Snappy uses CMAKE_CXX_FLAGS
-    # (instead of CMAKE_C_FLAGS) in the builds. Flags set in CXXFLAGS env variable will be
-    # ignored if CMAKE_CXX_FLAGS is defined. We should add $CXXFLAGS in the flags as well.
-    mkdir -p build_shared
-    pushd build_shared
-    wrap cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RELEASE \
-               -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
-               -DCMAKE_CXX_FLAGS="$CXXFLAGS -fno-omit-frame-pointer" ..
-    wrap make -C . -j${BUILD_THREADS:-4} install
-    popd
+  # Snappy's CMake builds either shared or static but not both. Build each separately.
+  # Adds -fno-omit-frame-pointer to enable frame pointers. Snappy uses CMAKE_CXX_FLAGS
+  # (instead of CMAKE_C_FLAGS) in the builds. Flags set in CXXFLAGS env variable will be
+  # ignored if CMAKE_CXX_FLAGS is defined. We should add $CXXFLAGS in the flags as well.
+  mkdir -p build_shared
+  pushd build_shared
+  wrap cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RELEASE \
+             -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
+             -DCMAKE_CXX_FLAGS="$CXXFLAGS -fno-omit-frame-pointer" ..
+  wrap make -C . -j${BUILD_THREADS:-4} install
+  popd
 
-    mkdir -p build_static
-    pushd build_static
-    wrap cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
-               -DCMAKE_CXX_FLAGS="$CXXFLAGS -fno-omit-frame-pointer" ..
-    wrap make -C . -j${BUILD_THREADS:-4} install
-    popd
-  else
-    wrap ./configure --with-pic --prefix=$LOCAL_INSTALL
-    wrap make -j${BUILD_THREADS:-4} install
-  fi
+  mkdir -p build_static
+  pushd build_static
+  wrap cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
+             -DCMAKE_CXX_FLAGS="$CXXFLAGS -fno-omit-frame-pointer" ..
+  wrap make -C . -j${BUILD_THREADS:-4} install
+  popd
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

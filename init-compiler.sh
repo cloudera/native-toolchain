@@ -46,9 +46,6 @@ fi
 # Build GDB against the system OS libraries. This is the same issue as binutils.
 # We only need the executables and it is hard to set the RPATH properly.
 # It is simpler to compile with the OS compiler/packages.
-if (( BUILD_HISTORICAL )); then
-  GDB_VERSION=7.9.1-p1 $SOURCE_DIR/source/gdb/build.sh
-fi
 GDB_VERSION=12.1 "$SOURCE_DIR"/source/gdb/build.sh
 
 if [[ "$OSTYPE" =~ ^linux ]]; then
@@ -129,13 +126,9 @@ export CFLAGS
 
 # Build and export toolchain cmake
 if [[ $SYSTEM_CMAKE -eq 0 ]]; then
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    build_fake_package "cmake"
-  else
-    $SOURCE_DIR/source/cmake/build.sh
-    CMAKE_BIN=$BUILD_DIR/cmake-$CMAKE_VERSION/bin/
-    PATH=$CMAKE_BIN:$PATH
-  fi
+  $SOURCE_DIR/source/cmake/build.sh
+  CMAKE_BIN=$BUILD_DIR/cmake-$CMAKE_VERSION/bin/
+  PATH=$CMAKE_BIN:$PATH
 fi
 
 if [[ ${SYSTEM_AUTOTOOLS} -eq 0 ]]; then
