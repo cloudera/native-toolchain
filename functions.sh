@@ -389,7 +389,13 @@ function build_dist_package() {
 
   PACKAGE_FINAL_TGZ="${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz"
 
-  tar zcf ${PACKAGE_FINAL_TGZ}\
+  COMPRESS_CMD="gzip"
+  if command -v pigz > /dev/null ; then
+    COMPRESS_CMD="pigz"
+  fi
+  COMPRESS_OPTION="--use-compress-program=${COMPRESS_CMD}"
+  tar cf ${PACKAGE_FINAL_TGZ}\
+    ${COMPRESS_OPTION} \
     --directory=${BUILD_DIR} \
     ${PACKAGE_STRING}${PATCH_VERSION}
 
