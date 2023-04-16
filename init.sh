@@ -114,7 +114,7 @@ export USE_CCACHE
 # Failing to download this directory doesn't abort the build. If the UPLOAD_CCACHE makefile variable
 # (not exported in this file, because we only update ccache when we build all platforms) is set to 1,
 # CCACHE_DIR is tarred and uploaded at the end of a full build.
-: ${DOWNLOAD_CCACHE=1}
+: ${DOWNLOAD_CCACHE=0}
 export DOWNLOAD_CCACHE
 
 : ${CCACHE_MAXSIZE=50G}
