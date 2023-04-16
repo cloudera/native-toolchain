@@ -491,14 +491,6 @@ function generate_build_id() {
   echo "${UNIQUE_ID}-${GIT_HASH}"
 }
 
-function enable_toolchain_autotools() {
-    PATH=${BUILD_DIR}/autoconf-${AUTOCONF_VERSION}/bin/:$PATH
-    PATH=${BUILD_DIR}/automake-${AUTOMAKE_VERSION}/bin/:$PATH
-    PATH=${BUILD_DIR}/libtool-${LIBTOOL_VERSION}/bin/:$PATH
-    ACLOCAL_PATH=${BUILD_DIR}/libtool-${LIBTOOL_VERSION}/share/aclocal:${ACLOCAL_PATH:-}
-    export ACLOCAL_PATH
-}
-
 # Adds the toolchain gcc library directory to LD_LIBRARY_PATH if the toolchain gcc
 # version is newer than the system gcc version.
 #

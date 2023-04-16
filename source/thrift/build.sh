@@ -30,7 +30,6 @@ if needs_build_package ; then
 
   setup_package_build "${PACKAGE}" "${PACKAGE_VERSION}"
 
-  BISON_ROOT="${BUILD_DIR}"/bison-"${BISON_VERSION}"
   BOOST_ROOT="${BUILD_DIR}"/boost-"${BOOST_VERSION}"
   ZLIB_ROOT="${BUILD_DIR}"/zlib-"${ZLIB_VERSION}"
   PYTHON_ROOT="${BUILD_DIR}"/python-"${PYTHON_VERSION}"
@@ -53,7 +52,7 @@ if needs_build_package ; then
   # LEXLIB= is a Workaround /usr/lib64/libfl.so: undefined reference to `yylex'
   PYTHON="${PYTHON_ROOT}"/bin/python
   PY_PREFIX="${LOCAL_INSTALL}"/python
-  PATH="${BISON_ROOT}"/bin:"${PATH}" \
+  PATH="${PATH}" \
     PYTHON="${PYTHON}" \
     PY_PREFIX="${PY_PREFIX}" \
     wrap ./configure \

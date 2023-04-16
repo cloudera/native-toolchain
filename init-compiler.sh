@@ -130,9 +130,3 @@ if [[ $SYSTEM_CMAKE -eq 0 ]]; then
   CMAKE_BIN=$BUILD_DIR/cmake-$CMAKE_VERSION/bin/
   PATH=$CMAKE_BIN:$PATH
 fi
-
-if [[ ${SYSTEM_AUTOTOOLS} -eq 0 ]]; then
-  ${SOURCE_DIR}/source/autoconf/build.sh
-  ${SOURCE_DIR}/source/automake/build.sh
-  ${SOURCE_DIR}/source/libtool/build.sh
-fi

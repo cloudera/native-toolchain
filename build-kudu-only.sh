@@ -38,7 +38,7 @@ TMP_DIR=$(mktemp -d)
 DL_DIR=$TMP_DIR/dl
 
 # Dependencies Kudu has on toolchain packages.
-KUDU_DEPENDENCIES="gcc python cmake binutils boost libtool automake autoconf"
+KUDU_DEPENDENCIES="gcc python cmake binutils boost"
 
 # Downloads a pre-built dependency from an existing toolchain build. Argument is
 # the package name.

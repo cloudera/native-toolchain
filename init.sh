@@ -19,8 +19,6 @@ set -o pipefail
 
 # This script exports the following environment variables:
 #  - ARCH_NAME
-#  - AUTOCONF_VERSION
-#  - AUTOMAKE_VERSION
 #  - BINUTILS_VERSION
 #  - BUILD_LABEL
 #  - BUILD_THREADS
@@ -34,7 +32,6 @@ set -o pipefail
 #  - DOWNLOAD_CCACHE
 #  - FAIL_ON_PUBLISH
 #  - GCC_VERSION
-#  - LIBTOOL_VERSION
 #  - MACOSX_DEPLOYMENT_TARGET
 #  - OS_NAME
 #  - OS_VERSION
@@ -43,7 +40,6 @@ set -o pipefail
 #  - PUBLISH_DEPENDENCIES
 #  - RELEASE_NAME
 #  - SOURCE_DIR
-#  - SYSTEM_AUTOTOOLS
 #  - SYSTEM_CMAKE
 #  - SYSTEM_GCC
 #  - TOOLCHAIN_BUILD_ID
@@ -95,18 +91,6 @@ export SYSTEM_CMAKE
 
 : ${CMAKE_VERSION=3.22.2}
 export CMAKE_VERSION
-
-: ${SYSTEM_AUTOTOOLS=0}
-export SYSTEM_AUTOTOOLS
-
-: ${AUTOCONF_VERSION=2.69}
-export AUTOCONF_VERSION
-
-: ${AUTOMAKE_VERSION=1.14.1-p1}
-export AUTOMAKE_VERSION
-
-: ${LIBTOOL_VERSION=2.4.2}
-export LIBTOOL_VERSION
 
 set -x
 # Set the build target platform from the Jenkins environment if it was not

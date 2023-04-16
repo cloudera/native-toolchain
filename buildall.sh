@@ -100,15 +100,9 @@ ZLIB_VERSION=1.2.13 $SOURCE_DIR/source/zlib/build.sh
 CLOUDFLAREZLIB_VERSION=9e601a3f37 $SOURCE_DIR/source/cloudflarezlib/build.sh
 
 ################################################################################
-# Build Bison
-################################################################################
-BISON_VERSION=3.0.4-p1 $SOURCE_DIR/source/bison/build.sh
-
-################################################################################
 # Build Thrift
-#  * depends on bison, boost, zlib and openssl
+#  * depends on boost, zlib and openssl
 ################################################################################
-export BISON_VERSION=3.0.4-p1
 export BOOST_VERSION=1.74.0-p1
 export ZLIB_VERSION=1.2.13
 export PYTHON_VERSION=2.7.16
@@ -116,7 +110,6 @@ export PYTHON_VERSION=2.7.16
 THRIFT_VERSION=0.11.0-p5 $SOURCE_DIR/source/thrift/build.sh
 THRIFT_VERSION=0.16.0-p3 $SOURCE_DIR/source/thrift/build.sh
 
-export -n BISON_VERSION
 export -n BOOST_VERSION
 export -n ZLIB_VERSION
 export -n PYTHON_VERSION
