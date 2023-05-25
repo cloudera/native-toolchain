@@ -229,7 +229,7 @@ TPC_DS_VERSION=2.1.0-p1 $SOURCE_DIR/source/tpc-ds/build.sh
   export ZLIB_VERSION=1.2.13
   export ZSTD_VERSION=1.5.2
   export GOOGLETEST_VERSION=1.8.0
-  ORC_VERSION=1.7.0-p14 $SOURCE_DIR/source/orc/build.sh
+  ORC_VERSION=1.7.9-p10 $SOURCE_DIR/source/orc/build.sh
 )
 
 ################################################################################

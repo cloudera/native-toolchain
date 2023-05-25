@@ -1,0 +1,29 @@
+From 90dda5cabfc4b8ee12d5fd46392823ccf97d7290 Mon Sep 17 00:00:00 2001
+From: Quanlong Huang <huangquanlong@gmail.com>
+Date: Thu, 28 Apr 2022 15:34:15 +0800
+Subject: [PATCH 08/10] ORC-1160: [C++] Fix seekToRow can't seek within
+ selected row group
+
+This fixes #1100
+---
+ c++/src/Reader.cc | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/c++/src/Reader.cc b/c++/src/Reader.cc
+index c6ccdb64..bcfa1fbf 100644
+--- a/c++/src/Reader.cc
++++ b/c++/src/Reader.cc
+@@ -1039,7 +1039,9 @@ namespace orc {
+             // current stripe has at least one row group matching the predicate
+             break;
+           }
+-        } else {
++          isStripeNeeded = false;
++        }
++        if (!isStripeNeeded) {
+           // advance to next stripe when current stripe has no matching rows
+           currentStripe += 1;
+           currentRowInStripe = 0;
+-- 
+2.39.0
+
