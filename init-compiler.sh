@@ -49,18 +49,20 @@ fi
 GDB_VERSION=12.1 "$SOURCE_DIR"/source/gdb/build.sh
 
 if [[ "$OSTYPE" =~ ^linux ]]; then
-  # ARCH_FLAGS are used to convey architectur dependent flags that should
+  # ARCH_FLAGS are used to convey architecture dependent flags that should
   # be obeyed by libraries explicitly needing this information.
   if [[ "$ARCH_NAME" == "ppc64le" ]]; then
-     ARCH_FLAGS="-mvsx -maltivec"
+    ARCH_FLAGS="-mvsx -maltivec"
   elif [[ "$ARCH_NAME" == "aarch64" ]]; then
     ARCH_FLAGS="-march=armv8-a"
   else
-     ARCH_FLAGS="-mno-avx2"
+    # x86_64
+    ARCH_FLAGS="-m64 -mno-avx2"
   fi
+  ARCH_CXXFLAGS=""
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Setting the C++ stlib to libstdc++ on Mac instead of the default libc++
-  ARCH_FLAGS="-stdlib=libstdc++"
+  ARCH_CXXFLAGS="-stdlib=libstdc++"
 fi
 
 export SYSTEM_GCC_VERSION=$(gcc -dumpversion)
@@ -92,24 +94,15 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
   LDFLAGS="$ARCH_FLAGS $FULL_RPATH $FULL_LPATH"
-
-  if [[ "$ARCH_NAME" == "aarch64" ]]; then
-    CXXFLAGS="$ARCH_FLAGS -fPIC -O3"
-  else
-    CXXFLAGS="$ARCH_FLAGS -fPIC -O3 -m64"
-  fi
 else
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    CXX="g++ -stdlib=libstdc++"
-  fi
   LDFLAGS=""
-  CXXFLAGS="-fPIC -O3 -m64"
 fi
-if [[ "$ARCH_NAME" == "aarch64" ]]; then
-  CFLAGS="-fPIC -O3"
-else
-  CFLAGS="-fPIC -O3 -m64"
-fi
+# -g1 enables basic debug information for backtraces
+# -gz enables compression of debug information
+# -gdwarf-4 sets the DWARF version to 4. It is better to be explicit about the DWARF
+#     version because newer compilers default to DWARF 5.
+CFLAGS="$ARCH_FLAGS -fPIC -O3 -g1 -gz -gdwarf-4"
+CXXFLAGS="$CFLAGS $ARCH_CXXFLAGS"
 if [[ $USE_CCACHE -ne 0 ]]; then
   CC=$(setup_ccache $CC)
   CXX=$(setup_ccache $CXX)

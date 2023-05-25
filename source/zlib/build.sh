@@ -30,7 +30,7 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
-  CFLAGS="$CFLAGS -fPIC -DPIC" CXXFLAGS="$CXXFLAGS -fPIC -DPIC" wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL
+  wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
 

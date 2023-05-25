@@ -117,7 +117,17 @@ function build {
     echo "Ninja is installed, disabling --load-average"
     LOAD_AVERAGE_ARGS=""
   fi
+  # When building Kudu's toolchain, debug symbols are not particularly useful
+  # for Impala development and they add substantial size to the Kudu binary.
+  # For example, compiling LLVM even with -g1 can add hundreds of MBs to the
+  # Kudu binary sizes. This turns off debug symbols for Kudu's toolchain.
+  STORE_CFLAGS=${CFLAGS}
+  STORE_CXXFLAGS=${CXXFLAGS}
+  CFLAGS="${CFLAGS} -g0"
+  CXXFLAGS="${CXXFLAGS} -g0"
   EXTRA_MAKEFLAGS="${LOAD_AVERAGE_ARGS}" wrap ./build-if-necessary.sh
+  CFLAGS=$STORE_CFLAGS
+  CXXFLAGS=$STORE_CXXFLAGS
   cd ..
 
   # Update the PATH to include Kudu's toolchain binaries.

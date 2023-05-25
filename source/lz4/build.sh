@@ -29,7 +29,6 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
   # In 1.9.3, the cmake directory moved to build/cmake
-  CFLAGS=-fPIC
   cd build/cmake
 
   # Adds -fno-omit-frame-pointer to enable frame pointers. Lz4 uses CMAKE_C_FLAGS (instead

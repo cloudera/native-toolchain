@@ -32,8 +32,6 @@ INCLUDE(CPack)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(CMAKE_CXX_FLAGS "-O2")
-
 set(SOURCE_FILES
   calloncehack.cc
 )

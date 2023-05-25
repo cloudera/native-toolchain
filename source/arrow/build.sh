@@ -30,6 +30,6 @@ if needs_build_package ; then
   cd cpp
   wrap cmake -DARROW_JSON=ON -DARROW_OPTIONAL_INSTALL=ON -DARROW_JEMALLOC=OFF \
       -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE
-  CFLAGS="-fPIC -DPIC" wrap make VERBOSE=1 -j${BUILD_THREADS:-4} all install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} all install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

@@ -43,6 +43,6 @@ if needs_build_package ; then
   wrap cmake -DBUILD_SHARED_LIBS=ON -DBUILD_JAVA=OFF -DBUILD_LIBHDFSPP=OFF\
       -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
       -DBUILD_CPP_TESTS=OFF
-  CFLAGS="-fPIC -DPIC" wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

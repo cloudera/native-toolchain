@@ -34,8 +34,8 @@ if needs_build_package ; then
   wrap cmake -DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=ON \
        -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE \
        -DREGISTER_INSTALL_PREFIX=OFF
-  # Force PIC compilation (will happen automatically with autotools-based build, but not
-  # cmake)
-  CFLAGS="-fPIC -DPIC" wrap make -j${BUILD_THREADS:-4} install
+  # Previously, this would pass in CFLAGS to force PIC compilation. The default CFLAGS
+  # force PIC compilation, so nothing special is needed.
+  wrap make -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

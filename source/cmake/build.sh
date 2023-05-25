@@ -24,6 +24,10 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
+# Turn off debug info for CMake by adding -g0, as it is just a build utility.
+CXXFLAGS="${CXXFLAGS} -g0"
+CFLAGS="${CFLAGS} -g0"
+
 if needs_build_package ; then
   # Download the dependency from S3
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR

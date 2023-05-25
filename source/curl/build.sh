@@ -31,7 +31,7 @@ if needs_build_package ; then
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
   wrap ./configure --with-pic --with-openssl --prefix=$LOCAL_INSTALL
-  CFLAGS="-fPIC -DPIC" wrap make -j${BUILD_THREADS:-4} install
+  wrap make -j${BUILD_THREADS:-4} install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

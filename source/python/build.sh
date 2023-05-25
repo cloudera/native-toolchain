@@ -45,7 +45,7 @@ if needs_build_package ; then
 
   # SLES12 puts the ncurses includes into a separate subdirectory under /usr/include,
   # which break readline if not put explicitly on the include path
-  export CFLAGS="-I/usr/include/ncurses -I${BZIP2_ROOT}/include"
+  export CFLAGS="$CFLAGS -I/usr/include/ncurses -I${BZIP2_ROOT}/include"
   export LDFLAGS="-L${BZIP2_ROOT}/lib"
   export LD_LIBRARY_PATH="${BZIP2_ROOT}/lib:${LD_LIBRARY_PATH:-}"
   # fastbinary expects ucs4. Without this, we get:

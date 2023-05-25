@@ -24,6 +24,10 @@ source "${SOURCE_DIR}"/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare "${THIS_DIR}"
 
+# It can be useful to step through Thrift with a debugger. Turn on full debuginfo.
+CXXFLAGS="${CXXFLAGS} -g"
+CFLAGS="${CFLAGS} -g"
+
 if needs_build_package ; then
   # Download the dependency from S3
   download_dependency "${PACKAGE}" "${PACKAGE_STRING}.tar.gz" "${THIS_DIR}"
