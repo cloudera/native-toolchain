@@ -91,6 +91,17 @@ function build {
   [[ -f version.txt ]]
   echo $PACKAGE_VERSION > version.txt
 
+  # Check for old propdeps-plugin and replace it with an equivalent.
+  # The old propdeps-plugin was available from a repository that has been restricted.
+  # This patch should apply to a variety of Kudu versions, so it is not specific
+  # to a single commithash.
+  # TODO: Once Kudu patches this, this can be removed.
+  if [[ -f java/buildSrc/build.gradle && -f java/gradle/scopes.gradle ]]; then
+    if grep "io.spring.gradle:propdeps-plugin" java/buildSrc/build.gradle ; then
+      patch -p1 < ${THIS_DIR}/0001-IMPALA-12174-Work-around-Kudu-build-issues-with-repo.patch
+    fi
+  fi
+
   export GRADLE_USER_HOME="$(pwd)"
 
   # Kudu's dependencies are not in the toolchain. They could be added later.

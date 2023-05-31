@@ -1,0 +1,59 @@
+From 5362c12ba9b993cab8daca2eb91c3b267bdd6a40 Mon Sep 17 00:00:00 2001
+From: Joe McDonnell <joemcdonnell@cloudera.com>
+Date: Wed, 31 May 2023 09:19:46 -0700
+Subject: [PATCH] IMPALA-12174: Work around Kudu build issues with
+ repo.spring.io
+
+Kudu builds have been failing due to repo.spring.io
+restricting access for certain artifacts. In particular,
+io.spring.gradle:propdeps-plugin is no longer available.
+This replaces it with the equivalent
+gradle.plugin.cn.bestwu.gradle:propdeps-plugin. These are
+strictly build-time artifacts for Kudu.
+
+Change-Id: Ida7d584e6e77eb06b1d0ea6acd7e5cbed927faf7
+---
+ java/buildSrc/build.gradle | 3 +--
+ java/gradle/scopes.gradle  | 8 ++++----
+ 2 files changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/java/buildSrc/build.gradle b/java/buildSrc/build.gradle
+index 987df4536..28f03f1ec 100644
+--- a/java/buildSrc/build.gradle
++++ b/java/buildSrc/build.gradle
+@@ -21,7 +21,6 @@ repositories {
+   mavenCentral()
+   jcenter()
+   maven { url "https://clojars.org/repo" } // Only used for the clojure plugin below.
+-  maven { url "https://repo.spring.io/plugins-release" } // Only used for the propdeps plugin below.
+   maven { url "https://plugins.gradle.org/m2/" }
+ }
+ 
+@@ -35,7 +34,7 @@ dependencies {
+   compile "com.google.protobuf:protobuf-gradle-plugin:0.8.18"
+   compile "com.netflix.nebula:nebula-clojure-plugin:10.1.1"
+   compile "gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.0"
+-  compile "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
++  compile "gradle.plugin.cn.bestwu.gradle:propdeps-plugin:0.0.10"
+   compile "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
+   compile "ru.vyarus:gradle-animalsniffer-plugin:1.5.4"
+   compile "com.google.code.gson:gson:2.8.9"
+diff --git a/java/gradle/scopes.gradle b/java/gradle/scopes.gradle
+index 10bede3a3..84a94a3d8 100644
+--- a/java/gradle/scopes.gradle
++++ b/java/gradle/scopes.gradle
+@@ -17,7 +17,7 @@
+ 
+ // This file adds provided scope and optional maven support.
+ 
+-apply plugin: "propdeps"
+-apply plugin: "propdeps-eclipse"
+-apply plugin: "propdeps-idea"
+-apply plugin: "propdeps-maven"
++apply plugin: "cn.bestwu.propdeps"
++apply plugin: "cn.bestwu.propdeps-eclipse"
++apply plugin: "cn.bestwu.propdeps-idea"
++apply plugin: "cn.bestwu.propdeps-maven"
+-- 
+2.25.1
+
