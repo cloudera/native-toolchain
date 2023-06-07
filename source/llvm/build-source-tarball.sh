@@ -64,9 +64,7 @@ function build_llvm() {
 
   setup_extracted_package_build $PACKAGE $PACKAGE_VERSION $TARGET_DIR
 
-  PYTHON_EXECUTABLE=$BUILD_DIR/python-$PYTHON_VERSION/bin/python
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    PYTHON_EXECUTABLE=/usr/bin/python
     export CXX=
     export CC=
     export CXXFLAGS=
@@ -101,7 +99,6 @@ function build_llvm() {
       -DLLVM_ENABLE_TERMINFO=OFF \
       -DLLVM_PARALLEL_COMPILE_JOBS=${BUILD_THREADS:-4} \
       -DLLVM_PARALLEL_LINK_JOBS=${BUILD_THREADS:-4} \
-      -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE \
       ${EXTRA_CMAKE_ARGS}
 
   wrap make -j${BUILD_THREADS:-4} --load-average=${BUILD_THREADS:-4} install

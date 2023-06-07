@@ -28,21 +28,46 @@ dl_verify() {
 
 set_default_python() {
   if ! command -v python > /dev/null; then
-    alternatives --set python /usr/bin/python2
+    if command -v python2 ; then
+      # If python2 is present, set python to point to it. This happens for Redhat 8.
+      alternatives --set python /usr/bin/python2
+    elif command -v python3 ; then
+      # Newer OSes (e.g. Redhat 9 and equivalents) make it harder to get Python 2, and we
+      # need to start using Python 3 by default.
+      # For these new OSes (Ubuntu 22, Redhat 9), there is no alternative entry for python,
+      # so we need to create one from scratch.
+      if command -v alternatives > /dev/null; then
+        if alternatives --list | grep python > /dev/null ; then
+          alternatives --set python /usr/bin/python3
+        else
+          # The alternative doesn't exist, create it
+          alternatives --install /usr/bin/python python /usr/bin/python3 20
+        fi
+      elif command -v update-alternatives > /dev/null; then
+        # This is what Ubuntu 20/22+ does. There is no official python alternative,
+        # so we need to create one.
+        update-alternatives --install /usr/bin/python python /usr/bin/python3 20
+      else
+        echo "ERROR: python/python2 don't exist"
+        echo "ERROR: alternatives/update-alternatives also don't exist, so giving up..."
+        exit 1
+      fi
+    else
+        echo "ERROR: python/python2/python3 don't exist, giving up..."
+    fi
   fi
   python -V > /dev/null
 }
 
 install_aws() {
+  # Install the last version of pip that has official Python 2.7 support (version 20.3.4).
   if ! command -v pip 2> /dev/null; then
-    dl_verify https://raw.githubusercontent.com/pypa/get-pip/fee32c376da1ff6496a798986d7939cd51e1644f/get-pip.py efe99298f3fbb1f56201ce6b81d2658067d2f7d7dfc2d412e0d3cacc9a397c61
+    dl_verify https://raw.githubusercontent.com/pypa/get-pip/20.3.4/get-pip.py 95c5ee602b2f3cc50ae053d716c3c89bea62c58568f64d7d25924d399b2d5218
     python get-pip.py
   fi
-  # Explicitly install docutils-0.15 which is the last docutils release that works with
-  # python-2.6. We have to stay compatible with python-2.6 because that's what centos:6
-  # ships with.
-  pip install docutils==0.15
-  pip install awscli==1.16.96
+  # This is the last version of awscli that supports Python 2.7. It is new enough to also get
+  # support relatively recent versions of Python 3 as well (e.g. Python 3.10).
+  pip install awscli==1.19.112
 }
 
 install_mvn() {

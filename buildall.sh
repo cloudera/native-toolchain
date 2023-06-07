@@ -63,7 +63,6 @@ export -n BZIP2_VERSION
 # Build LLVM 3.7+ with and without assertions. For LLVM 3.7+, the default is a
 # release build with no assertions.
 (
-  export PYTHON_VERSION=2.7.16
   LLVM_VERSION=5.0.1-p5 $SOURCE_DIR/source/llvm/build.sh
   LLVM_VERSION=5.0.1-asserts-p5 $SOURCE_DIR/source/llvm/build.sh
 )
@@ -201,7 +200,6 @@ FLATBUFFERS_VERSION=1.9.0-p1 $SOURCE_DIR/source/flatbuffers/build.sh
 (
   export BOOST_VERSION=1.74.0-p1
   export KUDU_VERSION=345fd44ca3
-  export PYTHON_VERSION=2.7.16
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else

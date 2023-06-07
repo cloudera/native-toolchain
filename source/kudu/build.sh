@@ -106,11 +106,6 @@ function build {
 
   # Kudu's dependencies are not in the toolchain. They could be added later.
   cd thirdparty
-  # For some reason python 2.7 from Kudu's thirdparty doesn't build on CentOS 6. It's
-  # not really needed since the toolchain provides python 2.7. To skip the thirdparty
-  # build, "python2.7" needs to be in the PATH.
-  OLD_PATH="$PATH"
-  PATH="$BUILD_DIR/python-$PYTHON_VERSION/bin:$OLD_PATH"
 
   # Kudu's thirdparty compilation of curl depends on being able to find krb5-config
   # on the path. On SLES12, this can be in /usr/lib/mit/bin, so include that directory
@@ -129,9 +124,9 @@ function build {
   EXTRA_MAKEFLAGS="${LOAD_AVERAGE_ARGS}" wrap ./build-if-necessary.sh
   cd ..
 
-  # Update the PATH to include Kudu's toolchain binaries (after our toolchain's Python).
+  # Update the PATH to include Kudu's toolchain binaries.
   KUDU_TP_PATH="`pwd`/thirdparty/installed/common/bin"
-  PATH="$BUILD_DIR/python-$PYTHON_VERSION/bin:$KUDU_TP_PATH:$OLD_PATH"
+  PATH="$KUDU_TP_PATH:$PATH"
 
   # Now Kudu can be built.
   RELEASE_INSTALL_DIR="$LOCAL_INSTALL/release"

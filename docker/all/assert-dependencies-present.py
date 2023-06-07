@@ -21,7 +21,6 @@ import argparse
 import distutils.core  # noqa: F401
 import distutils.spawn
 import distutils.sysconfig
-import platform
 import subprocess
 import logging
 import os
@@ -107,16 +106,6 @@ def check_path(require_lsb_release):
       raise Exception('Unable to find %s in PATH' % p)
 
 
-def check_openssl_version():
-  LOG.info('Checking openssl version')
-  want = '1.0.1e'
-  distro = platform.dist()[1]
-  if distro == 'centos':
-    out = check_output(['rpm', '-qa', 'openssl'])[0].rstrip()
-    if want not in out:
-      raise Exception('Unexpected openssl version. Was: %s, expected: %s' % (out, want))
-
-
 def check_aws_works():
   # Due to the python/pip version discrepancies it's
   # worthwhile to verify that aws was correctly installed
@@ -150,14 +139,6 @@ def check_java_version():
     raise Exception('Unexpected java version. Was: %s, expected: %s' % (out, want))
 
 
-def git_clone_works_with_https():
-  distro, version, _ = platform.dist()
-  if distro == 'centos' and version.startswith('6'):
-    # See: https://github.com/apache/kudu.git/info/refs
-    LOG.info('Checking if git can clone from https://github.com')
-    check_output(['git', 'ls-remote', '--heads', 'https://github.com/apache/kudu'])
-
-
 def get_arguments():
   """Parse and return command line options."""
   parser = argparse.ArgumentParser()
@@ -173,9 +154,7 @@ def main():
   logging.basicConfig(level=logging.INFO)
   args = get_arguments()
   check_libraries()
-  git_clone_works_with_https()
   check_path(not args.no_lsb_release)
-  check_openssl_version()
   check_python_headers_present()
   check_aws_works()
   check_mvn_works()
