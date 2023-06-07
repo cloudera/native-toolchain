@@ -39,19 +39,19 @@ function build_llvm() {
 
   pushd tools
   # CLANG
-  untar_xz ${THIS_DIR}/cfe-$SOURCE_VERSION.src.tar.xz
+  extract_archive ${THIS_DIR}/cfe-$SOURCE_VERSION.src.tar.xz
   mv cfe-$SOURCE_VERSION.src clang
 
   # CLANG Extras
   pushd clang/tools
-  untar_xz ${THIS_DIR}/clang-tools-extra-$SOURCE_VERSION.src.tar.xz
+  extract_archive ${THIS_DIR}/clang-tools-extra-$SOURCE_VERSION.src.tar.xz
   mv clang-tools-extra-$SOURCE_VERSION.src extra
   popd
 
   # COMPILER RT
   # Required for *Sanitizers and for using Clang's own C/C++ runtime.
   pushd ../projects
-  untar_xz ${THIS_DIR}/compiler-rt-$SOURCE_VERSION.src.tar.xz
+  extract_archive ${THIS_DIR}/compiler-rt-$SOURCE_VERSION.src.tar.xz
   mv compiler-rt-$SOURCE_VERSION.src compiler-rt
   popd
 

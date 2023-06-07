@@ -364,7 +364,7 @@ function build_fake_package() {
   if needs_build_package; then
     DESTDIR="${BUILD_DIR}/${PACKAGE_STRING}${PATCH_VERSION}"
     mkdir -p ${DESTDIR}
-    echo "Package not built for $OSTYPE $RELEASE_NAME $ARCH_NAME." >> ${DESTDIR}/README
+    echo "Package not built for $OSTYPE $OS_NAME $ARCH_NAME." >> ${DESTDIR}/README
 
     # Package and upload the fake dir
     build_dist_package
@@ -461,7 +461,7 @@ function extract_archive() {
       tar xzf "$ARCHIVE"
       ;;
     *.xz)
-      untar_xz "$ARCHIVE"
+      tar xJf "$ARCHIVE"
       ;;
     *.zip)
       unzip -qo "$ARCHIVE"
@@ -471,16 +471,6 @@ function extract_archive() {
       return 1
       ;;
   esac
-}
-
-# Helper to portable extract tar.xz archive.
-function untar_xz() {
-  if [[ "$RELEASE_NAME" =~ CentOS.*5\.[[:digit:]] ]]; then
-    # tar on Centos 5.8 doesn't support -J flag, so specify xzcat manually.
-    tar xf "$1" --use-compress-program xzcat
-  else
-    tar xJf "$1"
-  fi
 }
 
 # Generate a unique build ID that includes a prefix of the git hash.

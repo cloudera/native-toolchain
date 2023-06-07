@@ -38,7 +38,6 @@ set -o pipefail
 #  - PATH
 #  - PRODUCTION
 #  - PUBLISH_DEPENDENCIES
-#  - RELEASE_NAME
 #  - SOURCE_DIR
 #  - SYSTEM_CMAKE
 #  - SYSTEM_GCC
@@ -144,31 +143,29 @@ echo "Build ID is $TOOLCHAIN_BUILD_ID"
 # Make sure the necessary file system layout exists
 prepare_build_dir
 
-# Check Platform and build the correct release name. The RELEASE_NAME is used
-# when publishing the artifacts to the artifactory.
+# Check Platform and build the correct release name.
 if [[ "$OSTYPE" =~ ^linux ]]; then
-  if ! which lsb_release &>/dev/null; then
-    echo Unable to find the 'lsb_release' command. \
-        Please ensure it is available in your PATH. 1>&2
+  # /etc/os-release is present in all supported distributions
+  if [[ ! -f /etc/os-release ]]; then
+    echo "ERROR: /etc/os-release is not present"
     exit 1
   fi
-  OS_NAME_VERSION=$(lsb_release -sir 2>&1)
+  OS_NAME_VERSION=$(source /etc/os-release && printf "$ID\n$VERSION_ID")
   # Convert to lowercase, remove new lines, and trim minor version.
   OS_NAME_VERSION=$(tr "A-Z" "a-z" <<< "$OS_NAME_VERSION" | tr "\n" " " | cut -d. -f1 )
+  # These matches are based on the database of /etc/os-release files at
+  # https://github.com/chef/os_release
+  # (In particular, the ID field)
   case "$OS_NAME_VERSION" in
-    # "enterprise" is Oracle
-    centos* | enterprise* | redhat*) OS_NAME=rhel;;
+    centos* | rhel* | rocky* | almalinux*) OS_NAME=rhel;;
     debian*) OS_NAME=debian;;
-    suse*) OS_NAME=suse;;
+    sles*) OS_NAME=suse;;
     ubuntu*) OS_NAME=ubuntu;;
     *) echo "Warning: Unable to detect operating system" 1>&2
        OS_NAME=unknown;;
   esac
   OS_VERSION=$(echo "$OS_NAME_VERSION" | awk '{ print $NF }')
-
-  RELEASE_NAME=`lsb_release -r -i`
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-  RELEASE_NAME="OSX-$(sw_vers -productVersion)"
   OS_NAME="darwin"
   OS_VERSION=`sw_vers -productVersion`
 
@@ -204,4 +201,3 @@ export DEBUG
 export OS_NAME
 export OS_VERSION
 export PATH
-export RELEASE_NAME

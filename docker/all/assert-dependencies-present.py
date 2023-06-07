@@ -17,6 +17,7 @@
 # native toolchain. Since we support centos5 which ships with python2.6,
 # this script must be python2.6 .
 
+import argparse
 import distutils.core  # noqa: F401
 import distutils.spawn
 import distutils.sysconfig
@@ -69,15 +70,15 @@ def check_libraries():
       raise Exception('Unable to find pattern: %s in `ldconfig -p`' % pattern)
 
 
-def check_path():
+def check_path(require_lsb_release):
   progs = ['aclocal',
            'autoconf',
            'automake',
            'aws',
            'bison',
            'ccache',
+           'cmp',
            'flex',
-           'lsb_release',
            'libtool',
            'gcc',
            'git',
@@ -92,6 +93,8 @@ def check_path():
            'unzip',
            'bzip2',
            'yacc']
+  if require_lsb_release:
+    progs.append('lsb_release')
   which = distutils.spawn.find_executable
   for p in progs:
     if isinstance(p, tuple):
@@ -155,11 +158,23 @@ def git_clone_works_with_https():
     check_output(['git', 'ls-remote', '--heads', 'https://github.com/apache/kudu'])
 
 
+def get_arguments():
+  """Parse and return command line options."""
+  parser = argparse.ArgumentParser()
+
+  parser.add_argument("--no-lsb-release",
+                      help="If specified, lsb_release is not required to be present",
+                      action="store_true")
+  args = parser.parse_args()
+  return args
+
+
 def main():
   logging.basicConfig(level=logging.INFO)
+  args = get_arguments()
   check_libraries()
   git_clone_works_with_https()
-  check_path()
+  check_path(not args.no_lsb_release)
   check_openssl_version()
   check_python_headers_present()
   check_aws_works()
