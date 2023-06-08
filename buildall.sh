@@ -63,8 +63,8 @@ export -n BZIP2_VERSION
 # Build LLVM 3.7+ with and without assertions. For LLVM 3.7+, the default is a
 # release build with no assertions.
 (
-  LLVM_VERSION=5.0.1-p5 $SOURCE_DIR/source/llvm/build.sh
-  LLVM_VERSION=5.0.1-asserts-p5 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=5.0.1-p6 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=5.0.1-asserts-p6 $SOURCE_DIR/source/llvm/build.sh
 )
 
 ################################################################################
@@ -121,10 +121,8 @@ GFLAGS_VERSION=2.2.0-p2 $SOURCE_DIR/source/gflags/build.sh
 ################################################################################
 # Build gperftools
 ################################################################################
-# IMPALA-6414: Required until issues with 2.6.3 have been sorted out.
-GPERFTOOLS_VERSION=2.5-p4 $SOURCE_DIR/source/gperftools/build.sh
-GPERFTOOLS_VERSION=2.6.3 $SOURCE_DIR/source/gperftools/build.sh
 GPERFTOOLS_VERSION=2.8.1-p1 $SOURCE_DIR/source/gperftools/build.sh
+GPERFTOOLS_VERSION=2.10 $SOURCE_DIR/source/gperftools/build.sh
 
 ################################################################################
 # Build glog
@@ -199,7 +197,7 @@ FLATBUFFERS_VERSION=1.9.0-p1 $SOURCE_DIR/source/flatbuffers/build.sh
 ################################################################################
 (
   export BOOST_VERSION=1.74.0-p1
-  export KUDU_VERSION=345fd44ca3
+  export KUDU_VERSION=14c326461c
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else

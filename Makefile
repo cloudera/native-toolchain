@@ -17,11 +17,13 @@ STAMP_DIR=$(BUILD_DIR)/stamp
 SHELL=/bin/bash -o pipefail
 DISTROS = redhat7 \
 	redhat8 \
+	redhat9 \
 	sles12 \
 	sles15 \
 	ubuntu1604 \
 	ubuntu1804 \
-	ubuntu2004
+	ubuntu2004 \
+	ubuntu2204
 
 export TOOLCHAIN_BUILD_ID := $(shell bash -ec 'source functions.sh && generate_build_id')
 UPLOAD_CCACHE ?= 0

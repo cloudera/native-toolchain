@@ -1,0 +1,51 @@
+FROM rockylinux:9.2
+
+RUN dnf -y install dnf-plugins-core
+RUN dnf config-manager --set-enabled crb && dnf -y install epel-release
+RUN dnf -y install autoconf \
+  automake \
+  annobin \
+  bison \
+  byacc \
+  bzip2 \
+  cyrus-sasl \
+  cyrus-sasl-gssapi \
+  cyrus-sasl-devel \
+  cyrus-sasl-plain \
+  diffutils \
+  flex \
+  gcc \
+  gcc-c++ \
+  git \
+  glibc-devel \
+  java-1.8.0-openjdk-devel \
+  krb5-devel \
+  libevent-devel \
+  libdb-devel \
+  libffi-devel \
+  libtool \
+  lzo-devel \
+  make \
+  ncurses-devel \
+  chrony \
+  openssl-devel \
+  patch \
+  pigz \
+  postgresql \
+  postgresql-server \
+  python3-devel \
+  readline-devel \
+  rsync \
+  unzip \
+  vim-common \
+  wget \
+  which \
+  xz \
+  zlib-devel
+
+COPY ./all/postinstall.sh /usr/local/bin
+RUN postinstall.sh
+
+COPY ./all/assert-dependencies-present.py /usr/local/bin
+# Asserts that the packages listed above were correctly installed
+RUN assert-dependencies-present.py --no-lsb-release
