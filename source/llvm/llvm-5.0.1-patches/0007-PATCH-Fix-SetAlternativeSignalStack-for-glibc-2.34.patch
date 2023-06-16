@@ -1,0 +1,38 @@
+diff -Naur llvm-5.0.1.src.patched/projects/compiler-rt/lib/sanitizer_common/sanitizer_posix_libcdep.cc llvm-5.0.1.src.patched2/projects/compiler-rt/lib/sanitizer_common/sanitizer_posix_libcdep.cc
+--- llvm-5.0.1.src.patched/projects/compiler-rt/lib/sanitizer_common/sanitizer_posix_libcdep.cc	2023-06-02 12:40:43.802972967 -0700
++++ llvm-5.0.1.src.patched2/projects/compiler-rt/lib/sanitizer_common/sanitizer_posix_libcdep.cc	2023-06-16 12:38:22.232725881 -0700
+@@ -160,7 +160,11 @@
+ 
+ #if !SANITIZER_GO
+ // TODO(glider): different tools may require different altstack size.
+-static const uptr kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
++static uptr GetAltStackSize() {
++  // SIGSTKSZ is not enough.
++  static const uptr kAltStackSize = SIGSTKSZ * 4;
++  return kAltStackSize;
++}
+ 
+ void SetAlternateSignalStack() {
+   stack_t altstack, oldstack;
+@@ -171,10 +175,9 @@
+   // TODO(glider): the mapped stack should have the MAP_STACK flag in the
+   // future. It is not required by man 2 sigaltstack now (they're using
+   // malloc()).
+-  void* base = MmapOrDie(kAltStackSize, __func__);
+-  altstack.ss_sp = (char*) base;
++  altstack.ss_size = GetAltStackSize();
++  altstack.ss_sp = (char *)MmapOrDie(altstack.ss_size, __func__);
+   altstack.ss_flags = 0;
+-  altstack.ss_size = kAltStackSize;
+   CHECK_EQ(0, sigaltstack(&altstack, nullptr));
+ }
+ 
+@@ -182,7 +185,7 @@
+   stack_t altstack, oldstack;
+   altstack.ss_sp = nullptr;
+   altstack.ss_flags = SS_DISABLE;
+-  altstack.ss_size = kAltStackSize;  // Some sane value required on Darwin.
++  altstack.ss_size = GetAltStackSize();  // Some sane value required on Darwin.
+   CHECK_EQ(0, sigaltstack(&altstack, &oldstack));
+   UnmapOrDie(oldstack.ss_sp, oldstack.ss_size);
+ }
