@@ -1,0 +1,49 @@
+From d665e284df49e2032c151f55646e8ae531e9f3ce Mon Sep 17 00:00:00 2001
+From: stiga-huang <huangquanlong@gmail.com>
+Date: Fri, 16 Jun 2023 22:53:43 +0800
+Subject: [PATCH] THRIFT-5716: Fix uint32_t overflow in TMemoryBuffer
+
+---
+ lib/cpp/src/thrift/transport/TBufferTransports.cpp | 6 +++---
+ lib/cpp/test/TMemoryBufferTest.cpp                 | 8 ++++++++
+ 2 files changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/lib/cpp/src/thrift/transport/TBufferTransports.cpp b/lib/cpp/src/thrift/transport/TBufferTransports.cpp
+index efca5bd01..f7cf8f039 100644
+--- a/lib/cpp/src/thrift/transport/TBufferTransports.cpp
++++ b/lib/cpp/src/thrift/transport/TBufferTransports.cpp
+@@ -363,9 +363,9 @@ void TMemoryBuffer::ensureCanWrite(uint32_t len) {
+     throw TTransportException("Insufficient space in external MemoryBuffer");
+   }
+ 
+-  // Grow the buffer as necessary.
+-  const uint32_t current_used = bufferSize_ - avail;
+-  const uint32_t required_buffer_size = len + current_used;
++  // Grow the buffer as necessary. Use uint64_t to avoid overflow.
++  const uint64_t current_used = bufferSize_ - avail;
++  const uint64_t required_buffer_size = len + current_used;
+   if (required_buffer_size > maxBufferSize_) {
+     throw TTransportException(TTransportException::BAD_ARGS,
+                               "Internal buffer size overflow when requesting a buffer of size " + std::to_string(required_buffer_size));
+diff --git a/lib/cpp/test/TMemoryBufferTest.cpp b/lib/cpp/test/TMemoryBufferTest.cpp
+index 0ae4dc9ad..2f1aea694 100644
+--- a/lib/cpp/test/TMemoryBufferTest.cpp
++++ b/lib/cpp/test/TMemoryBufferTest.cpp
+@@ -385,6 +385,14 @@ BOOST_AUTO_TEST_CASE(test_maximum_buffer_size)
+   BOOST_CHECK_THROW(buf.write(&small_buff[0], 1), TTransportException);
+ }
+ 
++BOOST_AUTO_TEST_CASE(test_buffer_overflow)
++{
++  TMemoryBuffer buf;
++  std::vector<uint8_t> small_buff(1);
++  buf.write(&small_buff[0], 1);
++  BOOST_CHECK_THROW(buf.getWritePtr(std::numeric_limits<uint32_t>::max()), TTransportException);
++}
++
+ BOOST_AUTO_TEST_CASE(test_memory_buffer_to_get_sizeof_objects)
+ {
+   // This is a demonstration of how to use TMemoryBuffer to determine
+-- 
+2.39.0
+
