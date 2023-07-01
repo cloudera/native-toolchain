@@ -55,6 +55,7 @@ export BZIP2_VERSION=1.0.8-p2
 # For now, provide both Python 2 and 3 until we can switch over to Python 3.
 PYTHON_VERSION=2.7.16 $SOURCE_DIR/source/python/build.sh
 PYTHON_VERSION=3.7.16 $SOURCE_DIR/source/python/build.sh
+PYTHON_VERSION=3.8.18 $SOURCE_DIR/source/python/build.sh
 
 export -n BZIP2_VERSION
 ################################################################################
@@ -92,11 +93,15 @@ CRCUTIL_VERSION=2903870057d2f1f109b245650be29e856dc8b646\
 # Build ZLib
 ################################################################################
 ZLIB_VERSION=1.2.13 $SOURCE_DIR/source/zlib/build.sh
+ZLIB_VERSION=1.3.1 $SOURCE_DIR/source/zlib/build.sh
 
 ################################################################################
 # Build Cloudflare ZLib
 ################################################################################
+# 9e601a3f37 is latest as of 03/27/2023
 CLOUDFLAREZLIB_VERSION=9e601a3f37 $SOURCE_DIR/source/cloudflarezlib/build.sh
+# 7aa510344e is latest as of 11/23/2023
+CLOUDFLAREZLIB_VERSION=7aa510344e $SOURCE_DIR/source/cloudflarezlib/build.sh
 
 ################################################################################
 # Build Thrift
@@ -123,6 +128,7 @@ GFLAGS_VERSION=2.2.0-p2 $SOURCE_DIR/source/gflags/build.sh
 ################################################################################
 GPERFTOOLS_VERSION=2.8.1-p1 $SOURCE_DIR/source/gperftools/build.sh
 GPERFTOOLS_VERSION=2.10 $SOURCE_DIR/source/gperftools/build.sh
+GPERFTOOLS_VERSION=2.15 $SOURCE_DIR/source/gperftools/build.sh
 
 ################################################################################
 # Build glog
@@ -146,16 +152,19 @@ SNAPPY_VERSION=1.1.8 $SOURCE_DIR/source/snappy/build.sh
 # Build Lz4
 ################################################################################
 LZ4_VERSION=1.9.3 $SOURCE_DIR/source/lz4/build.sh
+LZ4_VERSION=1.9.4 $SOURCE_DIR/source/lz4/build.sh
 
 ################################################################################
 # Build Zstd
 ################################################################################
 ZSTD_VERSION=1.5.2 $SOURCE_DIR/source/zstd/build.sh
+ZSTD_VERSION=1.5.5 $SOURCE_DIR/source/zstd/build.sh
 
 ################################################################################
 # Build re2
 ################################################################################
 RE2_VERSION=20190301 $SOURCE_DIR/source/re2/build.sh
+RE2_VERSION=2023-03-01 $SOURCE_DIR/source/re2/build.sh
 
 ################################################################################
 # Build Ldap
@@ -232,16 +241,20 @@ TPC_DS_VERSION=2.1.0-p1 $SOURCE_DIR/source/tpc-ds/build.sh
 # CCTZ
 ################################################################################
 CCTZ_VERSION=2.2 $SOURCE_DIR/source/cctz/build.sh
+CCTZ_VERSION=2.3 $SOURCE_DIR/source/cctz/build.sh
+CCTZ_VERSION=2.4 $SOURCE_DIR/source/cctz/build.sh
 
 ################################################################################
 # JWT-CPP
 ################################################################################
 JWT_CPP_VERSION=0.5.0 $SOURCE_DIR/source/jwt-cpp/build.sh
+JWT_CPP_VERSION=0.6.0 $SOURCE_DIR/source/jwt-cpp/build.sh
+JWT_CPP_VERSION=0.7.0 $SOURCE_DIR/source/jwt-cpp/build.sh
 
 ################################################################################
 # ARROW
 ################################################################################
-ARROW_VERSION=9.0.0-p2 $SOURCE_DIR/source/arrow/build.sh
+ARROW_VERSION=13.0.0 $SOURCE_DIR/source/arrow/build.sh
 
 # CURL
 ################################################################################
@@ -266,4 +279,4 @@ fi
 
 # MOLD linker
 ################################################################################
-MOLD_VERSION=2.4.0 $SOURCE_DIR/source/mold/build.sh
+MOLD_VERSION=2.4.1 $SOURCE_DIR/source/mold/build.sh

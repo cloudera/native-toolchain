@@ -26,7 +26,12 @@ prepare $THIS_DIR
 
 if needs_build_package ; then
   # Download the dependency from S3
-  download_dependency $PACKAGE "${PACKAGE_STRING}.tgz" $THIS_DIR
+  # re2 20190301 uses '.tgz' while later releases like 2023-03-01 use '.tar.gz'
+  if [[ "${PACKAGE_VERSION}" =~ "2019" ]]; then
+    download_dependency $PACKAGE "${PACKAGE_STRING}.tgz" $THIS_DIR
+  else
+    download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
+  fi
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 

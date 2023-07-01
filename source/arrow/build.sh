@@ -24,7 +24,8 @@ prepare $THIS_DIR
 
 if needs_build_package ; then
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
-  setup_package_build $PACKAGE $PACKAGE_VERSION
+  setup_package_build $PACKAGE $PACKAGE_VERSION "${PACKAGE_STRING}.tar.gz" \
+      apache-$PACKAGE_STRING $PACKAGE_STRING
 
   cd cpp
   wrap cmake -DARROW_JSON=ON -DARROW_OPTIONAL_INSTALL=ON -DARROW_JEMALLOC=OFF \
