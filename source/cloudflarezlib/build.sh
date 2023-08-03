@@ -35,7 +35,7 @@ if [[ ! -d "${CLOUDFLARE_ZLIB_SOURCE_DIR}" ]]; then
 fi
 
 if ! needs_build_package; then
-  return
+  exit
 fi
 
 setup_package_build $PACKAGE $PACKAGE_VERSION
