@@ -1,17 +1,36 @@
-From 310b95e0e8a7d8c6b4dc30a3d681c2f3b3bacdf0 Mon Sep 17 00:00:00 2001
+From 461bd92e368f5ba9f7b7971e7be6fed06b646779 Mon Sep 17 00:00:00 2001
 From: Zoltan Borok-Nagy <boroknagyz@cloudera.com>
-Date: Wed, 23 Mar 2022 18:48:25 +0100
+Date: Mon, 7 Aug 2023 17:57:31 +0200
 Subject: [PATCH] IMPALA-11195: Disable SSL renegotiations
 
 ---
- lib/cpp/src/thrift/transport/TSSLSocket.cpp | 23 +++++++++++++++++++++
- 1 file changed, 23 insertions(+)
+ lib/cpp/src/thrift/transport/TSSLSocket.cpp | 34 +++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
 
 diff --git a/lib/cpp/src/thrift/transport/TSSLSocket.cpp b/lib/cpp/src/thrift/transport/TSSLSocket.cpp
-index ee995ad47..661951f8b 100644
+index 78d6790da..cf41e945b 100644
 --- a/lib/cpp/src/thrift/transport/TSSLSocket.cpp
 +++ b/lib/cpp/src/thrift/transport/TSSLSocket.cpp
-@@ -187,6 +187,21 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
+@@ -170,6 +170,18 @@ static void buildErrors(string& message, int errno_copy = 0, int sslerrno = 0);
+ static bool matchName(const char* host, const char* pattern, int size);
+ static char uppercase(char c);
+ 
++
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++// IMPALA-11195: disable TLS/SSL renegotiation in version 1.0.2 and prior.
++static void ssl_disable_renegotiation_cb(const SSL *ssl, int where, int ret) {
++    (void)ret;
++    if ((where & SSL_CB_HANDSHAKE_DONE) != 0) {
++        // Disable renegotiation (CVE-2009-3555)
++        ssl->s3->flags |= SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS;
++    }
++}
++#endif
++
+ // SSLContext implementation
+ SSLContext::SSLContext(const SSLProtocol& protocol) {
+   // Disable horribly insecure SSLv2 and SSLv3 protocols but allow a handshake
+@@ -195,6 +207,28 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
    }
    SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
  
@@ -26,28 +45,20 @@ index ee995ad47..661951f8b 100644
 +  //     run using an older version of 1.1.0 (prior to 1.1.0h) then the option
 +  //     will be accepted but nothing will happen, i.e. renegotiation will
 +  //     not be prevented.
-+  // The case of OpenSSL 1.0.2 and prior is handled by SSLContext::createSSL()
 +  options |= SSL_OP_NO_RENEGOTIATION;
++#elif OPENSSL_VERSION_NUMBER < 0x10100000L
++  // IMPALA-11195: disable TLS/SSL renegotiation. In version 1.0.2 and prior it's
++  // possible to use the undocumented SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS flag.
++  // We need to set the flag in the callback 'ssl_disable_renegotiation_cb' after
++  // handshake is done, otherwise the flag would get reset in SSL_accept().
++  SSL_CTX_set_info_callback(ctx_, ssl_disable_renegotiation_cb);
++#else
++  static_assert(false, "Found SSL version that is vulnerable to CVE-2009-3555.");
 +#endif
 +
    if ((SSL_CTX_set_options(ctx_, options) & options) != options) {
      string errors;
      buildErrors(errors);
-@@ -208,6 +223,14 @@ SSL* SSLContext::createSSL() {
-     buildErrors(errors);
-     throw TSSLException("SSL_new: " + errors);
-   }
-+#if OPENSSL_VERSION_NUMBER < 0x10100000L
-+  // IMPALA-11195: disable TLS/SSL renegotiation. In version 1.0.2 and prior it's
-+  // possible to use the undocumented SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS flag.
-+  // For more context, see a note on the SSL_OP_NO_RENEGOTIATION option in the
-+  // $OPENSSL_ROOT/CHANGES and https://github.com/openssl/openssl/issues/4739.
-+  // SSLContext c'tor takes care of that for OpenSSL version 1.1.0h and newer.
-+  ssl->s3->flags |= SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS;
-+#endif
-   return ssl;
- }
- 
 -- 
-2.17.1
+2.25.1
 
