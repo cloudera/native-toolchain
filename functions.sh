@@ -628,7 +628,7 @@ function symlink_required_libs() {
 function calc_relpath() {
   local src=$1
   local dst=$2
-  python -c "import os.path; print(os.path.relpath('${src}', '${dst}'))"
+  realpath --relative-to="$dst" "$src"
 }
 
 # Usage: symlink_lib <src lib> <binary>
