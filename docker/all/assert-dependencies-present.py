@@ -110,7 +110,7 @@ def check_aws_works():
   # Due to the python/pip version discrepancies it's
   # worthwhile to verify that aws was correctly installed
   # and not just in our path
-  LOG.info('Checking that aws is correctly isntalled.')
+  LOG.info('Checking that aws is correctly installed.')
   check_output(['aws', '--version'])
 
 
