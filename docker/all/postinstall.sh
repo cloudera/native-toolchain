@@ -60,6 +60,12 @@ set_default_python() {
 }
 
 install_aws() {
+  if command -v pip3 ; then
+    # Use Python 3 if available
+    pip3 install awscli==1.29.44
+    return
+  fi
+
   # Install the last version of pip that has official Python 2.7 support (version 20.3.4).
   if ! command -v pip 2> /dev/null; then
     dl_verify https://raw.githubusercontent.com/pypa/get-pip/20.3.4/get-pip.py 95c5ee602b2f3cc50ae053d716c3c89bea62c58568f64d7d25924d399b2d5218

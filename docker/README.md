@@ -28,6 +28,28 @@ command should build the toolchain for redhat7 and ubuntu1604.
 
 `make -j2 DISTROS="redhat7 ubuntu1604"`
 
+## Pushing the images
+
+Specify `./buildall.py --registry=example-registry.com/namespace` to publish images to a
+Docker registry. If images were previously built with [buildall.py](buildall.py), they
+should rebuild quickly from the build cache before pushing.
+
+## Building multi-platform images
+
+Docker buildx supports building multi-platform images and combining them in a single tag.
+`./buildall.py --multi` supports this, but requires that you install QEMU
+```
+apt install binfmt-support qemu-user-static qemu-system-x86
+```
+
+and create a [docker-container](https://docs.docker.com/engine/reference/commandline/buildx_create/#docker-container-driver)
+builder
+```
+docker buildx create --use
+```
+
+Note that building multi-platform images requires disabling loading them into the local
+`docker images`; the only way to publish them is with the `--registry` option.
 
 ## Working using pre-built images
 
@@ -37,14 +59,3 @@ with one of the distros listed in the Makefile, it is possible to specify urls i
 make variable.
 
 `make -j2 DISTROS="redhat7 ubuntu1604" DOCKER_REGISTRY="my-registry.com/"`
-
-
-## Pushing the images
-
-The following should list the commands required to push all `impala-toolchain-*` images to a docker registry:
-
-```
-export REGISTRY="example-registry.com/namespace`
-docker images "impala-toolchain-*"
---format="docker tag {{.Repository}} $REGISTRY/{{.Repository}} && docker push $REGISTRY/{{.Repository}}"
-```

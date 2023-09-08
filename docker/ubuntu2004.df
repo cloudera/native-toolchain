@@ -24,8 +24,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf
       pigz \
       pkg-config \
       python \
-      python3-distutils \
       python-dev \
+      python3-distutils \
+      python3-pip \
       rsync \
       texinfo \
       unzip \

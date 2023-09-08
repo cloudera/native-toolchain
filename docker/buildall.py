@@ -24,24 +24,45 @@ import sys
 
 LOG = logging.getLogger('buildall.py')
 
+# Used with --multi for multi-platform builds. Requires QEMU and a docker-container
+# builder, see README.md for setup.
+ARM_PLATFORMS = ['redhat8', 'redhat9', 'ubuntu2004', 'ubuntu2204']
 
 def main():
   logging.basicConfig(level=logging.INFO)
   parser = argparse.ArgumentParser()
-  parser.add_argument("--docker_file", default=None,
-                      help="An individual docker file to build")
+  parser.add_argument("--docker_file", help="An individual docker file to build")
+  parser.add_argument("--registry", help="Publish images to the specified registry")
+  parser.add_argument("--builder", help="Specify a buildx builder")
+  parser.add_argument("--multi", action='store_true',
+                      help="Build multi-platform images; disables loading in Docker")
   args = parser.parse_args()
-  if args.docker_file is not None:
+
+  if args.docker_file:
     if not os.path.exists(args.docker_file):
       sys.exit("Docker file {0} does not exist".format(args.docker_file))
     docker_file_list = [args.docker_file]
   else:
     docker_file_list = glob.glob('*.df')
+
   procs = []
   for df in docker_file_list:
-    tag = 'impala-toolchain-%s' % df[:-3]
-    build_cmd = ['docker', 'build', '-f', df, '-t', tag]
-    if 'sles12' in df:
+    osname = df[:-3]
+    tag = 'impala-toolchain-%s' % osname
+    log_file = tag + '.log'
+    if args.registry:
+      tag = "%s/%s" % (args.registry, tag)
+
+    build_cmd = ['docker', 'buildx', 'build', '-f', df, '-t', tag]
+    if args.builder:
+      build_cmd += ['--builder', args.builder]
+    if args.registry:
+      build_cmd.append('--push')
+    elif not args.multi:
+      build_cmd.append('--load')
+    if args.multi and osname in ARM_PLATFORMS:
+      build_cmd.append('--platform=linux/amd64,linux/arm64')
+    if 'sles12' in osname:
       # SLES_MIRROR must be non=empty if defined
       if 'SLES_MIRROR' in os.environ and os.environ['SLES_MIRROR']:
         build_cmd += ['--build-arg=SLES_MIRROR=%s' % os.environ['SLES_MIRROR']]
@@ -49,16 +70,17 @@ def main():
         LOG.warning('Skipping sles12 because SLES_MIRROR is empty')
         continue
     build_cmd.append('.')
-    log_file = tag + '.log'
     LOG.info('Running: %s Log: %s', ' '.join(build_cmd), log_file)
     with open(log_file, 'w') as f:
       procs.append((subprocess.Popen(build_cmd, stdout=f, stderr=f), tag, log_file))
+
   exit = 0
   for p, tag, log_file in procs:
     if p.wait():
-      exit = 'Error building %s. Refer to logs at %s' % (tag, log_file)
-      continue
-    print(tag)
+      exit = 1
+      LOG.error('Error building %s. Refer to logs at %s\n', tag, log_file)
+    else:
+      print(tag)
   sys.exit(exit)
 
 

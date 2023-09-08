@@ -30,9 +30,15 @@
 #   Default: "false"
 # DOCKER_REGISTRY: Points to a Docker registry where the containers should be pushed to.
 #   It can be left blank if PUBLISH_CONTAINERS is not "true"
+# BUILD_MULTI: Builds multi-platform images (aarch64 and amd64) for a subset of platforms
+#   (Ubuntu 20.04+, RedHat 8+) using buildx. Requires Docker Engine 23.0+.
 
 set -euo pipefail
 cd $(dirname $(dirname "${BASH_SOURCE[0]}")) >/dev/null
+
+if [[ ${BUILD_MULTI:-false} = true ]]; then
+  sudo apt-get install -y binfmt-support qemu-user-static qemu-system-x86
+fi
 
 DISTRO_PARAM=
 if [[ ${DISTRO_TO_BUILD:-All} != All ]]; then
@@ -48,18 +54,26 @@ if [[ ${FORCE_REBUILD:-false} = true ]]; then
   if [[ -n ${IMPALA_TOOLCHAIN_IMAGES} ]]; then
     docker image rm -f ${IMPALA_TOOLCHAIN_IMAGES}
   fi
+
+  if [[ ${BUILD_MULTI:-false} = true ]]; then
+    # Non-default builder only used for multi-platform builds.
+    docker buildx rm --all-inactive
+  fi
 fi
 
 pushd docker
-./buildall.py ${DISTRO_PARAM}
-popd
-
+MULTI=
+if [[ ${BUILD_MULTI:-false} = true ]]; then
+  BUILDER=impala-toolchain
+  MULTI=--multi --builder=${BUILDER}
+  docker buildx create --name ${BUILDER}
+fi
+./buildall.py ${MULTI} ${DISTRO_PARAM}
 if [[ ${PUBLISH_CONTAINERS:-false} = true ]]; then
   echo "Publishing containers to registry: ${DOCKER_REGISTRY}..."
-  for image in $(docker images ${IMPALA_TOOLCHAIN_IMAGE_PATTERN} \
-      --format="{{.Repository}}"); do
-    target="${DOCKER_REGISTRY}/$image"
-    docker tag $image $target
-    docker push $target
-  done
+  ./buildall.py ${MULTI} --registry=${DOCKER_REGISTRY} ${DISTRO_PARAM}
 fi
+if [[ ${BUILD_MULTI:-false} = true ]]; then
+  docker buildx rm ${BUILDER}
+fi
+popd
