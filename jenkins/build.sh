@@ -54,26 +54,28 @@ if [[ ${FORCE_REBUILD:-false} = true ]]; then
   if [[ -n ${IMPALA_TOOLCHAIN_IMAGES} ]]; then
     docker image rm -f ${IMPALA_TOOLCHAIN_IMAGES}
   fi
-
-  if [[ ${BUILD_MULTI:-false} = true ]]; then
-    # Non-default builder only used for multi-platform builds.
-    docker buildx rm --all-inactive
-  fi
 fi
 
 pushd docker
 MULTI=
 if [[ ${BUILD_MULTI:-false} = true ]]; then
   BUILDER=impala-toolchain
-  MULTI=--multi --builder=${BUILDER}
-  docker buildx create --name ${BUILDER}
+  MULTI="--multi --builder=${BUILDER}"
+  NEED_BUILDER=true
+  if docker buildx inspect ${BUILDER} >& /dev/null; then
+    if [[ ${FORCE_REBUILD:-false} = true ]]; then
+      docker buildx rm ${BUILDER}
+    else
+      NEED_BUILDER=false
+    fi
+  fi
+  if ${NEED_BUILDER}; then
+    docker buildx create --bootstrap --name ${BUILDER}
+  fi
 fi
 ./buildall.py ${MULTI} ${DISTRO_PARAM}
 if [[ ${PUBLISH_CONTAINERS:-false} = true ]]; then
   echo "Publishing containers to registry: ${DOCKER_REGISTRY}..."
   ./buildall.py ${MULTI} --registry=${DOCKER_REGISTRY} ${DISTRO_PARAM}
-fi
-if [[ ${BUILD_MULTI:-false} = true ]]; then
-  docker buildx rm ${BUILDER}
 fi
 popd
