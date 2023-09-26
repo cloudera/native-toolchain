@@ -420,7 +420,8 @@ function build_dist_package() {
   fi
 
   if [[ "PUBLISH_DEPENDENCIES_S3" -eq "1" ]]; then
-    local PACKAGE_S3_DESTINATION="s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${BUILD_LABEL}.tar.gz"
+    local ARCH=$(uname -m)
+    local PACKAGE_S3_DESTINATION="s3://${S3_BUCKET}/build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${BUILD_LABEL}-${ARCH}.tar.gz"
     echo "Uploading ${PACKAGE_FINAL_TGZ} to ${PACKAGE_S3_DESTINATION}"
     aws s3 cp --only-show-errors "${PACKAGE_FINAL_TGZ}" \
       "${PACKAGE_S3_DESTINATION}" \
