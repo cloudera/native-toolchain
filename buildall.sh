@@ -180,7 +180,7 @@ RAPIDJSON_VERSION=1.1.0 $SOURCE_DIR/source/rapidjson/build.sh
 ################################################################################
 # Build Libunwind
 ################################################################################
-LIBUNWIND_VERSION=1.5.0-p1 $SOURCE_DIR/source/libunwind/build.sh
+LIBUNWIND_VERSION=1.7.2-p1 $SOURCE_DIR/source/libunwind/build.sh
 
 ################################################################################
 # Build Breakpad
@@ -197,7 +197,7 @@ FLATBUFFERS_VERSION=1.9.0-p1 $SOURCE_DIR/source/flatbuffers/build.sh
 ################################################################################
 (
   export BOOST_VERSION=1.74.0-p1
-  export KUDU_VERSION=1.17.0
+  export KUDU_VERSION=e742f86f6d
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else
