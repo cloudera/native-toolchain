@@ -142,6 +142,7 @@ def passthrough_env(image):
               'SYSTEM_GCC',
               'SYSTEM_CMAKE',
               'S3_BUCKET',
+              'S3_MIRROR_BUCKET',
               'TOOLCHAIN_BUILD_ID']
   if 'BUILD_TARGET_LABEL' not in os.environ:
     # Discard docker registry prefix, if it exists.
