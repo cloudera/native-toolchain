@@ -1,0 +1,25 @@
+From 6e767e6635f459dfee45d45a4051b2919db9027a Mon Sep 17 00:00:00 2001
+From: stiga-huang <huangquanlong@gmail.com>
+Date: Tue, 22 Nov 2022 11:17:58 +0800
+Subject: [PATCH] THRIFT-5670: Fix wrong usage of GlobalOutput.perror()
+
+---
+ lib/cpp/src/thrift/transport/TSocket.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/cpp/src/thrift/transport/TSocket.cpp b/lib/cpp/src/thrift/transport/TSocket.cpp
+index d8accadc9..6c8a1c843 100644
+--- a/lib/cpp/src/thrift/transport/TSocket.cpp
++++ b/lib/cpp/src/thrift/transport/TSocket.cpp
+@@ -569,7 +569,7 @@ try_again:
+         throw TTransportException(TTransportException::INTERRUPTED, "Interrupted");
+       }
+     } else /* ret == 0 */ {
+-      GlobalOutput.perror("TSocket::read() THRIFT_EAGAIN (timed out) after %f ms", recvTimeout_);
++      GlobalOutput.printf("TSocket::read() THRIFT_EAGAIN (timed out) after %d ms", recvTimeout_);
+       throw TTransportException(TTransportException::TIMED_OUT, "THRIFT_EAGAIN (timed out)");
+     }
+ 
+-- 
+2.39.0
+
