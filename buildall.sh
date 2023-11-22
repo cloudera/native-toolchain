@@ -250,3 +250,16 @@ CURL_VERSION=7.78.0 $SOURCE_DIR/source/curl/build.sh
 # CALLONCEHACK
 ################################################################################
 CALLONCEHACK_VERSION=1.0.0 $SOURCE_DIR/source/calloncehack/build.sh
+
+################################################################################
+# Build hadoop native libraries
+################################################################################
+if [[ "$ARCH_NAME" == "aarch64" ]]; then
+  (
+    export PROTOBUF_VERSION=3.14.0
+    export SNAPPY_VERSION=1.1.8
+    export ZLIB_VERSION=1.2.13
+    export ZSTD_VERSION=1.5.2
+    HADOOP_VERSION=3.3.6 $SOURCE_DIR/source/hadoop/build.sh
+  )
+fi
