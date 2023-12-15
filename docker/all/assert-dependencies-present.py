@@ -77,6 +77,7 @@ def check_path(require_lsb_release):
            'bison',
            'ccache',
            'cmp',
+           'file',
            'flex',
            'hostname',
            'libtool',

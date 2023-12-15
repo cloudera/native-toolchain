@@ -13,6 +13,7 @@ RUN dnf -y install autoconf \
   cyrus-sasl-devel \
   cyrus-sasl-plain \
   diffutils \
+  file \
   flex \
   gcc \
   gcc-c++ \
