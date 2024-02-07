@@ -78,6 +78,7 @@ def check_path(require_lsb_release):
            'ccache',
            'cmp',
            'flex',
+           'hostname',
            'libtool',
            'gcc',
            'git',

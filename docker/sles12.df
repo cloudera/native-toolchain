@@ -1,4 +1,4 @@
-FROM registry.suse.com/suse/sles12sp3
+FROM registry.suse.com/suse/sles12sp5
 
 RUN rm -f /usr/lib/zypp/plugins/services/container-suseconnect
 
@@ -6,12 +6,11 @@ ARG SLES_MIRROR
 # Mandatory argument, use --build-arg to set up a sles_mirror
 RUN test -n "$SLES_MIRROR"
 
-RUN zypper --non-interactive ar -G -c ${SLES_MIRROR}/SUSE/Products/SLE-SERVER/12-SP3/x86_64/product a
-RUN zypper --non-interactive ar -G -c ${SLES_MIRROR}/SUSE/Products/SLE-SDK/12-SP3/x86_64/product/ b
-RUN zypper --non-interactive ar -G -c  https://download.opensuse.org/repositories/server:monitoring/SLE_12_SP3/server:monitoring.repo
-RUN zypper --non-interactive in --oldpackage libncurses6-5.9-40.124.x86_64 libncurses5-5.9-40.124.x86_64 ncurses-devel-5.9-40.124.x86_64
+RUN zypper --non-interactive ar -G -c ${SLES_MIRROR}/SUSE/Products/SLE-SERVER/12-SP5/x86_64/product a
+RUN zypper --non-interactive ar -G -c ${SLES_MIRROR}/SUSE/Products/SLE-SDK/12-SP5/x86_64/product/ b
+RUN zypper --non-interactive ar -G -c  https://download.opensuse.org/repositories/server:monitoring/SLE_12_SP5/server:monitoring.repo
 
-RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-interactive install autoconf \
+RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-interactive install --allow-downgrade autoconf \
   automake \
   bison \
   byacc \
@@ -39,6 +38,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-inter
   lzo-devel \
   make \
   ncurses-devel \
+  net-tools \
   ntp \
   patch \
   python \
