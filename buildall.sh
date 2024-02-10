@@ -263,3 +263,7 @@ if [[ "$ARCH_NAME" == "aarch64" ]]; then
     HADOOP_CLIENT_VERSION=3.3.6 $SOURCE_DIR/source/hadoop-client/build.sh
   )
 fi
+
+# MOLD linker
+################################################################################
+MOLD_VERSION=2.4.0 $SOURCE_DIR/source/mold/build.sh
