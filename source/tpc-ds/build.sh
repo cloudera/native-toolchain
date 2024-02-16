@@ -30,6 +30,13 @@ if needs_build_package; then
   # line.
   sed -i -r '/^CC\s*=/d' makefile
 
+  # The build makefile doesn't respect the CFLAGS environment variable directly,
+  # so we patch the makefile to set its LINUX_CFLAGS to include the CFLAGS
+  # from our environment. This includes -03, which produces a faster dsdgen binary.
+  # This keeps the other flags already specified (but puts our flags at the end).
+  # This can accumulate if run multiple times, but that should be harmless.
+  sed -i -r "s/^(LINUX_CFLAGS\s*=.*)/\1 ${CFLAGS}/" makefile
+
   wrap make clean
   wrap make -j${BUILD_THREADS-4}
 
