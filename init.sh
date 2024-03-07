@@ -52,7 +52,7 @@ set -o pipefail
 export DEBUG
 
 # If set to 1, will fail the build if the artifacts could not be published.
-: ${FAIL_ON_PUBLISH=0}
+: ${FAIL_ON_PUBLISH=1}
 export FAIL_ON_PUBLISH
 
 # If set to 1, the script will upload the artifacts to the internal artifactory and s3
