@@ -43,7 +43,7 @@ if needs_build_package ; then
   wrap make -j${BUILD_THREADS:-4}
   popd
 
-  # Gtest doesnt provide a install target so we make one
+  # Gtest does not provide a install target so we make one
   mkdir -p $LOCAL_INSTALL/lib
   mkdir -p $LOCAL_INSTALL/include
   install build_shared/libgtest.so build_shared/libgtest_main.so build_static/libgtest.a\

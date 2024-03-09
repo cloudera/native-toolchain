@@ -141,7 +141,7 @@ GFLAGS_VERSION=2.2.0-p2 GLOG_VERSION=0.3.5-p3 $SOURCE_DIR/source/glog/build.sh
 GTEST_VERSION=1.6.0 $SOURCE_DIR/source/gtest/build.sh
 
 # New versions of gtest are named googletest
-GOOGLETEST_VERSION=1.8.0 $SOURCE_DIR/source/googletest/build.sh
+GOOGLETEST_VERSION=1.14.0 $SOURCE_DIR/source/googletest/build.sh
 
 ################################################################################
 # Build Snappy
@@ -243,7 +243,6 @@ TPC_DS_VERSION=2.1.0-p1 $SOURCE_DIR/source/tpc-ds/build.sh
   export SNAPPY_VERSION=1.1.8
   export ZLIB_VERSION=1.2.13
   export ZSTD_VERSION=1.5.2
-  export GOOGLETEST_VERSION=1.8.0
   ORC_VERSION=1.7.9-p10 $SOURCE_DIR/source/orc/build.sh
 )
 

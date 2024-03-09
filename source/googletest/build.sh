@@ -28,17 +28,22 @@ if needs_build_package ; then
   # Download the dependency from S3
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
 
-  # The extracted package dir has "release" in the name.
-  EXTRACTED_DIR="${PACKAGE}-release-${PACKAGE_VERSION}"
-  setup_package_build $PACKAGE $PACKAGE_VERSION "${PACKAGE_STRING}.tar.gz" \
-      "$EXTRACTED_DIR"
+  setup_package_build $PACKAGE $PACKAGE_VERSION
 
-  pushd ..
-  mkdir -p build-googletest-$GOOGLETEST_VERSION
-  pushd build-googletest-$GOOGLETEST_VERSION
-  wrap cmake -DCMAKE_CXX_FLAGS="${CXXFLAGS}" -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL "../${EXTRACTED_DIR}"
+  # Gtest's CMake builds either shared or static but not both. Build each separately.
+  mkdir -p build_shared
+  pushd build_shared
+  wrap cmake -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} -DBUILD_SHARED_LIBS=ON ..
   wrap make -j${BUILD_THREADS:-4}
   wrap make install
+  popd
+
+  mkdir -p build_static
+  pushd build_static
+  wrap cmake -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} ..
+  wrap make -j${BUILD_THREADS:-4}
+  wrap make install
+  popd
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

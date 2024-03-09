@@ -27,7 +27,6 @@ if needs_build_package ; then
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
   # ORC 1.5+ uses *_HOME environment variables to find dependencies.
-  export GTEST_HOME=$BUILD_DIR/googletest-${GOOGLETEST_VERSION}
   export LZ4_HOME=$BUILD_DIR/lz4-${LZ4_VERSION}
   export PROTOBUF_HOME=$BUILD_DIR/protobuf-${PROTOBUF_VERSION}
   export SNAPPY_HOME=$BUILD_DIR/snappy-${SNAPPY_VERSION}
