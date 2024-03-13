@@ -19,6 +19,12 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$(cd "$(dirname "$0")" && pwd)"
 prepare $THIS_DIR
 
+# Because this is being built before we've switched over to the toolchain
+# compiler, it doesn't get our custom CFLAGS/CXXFLAGS. By default, binutils
+# will build with -O2. To get a bit more optimization, force it to use -O3.
+export CFLAGS="-fPIC -O3"
+export CXXFLAGS="-fPIC -O3"
+
 if needs_build_package ; then
   # Download the dependency from S3
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
