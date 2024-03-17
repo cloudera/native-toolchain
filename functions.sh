@@ -159,6 +159,8 @@ function setup_package_build() {
   if [ ! -z "$ARCHIVE" ]; then
     extract_archive $ARCHIVE
     if [ "$EXTRACTED_DIR" != "$TARGET_DIR" ]; then
+      # Remove any existing directory
+      rm -rf "$TARGET_DIR"
       mv "$EXTRACTED_DIR" "$TARGET_DIR"
     fi
     DIR=$TARGET_DIR

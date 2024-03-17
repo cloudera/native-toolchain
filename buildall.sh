@@ -280,3 +280,13 @@ fi
 # MOLD linker
 ################################################################################
 MOLD_VERSION=2.4.1 $SOURCE_DIR/source/mold/build.sh
+
+# libpfm
+################################################################################
+LIBPFM_VERSION=4.13.0 $SOURCE_DIR/source/libpfm/build.sh
+
+# GOOGLE BENCHMARK
+################################################################################
+export LIBPFM_VERSION=4.13.0
+GOOGLEBENCHMARK_VERSION=1.8.3 $SOURCE_DIR/source/googlebenchmark/build.sh
+unset LIBPFM_VERSION
