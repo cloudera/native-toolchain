@@ -625,14 +625,35 @@ function symlink_required_libs() {
       continue
     fi
 
-    # Check for matches using the naive N^2 algorithm.
+    # Check for matches using a naive N^2 algorithm with a basic fast-path optimization
     local required_lib
     local src_lib
     for required_lib in $required_libs; do
+      # Calculate the lib directory for the $dst_dir (i.e. the directory that we would put
+      # the symlink in if we decided we needed it)
+      local dst_lib_dir=$(calc_dst_lib_dir $(dirname $file))
+
+      # Fast path: If the required library is already in the $dst_lib_dir, then we can
+      # bail out early.
+      #
+      # This can happen if we already symlinked the library into $dst_lib_dir or it can
+      # happen if a shared library has a dependency on another shared library in the
+      # same directory (i.e. libfoo_a.so depends on libfoo_b.so).
+      #
+      # This fast path makes a large difference for Abseil, as it has many shared
+      # libraries that depend on each other.
+      if [[ -f "$dst_lib_dir/$required_lib" ]]; then
+        # If the $dst_lib_dir already has an entry for the required library, then we can
+        # bail out early.
+        continue
+      fi
+
+      # Slow path: Look through the list of source libraries to find a match
       for src_lib in $src_libs; do
         if [[ "$(basename $src_lib)" = "$required_lib" ]]; then
           # We found a dependency.
           symlink_lib "$src_lib" "$file"
+          break
         fi
       done
     done
@@ -647,6 +668,16 @@ function calc_relpath() {
   realpath --relative-to="$dst" "$src"
 }
 
+function calc_dst_lib_dir() {
+  local dst_dir=$1
+  if [[ "$(basename "$dst_dir")" == "lib" ]]; then
+    # Don't insert extraneous ../lib
+    echo "$dst_dir"
+  else
+    echo "$dst_dir/../lib"
+  fi
+}
+
 # Usage: symlink_lib <src lib> <binary>
 # Create a relative symlink to <src lib> where it will on the rpath of <binary>.
 # <src lib> and <binary> must be relative paths from the current directory.
@@ -656,12 +687,7 @@ function symlink_lib() {
   local binary_dir="$(dirname "$binary")"
 
   # The lib/ subfolder is on the rpath of all binaries. Add a symlink there.
-  if [[ "$(basename "$binary_dir")" == "lib" ]]; then
-    # Don't insert extraneous ../lib
-    local dst_lib_dir="$binary_dir"
-  else
-    local dst_lib_dir="$binary_dir/../lib"
-  fi
+  local dst_lib_dir=$(calc_dst_lib_dir "$binary_dir")
   local src_lib_rel_path=$(calc_relpath "$src_lib" "$dst_lib_dir")
 
   # Add the symlink if not already present.

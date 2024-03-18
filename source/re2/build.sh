@@ -35,17 +35,48 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
-  # For some reason, re2 doesnt play nice with prefix installations and other
-  # typical configuration parameters
-  EXTENSION=
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    EXTENSION=.bak
+  # re2 added an abseil-cpp dependency in 2023-06-01. If the CMakeLists.txt exists
+  # and references absl, then we need to add that dependency (which is easier to do
+  # if we build with CMake).
+  if [[ -f CMakeLists.txt ]] && grep -q "absl" CMakeLists.txt ; then
+    # Find the location of abslConfig.cmake in abseil-cpp's directory
+    # This can't be hard-coded, because it varies across distributions (lib vs lib64).
+    ABSL_CONFIG_LOCATION=$(find $BUILD_DIR/abseil-cpp-${ABSEIL_CPP_VERSION} -name 'abslConfig.cmake')
+    [[ -f $ABSL_CONFIG_LOCATION ]]
+    ABSL_CONFIG_DIR=$(dirname ${ABSL_CONFIG_LOCATION})
+
+    # Need separate builds for static library versus shared library
+    rm -rf build_static
+    mkdir build_static
+    pushd build_static
+    wrap cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
+         -Dabsl_DIR=$ABSL_CONFIG_DIR ..
+    wrap make -j${BUILD_THREADS:-4}
+    wrap make install
+    popd
+
+    rm -rf build_shared
+    mkdir build_shared
+    pushd build_shared
+    wrap cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RELEASE \
+         -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
+         -Dabsl_DIR=$ABSL_CONFIG_DIR ..
+    wrap make -j${BUILD_THREADS:-4}
+    wrap make install
+    popd
+  else
+    # For some reason, re2 doesn't play nice with prefix installations and other
+    # typical configuration parameters
+    EXTENSION=
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      EXTENSION=.bak
+    fi
+    sed -i $EXTENSION 's/CXXFLAGS=-Wall/CXXFLAGS+=-Wall/' Makefile
+    sed -i $EXTENSION 's/LDFLAGS=-pthread/LDFLAGS+=-pthread/' Makefile
+    sed -i $EXTENSION 's/CXX=g\+\+/CXX?=g\+\+/' Makefile
+    sed -i $EXTENSION 's/prefix=\/usr/prefix?=\/usr/' Makefile
+    prefix=$LOCAL_INSTALL wrap make -j${BUILD_THREADS:-4} install
   fi
-  sed -i $EXTENSION 's/CXXFLAGS=-Wall/CXXFLAGS+=-Wall/' Makefile
-  sed -i $EXTENSION 's/LDFLAGS=-pthread/LDFLAGS+=-pthread/' Makefile
-  sed -i $EXTENSION 's/CXX=g\+\+/CXX?=g\+\+/' Makefile
-  sed -i $EXTENSION 's/prefix=\/usr/prefix?=\/usr/' Makefile
-  prefix=$LOCAL_INSTALL wrap make -j${BUILD_THREADS:-4} install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
