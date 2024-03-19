@@ -30,13 +30,24 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
-  wrap cmake -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} .
+  # Gtest's CMake builds either shared or static but not both. Build each separately.
+  mkdir -p build_shared
+  pushd build_shared
+  wrap cmake -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} -DBUILD_SHARED_LIBS=ON ..
   wrap make -j${BUILD_THREADS:-4}
+  popd
+
+  mkdir -p build_static
+  pushd build_static
+  wrap cmake -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} ..
+  wrap make -j${BUILD_THREADS:-4}
+  popd
 
   # Gtest doesnt provide a install target so we make one
   mkdir -p $LOCAL_INSTALL/lib
   mkdir -p $LOCAL_INSTALL/include
-  install libgtest.a libgtest_main.a $LOCAL_INSTALL/lib
+  install build_shared/libgtest.so build_shared/libgtest_main.so build_static/libgtest.a\
+      build_static/libgtest_main.a $LOCAL_INSTALL/lib
   cp -R include/gtest $LOCAL_INSTALL/include
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
