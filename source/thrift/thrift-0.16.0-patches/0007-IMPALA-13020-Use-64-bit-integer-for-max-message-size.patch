@@ -1,0 +1,132 @@
+From 7eaca019499ec8d9e1e739170197c33b1d6eb8e7 Mon Sep 17 00:00:00 2001
+From: Joe McDonnell <joemcdonnell@cloudera.com>
+Date: Wed, 17 Apr 2024 11:57:16 -0700
+Subject: [PATCH] IMPALA-13020: Use 64-bit integer for max message size on C++
+
+Currently, the max message size is specified with a 32-bit signed
+integer, so it maxes out at 2GB. Impala has use cases where a
+message can exceed 2GB, so this modifies the C++ library to use
+int64_t for the limit (and other associated variables). This allows
+Impala to specify a higher limit for its internal communication.
+This uses int64_t rather than 'long long' for clarity.
+---
+ lib/cpp/src/thrift/TConfiguration.h       | 12 ++++++-----
+ lib/cpp/src/thrift/transport/TTransport.h | 25 ++++++++++++-----------
+ 2 files changed, 20 insertions(+), 17 deletions(-)
+
+diff --git a/lib/cpp/src/thrift/TConfiguration.h b/lib/cpp/src/thrift/TConfiguration.h
+index 5bff440a0..ac2dc7f3c 100644
+--- a/lib/cpp/src/thrift/TConfiguration.h
++++ b/lib/cpp/src/thrift/TConfiguration.h
+@@ -20,29 +20,31 @@
+ #ifndef THRIFT_TCONFIGURATION_H
+ #define THRIFT_TCONFIGURATION_H
+ 
++#include <cstdint>
++
+ namespace apache {
+ namespace thrift {
+ 
+ class TConfiguration
+ {
+ public:
+-  TConfiguration(int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE, 
++  TConfiguration(int64_t maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE, 
+                 int maxFrameSize = DEFAULT_MAX_FRAME_SIZE, int recursionLimit = DEFAULT_RECURSION_DEPTH)
+     : maxMessageSize_(maxMessageSize), maxFrameSize_(maxFrameSize), recursionLimit_(recursionLimit) {}
+ 
+-  const static int DEFAULT_MAX_MESSAGE_SIZE = 100 * 1024 * 1024;
++  const static int64_t DEFAULT_MAX_MESSAGE_SIZE = 100 * 1024 * 1024;
+   const static int DEFAULT_MAX_FRAME_SIZE = 16384000;      // this value is used consistently across all Thrift libraries
+   const static int DEFAULT_RECURSION_DEPTH = 64;
+ 
+-  inline int  getMaxMessageSize() { return maxMessageSize_; }
+-  inline void setMaxMessageSize(int maxMessageSize) { maxMessageSize_ = maxMessageSize; } 
++  inline int64_t  getMaxMessageSize() { return maxMessageSize_; }
++  inline void setMaxMessageSize(int64_t maxMessageSize) { maxMessageSize_ = maxMessageSize; } 
+   inline int getMaxFrameSize() { return maxFrameSize_; }
+   inline void setMaxFrameSize(int maxFrameSize) { maxFrameSize_ = maxFrameSize; }
+   inline int getRecursionLimit() { return recursionLimit_; }
+   inline void setRecursionLimit(int recursionLimit) { recursionLimit_ = recursionLimit; }
+ 
+ private:
+-  int maxMessageSize_ = DEFAULT_MAX_MESSAGE_SIZE;
++  int64_t maxMessageSize_ = DEFAULT_MAX_MESSAGE_SIZE;
+   int maxFrameSize_ = DEFAULT_MAX_FRAME_SIZE;
+   int recursionLimit_ = DEFAULT_RECURSION_DEPTH;
+ 
+diff --git a/lib/cpp/src/thrift/transport/TTransport.h b/lib/cpp/src/thrift/transport/TTransport.h
+index 52b3a0a4d..4b2650892 100644
+--- a/lib/cpp/src/thrift/transport/TTransport.h
++++ b/lib/cpp/src/thrift/transport/TTransport.h
+@@ -23,6 +23,7 @@
+ #include <thrift/Thrift.h>
+ #include <thrift/TConfiguration.h>
+ #include <thrift/transport/TTransportException.h>
++#include <cstdint>
+ #include <memory>
+ #include <string>
+ 
+@@ -260,9 +261,9 @@ public:
+    *
+    * @param size  real message size
+    */
+-  void updateKnownMessageSize(long int size)
++  void updateKnownMessageSize(int64_t size)
+   {
+-    long int consumed = knownMessageSize_ - remainingMessageSize_;
++    int64_t consumed = knownMessageSize_ - remainingMessageSize_;
+     resetConsumedMessageSize(size);
+     countConsumedMessageBytes(consumed);
+   }
+@@ -272,7 +273,7 @@ public:
+    *
+    * @param numBytes  numBytes bytes of data
+    */
+-  void checkReadBytesAvailable(long int numBytes)
++  void checkReadBytesAvailable(int64_t numBytes)
+   {
+     if (remainingMessageSize_ < numBytes)
+       throw TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
+@@ -280,21 +281,21 @@ public:
+ 
+ protected:
+   std::shared_ptr<TConfiguration> configuration_;
+-  long int remainingMessageSize_;
+-  long int knownMessageSize_;
++  int64_t remainingMessageSize_;
++  int64_t knownMessageSize_;
+ 
+-  inline long int getRemainingMessageSize() { return remainingMessageSize_; }
+-  inline void setRemainingMessageSize(long int remainingMessageSize) { remainingMessageSize_ = remainingMessageSize; }
+-  inline int getMaxMessageSize() { return configuration_->getMaxMessageSize(); }
+-  inline long int getKnownMessageSize() { return knownMessageSize_; }
+-  void setKnownMessageSize(long int knownMessageSize) { knownMessageSize_ = knownMessageSize; }
++  inline int64_t getRemainingMessageSize() { return remainingMessageSize_; }
++  inline void setRemainingMessageSize(int64_t remainingMessageSize) { remainingMessageSize_ = remainingMessageSize; }
++  inline int64_t getMaxMessageSize() { return configuration_->getMaxMessageSize(); }
++  inline int64_t getKnownMessageSize() { return knownMessageSize_; }
++  void setKnownMessageSize(int64_t knownMessageSize) { knownMessageSize_ = knownMessageSize; }
+ 
+   /**  
+    * Resets RemainingMessageSize to the configured maximum
+    * 
+    *  @param newSize  configured size
+    */
+-  void resetConsumedMessageSize(long newSize = -1)
++  void resetConsumedMessageSize(int64_t newSize = -1)
+   {
+     // full reset 
+     if (newSize < 0)
+@@ -317,7 +318,7 @@ protected:
+    * 
+    *  @param numBytes  Consumes numBytes
+    */
+-  void countConsumedMessageBytes(long int numBytes)
++  void countConsumedMessageBytes(int64_t numBytes)
+   {
+     if (remainingMessageSize_ >= numBytes)
+     {
+-- 
+2.25.1
+
