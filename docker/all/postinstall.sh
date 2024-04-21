@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2019 Cloudera Inc.
+# Copyright 2019-2025 Cloudera Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,21 +59,62 @@ set_default_python() {
   python -V > /dev/null
 }
 
-install_aws() {
-  if command -v pip3 ; then
-    # Use Python 3 if available
-    pip3 install awscli==1.29.44
-    return
+install_awscliv2() {
+  local ARCH_NAME=$(uname -p)
+  if [[ $ARCH_NAME != 'aarch64' && $ARCH_NAME != 'x86_64' ]]; then
+    echo 'This script works only for x86_64 and aarch64 architectures; this is "${ARCH_NAME}"'
+    return 1
   fi
 
-  # Install the last version of pip that has official Python 2.7 support (version 20.3.4).
-  if ! command -v pip 2> /dev/null; then
-    dl_verify https://raw.githubusercontent.com/pypa/get-pip/20.3.4/get-pip.py 95c5ee602b2f3cc50ae053d716c3c89bea62c58568f64d7d25924d399b2d5218
-    python get-pip.py "pip==20.3.4"
-  fi
-  # This is the last version of awscli that supports Python 2.7. It is new enough to also get
-  # support relatively recent versions of Python 3 as well (e.g. Python 3.10).
-  pip install awscli==1.19.112
+  local AWS_INSTALLER_DIR=$(mktemp -d)
+  local AWS_INSTALLER=${AWS_INSTALLER_DIR}/awscliv2.zip
+  local AWS_INSTALLER_SIG=${AWS_INSTALLER}.sig
+  wget -nv -O ${AWS_INSTALLER} "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH_NAME}.zip"
+
+  # Verify the signature of the download ZIP file
+  wget -nv -O ${AWS_INSTALLER_SIG} "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH_NAME}.zip.sig"
+
+  cat > $AWS_INSTALLER_DIR/awscliv2-public-key << EOF
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQINBF2Cr7UBEADJZHcgusOJl7ENSyumXh85z0TRV0xJorM2B/JL0kHOyigQluUG
+ZMLhENaG0bYatdrKP+3H91lvK050pXwnO/R7fB/FSTouki4ciIx5OuLlnJZIxSzx
+PqGl0mkxImLNbGWoi6Lto0LYxqHN2iQtzlwTVmq9733zd3XfcXrZ3+LblHAgEt5G
+TfNxEKJ8soPLyWmwDH6HWCnjZ/aIQRBTIQ05uVeEoYxSh6wOai7ss/KveoSNBbYz
+gbdzoqI2Y8cgH2nbfgp3DSasaLZEdCSsIsK1u05CinE7k2qZ7KgKAUIcT/cR/grk
+C6VwsnDU0OUCideXcQ8WeHutqvgZH1JgKDbznoIzeQHJD238GEu+eKhRHcz8/jeG
+94zkcgJOz3KbZGYMiTh277Fvj9zzvZsbMBCedV1BTg3TqgvdX4bdkhf5cH+7NtWO
+lrFj6UwAsGukBTAOxC0l/dnSmZhJ7Z1KmEWilro/gOrjtOxqRQutlIqG22TaqoPG
+fYVN+en3Zwbt97kcgZDwqbuykNt64oZWc4XKCa3mprEGC3IbJTBFqglXmZ7l9ywG
+EEUJYOlb2XrSuPWml39beWdKM8kzr1OjnlOm6+lpTRCBfo0wa9F8YZRhHPAkwKkX
+XDeOGpWRj4ohOx0d2GWkyV5xyN14p2tQOCdOODmz80yUTgRpPVQUtOEhXQARAQAB
+tCFBV1MgQ0xJIFRlYW0gPGF3cy1jbGlAYW1hem9uLmNvbT6JAlQEEwEIAD4CGwMF
+CwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQT7Xbd/1cEYuAURraimMQrMRnJHXAUC
+ZqFYbwUJCv/cOgAKCRCmMQrMRnJHXKYuEAC+wtZ611qQtOl0t5spM9SWZuszbcyA
+0xBAJq2pncnp6wdCOkuAPu4/R3UCIoD2C49MkLj9Y0Yvue8CCF6OIJ8L+fKBv2DI
+yWZGmHL0p9wa/X8NCKQrKxK1gq5PuCzi3f3SqwfbZuZGeK/ubnmtttWXpUtuU/Iz
+VR0u/0sAy3j4uTGKh2cX7XnZbSqgJhUk9H324mIJiSwzvw1Ker6xtH/LwdBeJCck
+bVBdh3LZis4zuD4IZeBO1vRvjot3Oq4xadUv5RSPATg7T1kivrtLCnwvqc6L4LnF
+0OkNysk94L3LQSHyQW2kQS1cVwr+yGUSiSp+VvMbAobAapmMJWP6e/dKyAUGIX6+
+2waLdbBs2U7MXznx/2ayCLPH7qCY9cenbdj5JhG9ibVvFWqqhSo22B/URQE/CMrG
++3xXwtHEBoMyWEATr1tWwn2yyQGbkUGANneSDFiTFeoQvKNyyCFTFO1F2XKCcuDs
+19nj34PE2TJilTG2QRlMr4D0NgwLLAMg2Los1CK6nXWnImYHKuaKS9LVaCoC8vu7
+IRBik1NX6SjrQnftk0M9dY+s0ZbAN1gbdjZ8H3qlbl/4TxMdr87m8LP4FZIIo261
+Eycv34pVkCePZiP+dgamEiQJ7IL4ZArio9mv6HbDGV6mLY45+l6/0EzCwkI5IyIf
+BfWC9s/USgxchg==
+=ptgS
+-----END PGP PUBLIC KEY BLOCK-----
+EOF
+
+  gpg --import $AWS_INSTALLER_DIR/awscliv2-public-key
+  gpg --verify ${AWS_INSTALLER_SIG} ${AWS_INSTALLER}
+
+  pushd ${AWS_INSTALLER_DIR}
+  unzip ${AWS_INSTALLER}
+  ./aws/install --bin-dir /usr/bin
+
+  popd
+  rm -rf ${AWS_INSTALLER_DIR}
 }
 
 install_mvn() {
@@ -103,6 +144,6 @@ cd /usr/local
 # NOTE: If we run these in parallel, we need to be careful about keeping the return
 #       codes. Running serial for now, because performance is not important here.
 set_default_python
-install_aws
+install_awscliv2
 install_mvn
 install_ccache
