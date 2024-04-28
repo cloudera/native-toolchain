@@ -97,7 +97,7 @@ if needs_build_package ; then
     exit 1
   fi
   add_gcc_to_ld_library_path
-  wrap make -j"${BUILD_THREADS:-4}" install
+  wrap make VERBOSE=1 -j"${BUILD_THREADS:-4}" install
   cd contrib/fb303
   rm -f config.cache
   chmod 755 ./bootstrap.sh
@@ -107,7 +107,7 @@ if needs_build_package ; then
     --with-boost="${BOOST_ROOT}" \
     --with-java=no --with-php=no --with-cpp=no --prefix="${LOCAL_INSTALL}" \
     --with-thriftpath="${LOCAL_INSTALL}"
-  wrap make -j"${BUILD_THREADS}" install
+  wrap make VERBOSE=1 -j"${BUILD_THREADS}" install
 
   # Fake the share/fb303/if
   mkdir -p ${LOCAL_INSTALL}/share/fb303/if

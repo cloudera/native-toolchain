@@ -36,6 +36,6 @@ if needs_build_package ; then
   # ignored if CMAKE_C_FLAGS is defined. We should add $CFLAGS in the flags as well.
   wrap cmake -DBUILD_STATIC_LIBS=ON -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
       -DCMAKE_C_FLAGS="$CFLAGS -fno-omit-frame-pointer" -DCMAKE_BUILD_TYPE=RELEASE .
-  wrap make -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

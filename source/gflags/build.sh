@@ -36,6 +36,6 @@ if needs_build_package ; then
        -DREGISTER_INSTALL_PREFIX=OFF
   # Previously, this would pass in CFLAGS to force PIC compilation. The default CFLAGS
   # force PIC compilation, so nothing special is needed.
-  wrap make -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

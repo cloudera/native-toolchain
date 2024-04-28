@@ -34,13 +34,13 @@ if needs_build_package ; then
   mkdir -p build_shared
   pushd build_shared
   wrap cmake -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} -DBUILD_SHARED_LIBS=ON ..
-  wrap make -j${BUILD_THREADS:-4}
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
   popd
 
   mkdir -p build_static
   pushd build_static
   wrap cmake -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} ..
-  wrap make -j${BUILD_THREADS:-4}
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
   popd
 
   # Gtest does not provide a install target so we make one

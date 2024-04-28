@@ -39,14 +39,14 @@ if needs_build_package ; then
   wrap cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RELEASE \
              -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
              -DCMAKE_CXX_FLAGS="$CXXFLAGS -fno-omit-frame-pointer" ..
-  wrap make -C . -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -C . -j${BUILD_THREADS:-4} install
   popd
 
   mkdir -p build_static
   pushd build_static
   wrap cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
              -DCMAKE_CXX_FLAGS="$CXXFLAGS -fno-omit-frame-pointer" ..
-  wrap make -C . -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -C . -j${BUILD_THREADS:-4} install
   popd
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION

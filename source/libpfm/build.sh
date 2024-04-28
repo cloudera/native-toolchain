@@ -25,7 +25,7 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
-  wrap make -j$BUILD_THREADS
+  wrap make VERBOSE=1 -j$BUILD_THREADS
   wrap make PREFIX=$LOCAL_INSTALL install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

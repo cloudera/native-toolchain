@@ -32,7 +32,7 @@ if needs_build_package ; then
 
   wrap ./autogen.sh
   wrap ./configure --with-pic --prefix=$LOCAL_INSTALL
-  wrap make -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

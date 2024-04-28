@@ -37,7 +37,7 @@ if needs_build_package ; then
     -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
     -DBOOST_ROOT=${BOOST_ROOT} \
     ..
-  wrap make -C . -j${BUILD_THREADS:-4}
+  wrap make VERBOSE=1 -C . -j${BUILD_THREADS:-4}
 
   # Different versions of CMake produce different locations for the avro-c.pc file
   if [[ -e avro-c.pc ]]; then

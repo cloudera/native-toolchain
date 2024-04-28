@@ -38,7 +38,7 @@ if needs_build_package ; then
   pushd "gmp-${GMP_VERSION}"
   GMP_INSTALL=$(pwd)/install
   ./configure --prefix=${GMP_INSTALL} > $BUILD_LOG 2>&1
-  wrap make -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
   popd
 
   ./configure --prefix=$LOCAL_INSTALL --with-libgmp-prefix=${GMP_INSTALL} > $BUILD_LOG 2>&1
@@ -51,7 +51,7 @@ if needs_build_package ; then
   sed -i $EXTENSION 's/MAKEINFO = .*missing makeinfo$/MAKEINFO = \/bin\/true/' Makefile
   sed -i $EXTENSION 's/MAKEINFO = @MAKEINFO@$/MAKEINFO = \/bin\/true/' gdb/Makefile.in
 
-  wrap make -j${BUILD_THREADS:-4}
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
   wrap make install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION

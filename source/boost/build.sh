@@ -40,6 +40,7 @@ if needs_build_package ; then
   CXXFLAGS+=" -Wno-deprecated-declarations"
   # Update compilers to use our toolchain
   wrap ./bootstrap.sh --without-libraries=python --prefix=$LOCAL_INSTALL cxxflags="$CXXFLAGS"
-  wrap ./b2 -s"NO_BZIP2=1" boost.locale.icu=off $TOOLSET cxxflags="$CXXFLAGS" linkflags="$CXXFLAGS" --prefix=$LOCAL_INSTALL -j"${BUILD_THREADS:-4}" install
+  # -d+2 shows the compilation commands
+  wrap ./b2 -s"NO_BZIP2=1" boost.locale.icu=off -d+2 $TOOLSET cxxflags="$CXXFLAGS" linkflags="$CXXFLAGS" --prefix=$LOCAL_INSTALL -j"${BUILD_THREADS:-4}" install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

@@ -142,7 +142,7 @@ function build {
       -DCMAKE_BUILD_TYPE=Release \
       -DNO_TESTS=1 \
       -DCMAKE_INSTALL_PREFIX="$RELEASE_INSTALL_DIR" ..
-  wrap make -j$BUILD_THREADS --load-average=${BUILD_THREADS}
+  wrap make VERBOSE=1 -j$BUILD_THREADS --load-average=${BUILD_THREADS}
   install_kudu "$RELEASE_INSTALL_DIR"
   popd
 
@@ -155,7 +155,7 @@ function build {
       -DKUDU_LINK=static \
       -DNO_TESTS=1 \
       -DCMAKE_INSTALL_PREFIX="$DEBUG_INSTALL_DIR" ..
-  wrap make -j$BUILD_THREADS --load-average=${BUILD_THREADS}
+  wrap make VERBOSE=1 -j$BUILD_THREADS --load-average=${BUILD_THREADS}
   install_kudu "$DEBUG_INSTALL_DIR"
   popd
 

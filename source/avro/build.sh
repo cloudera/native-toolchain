@@ -33,7 +33,7 @@ if needs_build_package ; then
   mkdir -p build
   cd build
   wrap cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL ..
-  wrap make -C . -j${BUILD_THREADS:-4}
+  wrap make VERBOSE=1 -C . -j${BUILD_THREADS:-4}
 
   # Different versions of CMake produce different locations for the avro-c.pc file
   if [[ -e avro-c.pc ]]; then

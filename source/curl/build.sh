@@ -30,7 +30,9 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
-  wrap ./configure --with-pic --with-openssl --prefix=$LOCAL_INSTALL
+  # --disable-silent-rules enables verbose output including the compilation command
+  wrap ./configure --with-pic --with-openssl --disable-silent-rules \
+      --prefix=$LOCAL_INSTALL
   wrap make -j${BUILD_THREADS:-4} install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION

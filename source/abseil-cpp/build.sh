@@ -45,7 +45,7 @@ mkdir build_static
 pushd build_static
 wrap cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
      -DABSL_ENABLE_INSTALL=ON -DABSL_BUILD_TESTING=OFF ..
-wrap make -j${BUILD_THREADS:-4}
+wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
 wrap make install
 popd
 
@@ -55,7 +55,7 @@ pushd build_shared
 wrap cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RELEASE \
      -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
      -DABSL_ENABLE_INSTALL=ON -DABSL_BUILD_TESTING=OFF ..
-wrap make -j${BUILD_THREADS:-4}
+wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
 wrap make install
 popd
 

@@ -41,7 +41,7 @@ if needs_build_package ; then
   wrap cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
        -DBENCHMARK_ENABLE_TESTING=OFF -DBENCHMARK_ENABLE_LIBPFM=ON \
        -DPFM_ROOT=$BUILD_DIR/libpfm-${LIBPFM_VERSION} ..
-  wrap make -j${BUILD_THREADS:-4}
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
   wrap make install
   popd
 
@@ -52,7 +52,7 @@ if needs_build_package ; then
        -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
        -DBENCHMARK_ENABLE_TESTING=OFF -DBENCHMARK_ENABLE_LIBPFM=ON \
        -DPFM_ROOT=$BUILD_DIR/libpfm-${LIBPFM_VERSION} ..
-  wrap make -j${BUILD_THREADS:-4}
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
   wrap make install
   popd
 

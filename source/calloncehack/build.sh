@@ -27,6 +27,6 @@ prepare $THIS_DIR
 if needs_build_package ; then
   setup_extracted_package_build $PACKAGE $PACKAGE_VERSION $THIS_DIR/calloncehack
   wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL
-  wrap make -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

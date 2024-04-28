@@ -45,7 +45,8 @@ if needs_build_package ; then
     setup_package_build $PACKAGE $PACKAGE_VERSION
   fi
   add_gcc_to_ld_library_path
-  wrap ./configure --with-pic --prefix=$LOCAL_INSTALL
+  # --disable-silent-rules enables verbose output including the compilation command
+  wrap ./configure --disable-silent-rules --with-pic --prefix=$LOCAL_INSTALL
   wrap make -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

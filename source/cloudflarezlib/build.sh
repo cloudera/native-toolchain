@@ -42,12 +42,12 @@ setup_package_build $PACKAGE $PACKAGE_VERSION
 
 # Build static lib
 wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL
-wrap make -j${BUILD_THREADS:-4}
+wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
 wrap make install
 
 # Build shared lib
 wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DBUILD_SHARED_LIBS=ON
-wrap make -j${BUILD_THREADS:-4}
+wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
 wrap make install
 
 finalize_package_build $PACKAGE $PACKAGE_VERSION

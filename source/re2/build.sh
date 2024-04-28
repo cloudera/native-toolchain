@@ -51,7 +51,7 @@ if needs_build_package ; then
     pushd build_static
     wrap cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
          -Dabsl_DIR=$ABSL_CONFIG_DIR ..
-    wrap make -j${BUILD_THREADS:-4}
+    wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
     wrap make install
     popd
 
@@ -61,7 +61,7 @@ if needs_build_package ; then
     wrap cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RELEASE \
          -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
          -Dabsl_DIR=$ABSL_CONFIG_DIR ..
-    wrap make -j${BUILD_THREADS:-4}
+    wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
     wrap make install
     popd
   else
@@ -75,7 +75,7 @@ if needs_build_package ; then
     sed -i $EXTENSION 's/LDFLAGS=-pthread/LDFLAGS+=-pthread/' Makefile
     sed -i $EXTENSION 's/CXX=g\+\+/CXX?=g\+\+/' Makefile
     sed -i $EXTENSION 's/prefix=\/usr/prefix?=\/usr/' Makefile
-    prefix=$LOCAL_INSTALL wrap make -j${BUILD_THREADS:-4} install
+    prefix=$LOCAL_INSTALL wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
   fi
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION

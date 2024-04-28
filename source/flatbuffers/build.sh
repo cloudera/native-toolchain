@@ -45,6 +45,6 @@ if needs_build_package ; then
   wrap cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL} \
       -DCMAKE_CXX_FLAGS="$CXXFLAGS" -DFLATBUFFERS_BUILD_TESTS="OFF" \
       -DCMAKE_BUILD_TYPE=Release
-  wrap make -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

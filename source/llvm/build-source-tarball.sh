@@ -181,11 +181,11 @@ function build_llvm() {
       -DLLVM_PARALLEL_LINK_JOBS=${BUILD_THREADS:-4} \
       ${EXTRA_CMAKE_ARGS}
 
-  wrap make -j${BUILD_THREADS:-4} --load-average=${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} --load-average=${BUILD_THREADS:-4} install
   popd
 
   pushd ${THIS_DIR}/build-$PACKAGE_STRING/tools/clang
-  wrap make -j${BUILD_THREADS:-4} --load-average=${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} --load-average=${BUILD_THREADS:-4} install
   popd
 
   function strip_if_possible() {

@@ -38,7 +38,7 @@ if needs_build_package; then
   sed -i -r "s/^(LINUX_CFLAGS\s*=.*)/\1 ${CFLAGS}/" makefile
 
   wrap make clean
-  wrap make -j${BUILD_THREADS-4}
+  wrap make VERBOSE=1 -j${BUILD_THREADS-4}
 
   # Apparently TPC-DS isn't really meant to be installed. So everything needs to be done
   # manually.

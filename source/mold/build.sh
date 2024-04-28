@@ -37,7 +37,7 @@ if needs_build_package ; then
   mkdir -p build
   pushd build
   wrap cmake -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=Release ..
-  wrap make -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
   popd
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION

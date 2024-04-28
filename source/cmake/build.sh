@@ -40,7 +40,7 @@ if needs_build_package ; then
   #   desired behavior.
   wrap ./bootstrap --prefix=${LOCAL_INSTALL} --parallel=${BUILD_THREADS} \
     -- -DKWSYS_PROCESS_USE_SELECT=0 -DKWSYSPE_USE_SELECT=0
-  wrap make -j${BUILD_THREADS}
+  wrap make VERBOSE=1 -j${BUILD_THREADS}
   wrap make install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION

@@ -34,7 +34,7 @@ if needs_build_package ; then
   # we're not compiling the rest of our code to not omit frame pointers but it
   # still seems to generate useful profiling data.
   wrap ./configure --enable-frame-pointers --with-pic --prefix=$LOCAL_INSTALL
-  wrap make -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

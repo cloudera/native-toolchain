@@ -37,7 +37,7 @@ if needs_build_package ; then
   #   see https://sourceware.org/bugzilla/show_bug.cgi?id=19520 and IMPALA-5025.
   wrap ./configure --enable-gold --enable-plugins --disable-x86-relax-relocations \
       --prefix=$LOCAL_INSTALL
-  wrap make -j$BUILD_THREADS
+  wrap make VERBOSE=1 -j$BUILD_THREADS
   wrap make install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

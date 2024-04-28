@@ -34,7 +34,7 @@ if needs_build_package ; then
 
   # build in a separate subdirectory for clarity
   mkdir -p build
-  wrap make -C build -f ../Makefile SRC=../ -j${BUILD_THREADS:-4} \
+  wrap make VERBOSE=1 -C build -f ../Makefile SRC=../ -j${BUILD_THREADS:-4} \
       PREFIX="$LOCAL_INSTALL" \
       SHARED_LDFLAGS="-shared -Wl,-soname,$SHARED_LIB_SONAME" \
       CCTZ_SHARED_LIB="$SHARED_LIB_VER_NAME" \

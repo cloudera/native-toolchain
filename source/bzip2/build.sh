@@ -29,10 +29,10 @@ if needs_build_package ; then
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
-  wrap make install PREFIX=$LOCAL_INSTALL
+  wrap make VERBOSE=1 install PREFIX=$LOCAL_INSTALL
   # This command doesn't respect CFLAGS through the environment variable, so this
   # passes it in explicitly.
-  wrap make -f Makefile-libbz2_so CFLAGS="$CFLAGS"
+  wrap make VERBOSE=1 -f Makefile-libbz2_so CFLAGS="$CFLAGS"
   wrap cp -a libbz2.so* ${LOCAL_INSTALL}/lib/
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
