@@ -374,6 +374,24 @@ function build_fake_package() {
   fi
 }
 
+function upload_to_s3() {
+  local FILENAME=$1
+  local S3_LOCATION=$2
+
+  # Upload to s3 can be flaky on certain platforms, so this retries a few times
+  # to compensate.
+  local NUM_RETRIES=10
+  for ((i=1; i<=${NUM_RETRIES}; i++)); do
+    echo "Uploading ${FILENAME} to ${S3_LOCATION} (attempt #${i})"
+    if aws s3 cp --only-show-errors ${FILENAME} ${S3_LOCATION} ; then
+      echo "Successfully uploaded ${FILENAME} to ${S3_LOCATION}"
+      return 0;
+    fi
+    echo "Failed to upload ${FILENAME} to ${S3_LOCATION}"
+  done
+  return 1;
+}
+
 # Build the RPM or DEB package depending on the operating system.
 # Depends on the LOCAL_INSTALL variable containing the target directory and the
 # TOOLCHAIN_BUILD_ID variable containing a unique string.
@@ -430,16 +448,12 @@ function build_dist_package() {
     local ARCH=$(uname -m)
     local PACKAGE_RELATIVE_URL="build/${TOOLCHAIN_BUILD_ID}/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${BUILD_LABEL}-${ARCH}.tar.gz"
     local PACKAGE_S3_DESTINATION="s3://${S3_BUCKET}/${PACKAGE_RELATIVE_URL}"
-    echo "Uploading ${PACKAGE_FINAL_TGZ} to ${PACKAGE_S3_DESTINATION}"
-    aws s3 cp --only-show-errors \
-        "${PACKAGE_FINAL_TGZ}" "${PACKAGE_S3_DESTINATION}"  || $RET_VAL
+    upload_to_s3 ${PACKAGE_FINAL_TGZ} ${PACKAGE_S3_DESTINATION} || $RET_VAL
     # S3_MIRROR_BUCKET may be empty for experimental builds
     if [[ -n ${S3_MIRROR_BUCKET:-} ]]; then
       local PACKAGE_MIRROR_DESTINATION="s3://${S3_MIRROR_BUCKET}/${PACKAGE_RELATIVE_URL}"
       echo "Uploading to mirror:"
-      echo "Uploading ${PACKAGE_FINAL_TGZ} to ${PACKAGE_MIRROR_DESTINATION}"
-      aws s3 cp --only-show-errors \
-          "${PACKAGE_FINAL_TGZ}" "${PACKAGE_MIRROR_DESTINATION}" || $RET_VAL
+      upload_to_s3 ${PACKAGE_FINAL_TGZ} ${PACKAGE_MIRROR_DESTINATION} || $RET_VAL
     fi
   fi
 }
