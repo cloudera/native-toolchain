@@ -89,10 +89,10 @@ EOF
 }
 
 install_ccache() {
-  dl_verify https://github.com/ccache/ccache/releases/download/v3.3.3/ccache-3.3.3.tar.gz 87a399a2267cfac3f36411fbc12ff8959f408cffd050ad15fe423df88e977e8f
-  tar xvzf ccache-3.3.3.tar.gz
+  dl_verify https://github.com/ccache/ccache/releases/download/v3.7.12/ccache-3.7.12.tar.gz d2abe88d4c283ce960e233583061127b156ffb027c6da3cf10770fc0c7244194
+  tar xvzf ccache-3.7.12.tar.gz
   (
-  cd ccache-3.3.3
+  cd ccache-3.7.12
   ./configure
   make -j
   make install

@@ -124,7 +124,7 @@ def check_mvn_works():
 def check_ccache_works():
   # Older versions of ccache can cause build failures and weirdness (e.g. on Redhat 6)
   # Verify that the version we installed is present.
-  want = '3.3.3'
+  want = '3.7.12'
   LOG.info('Checking that ccache is correctly installed.')
   out = check_output(['ccache', '--version'])[0]
   if want not in out:
@@ -160,6 +160,7 @@ def main():
   check_python_headers_present()
   check_aws_works()
   check_mvn_works()
+  check_ccache_works()
   check_java_version()
 
 
