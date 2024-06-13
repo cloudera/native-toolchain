@@ -77,6 +77,9 @@ if needs_build_package ; then
     --with-go=no \
     --with-qt4=no \
     --with-libevent=no \
+    --with-rs=no \
+    --with-dotnetcore=no \
+    --with-netstd=no \
     ${PIC_LIB_OPTIONS:-} \
     ${CONFIGURE_FLAG_BUILD_SYS}
   # The error code is zero if one or more libraries can be built. To ensure that C++
