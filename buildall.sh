@@ -306,3 +306,13 @@ export ZLIB_VERSION=1.3.1
 AWS_SDK_CPP_VERSION=1.11.485 $SOURCE_DIR/source/aws-sdk-cpp/build.sh
 unset CURL_VERSION
 unset ZLIB_VERSION
+
+################################################################################
+# OpenTelemetry C++
+################################################################################
+{
+  export CURL_VERSION=8.10.1
+  export PROTOBUF_VERSION=3.14.0
+  export ZLIB_VERSION=1.3.1
+  OPENTELEMETRY_CPP_VERSION=1.20.0 $SOURCE_DIR/source/opentelemetry-cpp/build.sh
+}
