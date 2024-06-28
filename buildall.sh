@@ -64,8 +64,8 @@ export -n BZIP2_VERSION
 # Build LLVM 3.7+ with and without assertions. For LLVM 3.7+, the default is a
 # release build with no assertions.
 (
-  LLVM_VERSION=5.0.1-p7 $SOURCE_DIR/source/llvm/build.sh
-  LLVM_VERSION=5.0.1-asserts-p7 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=5.0.1-p8 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=5.0.1-asserts-p8 $SOURCE_DIR/source/llvm/build.sh
 )
 
 ################################################################################

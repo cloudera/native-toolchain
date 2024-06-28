@@ -1,0 +1,69 @@
+From 3d3d2f3139cefdee2b34b57cdf855d532178bc31 Mon Sep 17 00:00:00 2001
+From: JF Bastien <jfbastien@apple.com>
+Date: Thu, 2 Aug 2018 17:35:46 +0000
+Subject: [PATCH 1/1] __c11_atomic_load's _Atomic can be const
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Summary:
+C++11 onwards specs the non-member functions atomic_load and atomic_load_explicit as taking the atomic<T> by const (potentially volatile) pointer. C11, in its infinite wisdom, decided to drop the const, and C17 will fix this with DR459 (the current draft forgot to fix B.16, but that’s not the normative part).
+
+clang’s lib/Headers/stdatomic.h implements these as #define to the __c11_* equivalent, which are builtins with custom typecheck. Fix the typecheck.
+
+D47613 takes care of the libc++ side.
+
+Discussion: http://lists.llvm.org/pipermail/cfe-dev/2018-May/058129.html
+
+<rdar://problem/27426936>
+
+Reviewers: rsmith
+
+Subscribers: cfe-commits
+
+Differential Revision: https://reviews.llvm.org/D47618
+
+llvm-svn: 338743
+---
+ tools/clang/lib/Sema/SemaChecking.cpp | 2 +-
+ tools/clang/test/Sema/atomic-ops.c    | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tools/clang/lib/Sema/SemaChecking.cpp b/tools/clang/lib/Sema/SemaChecking.cpp
+index b2223b755061..676ebe2883d0 100644
+--- a/tools/clang/lib/Sema/SemaChecking.cpp
++++ b/tools/clang/lib/Sema/SemaChecking.cpp
+@@ -2900,7 +2900,7 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
+         << Ptr->getType() << Ptr->getSourceRange();
+       return ExprError();
+     }
+-    if (AtomTy.isConstQualified()) {
++    if ((Form != Load && Form != LoadCopy && AtomTy.isConstQualified())) {
+       Diag(DRE->getLocStart(), diag::err_atomic_op_needs_non_const_atomic)
+         << Ptr->getType() << Ptr->getSourceRange();
+       return ExprError();
+diff --git a/tools/clang/test/Sema/atomic-ops.c b/tools/clang/test/Sema/atomic-ops.c
+index eee1cda8635e..a99a2e2c4c2c 100644
+--- a/tools/clang/test/Sema/atomic-ops.c
++++ b/tools/clang/test/Sema/atomic-ops.c
+@@ -115,7 +115,7 @@ void f(_Atomic(int) *i, const _Atomic(int) *ci,
+   __c11_atomic_load(i, memory_order_seq_cst);
+   __c11_atomic_load(p, memory_order_seq_cst);
+   __c11_atomic_load(d, memory_order_seq_cst);
+-  __c11_atomic_load(ci, memory_order_seq_cst); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
++  __c11_atomic_load(ci, memory_order_seq_cst);
+ 
+   int load_n_1 = __atomic_load_n(I, memory_order_relaxed);
+   int *load_n_2 = __atomic_load_n(P, memory_order_relaxed);
+@@ -219,7 +219,7 @@ void f(_Atomic(int) *i, const _Atomic(int) *ci,
+ 
+   __c11_atomic_init(ci, 0); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
+   __c11_atomic_store(ci, 0, memory_order_release); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
+-  __c11_atomic_load(ci, memory_order_acquire); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
++  __c11_atomic_load(ci, memory_order_acquire);
+ 
+   // Ensure the <stdatomic.h> macros behave appropriately.
+   atomic_int n = ATOMIC_VAR_INIT(123);
+-- 
+2.34.1
+
