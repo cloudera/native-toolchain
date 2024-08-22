@@ -91,6 +91,13 @@ function build {
   [[ -f version.txt ]]
   echo $PACKAGE_VERSION > version.txt
 
+  # Workaround for IMPALA-13309: A Maven repository shut down and maven central only has
+  # gradle-scalafmt at a different artifact path. Patch build.gradle to use the working
+  # path. This won't match anything for newer Kudu versions that don't have this issue.
+  # NOTE: Remove this when we move to a newer Kudu.
+  sed -i 's#compile "cz.alenkacz:gradle-scalafmt#compile "gradle.plugin.cz.alenkacz:gradle-scalafmt#' \
+    java/buildSrc/build.gradle
+
   export GRADLE_USER_HOME="$(pwd)"
 
   # Kudu's dependencies are not in the toolchain. They could be added later.
