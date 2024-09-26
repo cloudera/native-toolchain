@@ -31,8 +31,33 @@ if needs_build_package ; then
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
   # --disable-silent-rules enables verbose output including the compilation command
+  # This disables some functionalities that we don't need (FTP, Gopher, etc), which
+  # reduces surface area for vulnerabilities.
   wrap ./configure --with-pic --with-openssl --disable-silent-rules \
-      --prefix=$LOCAL_INSTALL
+       --with-gssapi \
+       --prefix=$LOCAL_INSTALL \
+       --disable-dict \
+       --disable-file \
+       --disable-ftp \
+       --disable-gopher \
+       --disable-imap \
+       --disable-ldap \
+       --disable-ldaps \
+       --disable-libcurl-option \
+       --disable-mqtt \
+       --disable-pop3 \
+       --disable-rtsp \
+       --disable-smb \
+       --disable-smtp \
+       --disable-telnet \
+       --disable-tftp \
+       --without-brotli \
+       --without-libidn2 \
+       --without-libpsl \
+       --without-librtmp \
+       --without-libssh2 \
+       --without-nghttp2 \
+       --without-zstd
   wrap make -j${BUILD_THREADS:-4} install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION

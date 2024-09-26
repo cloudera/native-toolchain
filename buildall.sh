@@ -268,6 +268,7 @@ ARROW_VERSION=13.0.0 $SOURCE_DIR/source/arrow/build.sh
 # CURL
 ################################################################################
 CURL_VERSION=7.78.0 $SOURCE_DIR/source/curl/build.sh
+CURL_VERSION=8.10.1 $SOURCE_DIR/source/curl/build.sh
 
 # CALLONCEHACK
 ################################################################################
