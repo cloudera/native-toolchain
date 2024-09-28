@@ -48,6 +48,10 @@ RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-inter
   python-devel \
   python-xml
 
+# Earlier packages pull in a Java 17 JRE and set it as the default JRE, breaking our
+# assert-dependency checks. Set it back to Java 8 here.
+RUN update-alternatives --set java /usr/lib64/jvm/jre-1.8.0-openjdk/bin/java
+
 COPY ./all/postinstall.sh /usr/local/bin
 RUN postinstall.sh
 

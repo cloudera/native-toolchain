@@ -2,8 +2,10 @@
 
 We currently support building on the following platforms:
 
-* x86-64 & AArch64 Ubuntu 16.04, 18.04, 20.04
-* x86-64 CentOS 7.x, 8.x
+* x86-64 Ubuntu 16.04, 18.04
+* x86-64 & AArch64 Ubuntu 20.04, 22.04
+* x86-64 CentOS 7.x
+* x86-64 & AArch64 CentOS 8.x; Rocky 9.x
 * x86-86 SLES 12, 15
 
 Other platforms might also work but are not well tested. To set up the

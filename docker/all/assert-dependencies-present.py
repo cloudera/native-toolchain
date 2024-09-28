@@ -20,7 +20,7 @@
 import argparse
 import distutils.core  # noqa: F401
 import distutils.spawn
-import distutils.sysconfig
+import sysconfig
 import subprocess
 import logging
 import os
@@ -49,7 +49,7 @@ def regex_in_list(regex, l):
 
 def check_python_headers_present():
   # Causes thrift to fail silently, so ensure this is present
-  include = os.path.join(distutils.sysconfig.get_python_inc(), 'Python.h')
+  include = os.path.join(sysconfig.get_config_var('INCLUDEPY'), 'Python.h')
   LOG.info('Checking if %s exists', include)
   assert os.path.isfile(include)
 

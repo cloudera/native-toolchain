@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2019 Cloudera Inc.
+# Copyright 2019-2025 Cloudera Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ def passthrough_env(image):
               'TOOLCHAIN_BUILD_ID']
   if 'BUILD_TARGET_LABEL' not in os.environ:
     # Discard docker registry prefix, if it exists.
-    matches = filter(image.endswith, KNOWN_DOCKER_TAGS)
+    matches = [im for im in KNOWN_DOCKER_TAGS if (image.endswith(im))]
     if matches:
       assert len(matches) == 1
       os.environ['BUILD_TARGET_LABEL'] = KNOWN_DOCKER_TAGS[matches[0]]
