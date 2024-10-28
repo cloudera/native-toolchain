@@ -1,0 +1,55 @@
+From 7c73dd7de7c4f14379b781418c6e947ad464c818 Mon Sep 17 00:00:00 2001
+From: Eyizoha <eyizoha@163.com>
+Date: Thu, 15 Aug 2024 18:27:23 +0800
+Subject: [PATCH] Fix bug when parsing NaN, Inf with fraction or exponent parts
+ (fixes #2299)
+
+This patch fixes the issue where parsing NaN or Inf values with
+fractional or exponent parts would return incorrect results
+(e.g., "NaN.2e2" would be parsed as 20).
+Before this patch, the parser would continue to process the fractional
+and exponent parts even after successfully parsing a valid NaN or Inf,
+which could lead to parsing errors. This patch adds a check for such
+cases to skips the parsing of the fractional and exponent parts after
+completing the NaN and Inf parsing.
+---
+ include/rapidjson/reader.h   | 4 ++--
+ test/unittest/readertest.cpp | 3 +++
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/include/rapidjson/reader.h b/include/rapidjson/reader.h
+index 55546601e..f7ef61024 100644
+--- a/include/rapidjson/reader.h
++++ b/include/rapidjson/reader.h
+@@ -1584,7 +1584,7 @@ class GenericReader {
+         // Parse frac = decimal-point 1*DIGIT
+         int expFrac = 0;
+         size_t decimalPosition;
+-        if (Consume(s, '.')) {
++        if (!useNanOrInf && Consume(s, '.')) {
+             decimalPosition = s.Length();
+ 
+             if (RAPIDJSON_UNLIKELY(!(s.Peek() >= '0' && s.Peek() <= '9')))
+@@ -1631,7 +1631,7 @@ class GenericReader {
+ 
+         // Parse exp = e [ minus / plus ] 1*DIGIT
+         int exp = 0;
+-        if (Consume(s, 'e') || Consume(s, 'E')) {
++        if (!useNanOrInf && (Consume(s, 'e') || Consume(s, 'E'))) {
+             if (!useDouble) {
+                 d = static_cast<double>(use64bit ? i64 : i);
+                 useDouble = true;
+diff --git a/test/unittest/readertest.cpp b/test/unittest/readertest.cpp
+index f828dbbe2..06c7d7534 100644
+--- a/test/unittest/readertest.cpp
++++ b/test/unittest/readertest.cpp
+@@ -1836,6 +1836,9 @@ TEST(Reader, ParseNanAndInfinity) {
+     TEST_NAN_INF_ERROR(kParseErrorValueInvalid, "-nan", 1);
+     TEST_NAN_INF_ERROR(kParseErrorValueInvalid, "NAN", 1);
+     TEST_NAN_INF_ERROR(kParseErrorValueInvalid, "-Infinty", 6);
++    TEST_NAN_INF_ERROR(kParseErrorDocumentRootNotSingular, "NaN.2e2", 3);
++    TEST_NAN_INF_ERROR(kParseErrorDocumentRootNotSingular, "Inf.2", 3);
++    TEST_NAN_INF_ERROR(kParseErrorDocumentRootNotSingular, "-InfE2", 4);
+ 
+ #undef TEST_NAN_INF_ERROR
+ #undef TEST_NAN_INF

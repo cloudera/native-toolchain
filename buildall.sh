@@ -194,7 +194,7 @@ AVRO_VERSION=1.7.4-p5 $SOURCE_DIR/source/avro/build.sh
 ################################################################################
 # Build Rapidjson
 ################################################################################
-RAPIDJSON_VERSION=1.1.0 $SOURCE_DIR/source/rapidjson/build.sh
+RAPIDJSON_VERSION=1.1.0-p1 $SOURCE_DIR/source/rapidjson/build.sh
 
 ################################################################################
 # Build Libunwind
