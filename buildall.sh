@@ -299,3 +299,11 @@ LIBPFM_VERSION=4.13.0 $SOURCE_DIR/source/libpfm/build.sh
 export LIBPFM_VERSION=4.13.0
 GOOGLEBENCHMARK_VERSION=1.8.3 $SOURCE_DIR/source/googlebenchmark/build.sh
 unset LIBPFM_VERSION
+
+# AWS-SDK-CPP
+################################################################################
+export CURL_VERSION=8.10.1
+export ZLIB_VERSION=1.3.1
+AWS_SDK_CPP_VERSION=1.11.485 $SOURCE_DIR/source/aws-sdk-cpp/build.sh
+unset CURL_VERSION
+unset ZLIB_VERSION
