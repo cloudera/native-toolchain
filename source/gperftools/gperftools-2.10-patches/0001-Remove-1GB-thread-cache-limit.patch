@@ -1,0 +1,11 @@
+diff -Naur gperftools-2.10/src/thread_cache.cc gperftools-2.10.mod/src/thread_cache.cc
+--- gperftools-2.10/src/thread_cache.cc	2021-02-14 16:12:51.000000000 -0800
++++ gperftools-2.10.mod/src/thread_cache.cc	2025-04-25 11:07:00.230500967 -0700
+@@ -520,7 +520,6 @@
+ void ThreadCache::set_overall_thread_cache_size(size_t new_size) {
+   // Clip the value to a reasonable range
+   if (new_size < kMinThreadCacheSize) new_size = kMinThreadCacheSize;
+-  if (new_size > (1<<30)) new_size = (1<<30);     // Limit to 1GB
+   overall_thread_cache_size_ = new_size;
+ 
+   RecomputePerThreadCacheSize();
