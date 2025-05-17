@@ -171,6 +171,18 @@ RE2_VERSION=2025-11-05 $SOURCE_DIR/source/re2/build.sh
 unset ABSEIL_CPP_VERSION
 
 ################################################################################
+# Build Google tcmalloc
+################################################################################
+export ABSEIL_CPP_VERSION=20250512.2
+TCMALLOC_VERSION=5aa90af663 $SOURCE_DIR/source/tcmalloc/build.sh
+unset ABSEIL_CPP_VERSION
+
+################################################################################
+# Build jemalloc
+################################################################################
+JEMALLOC_VERSION=5.3.0 $SOURCE_DIR/source/jemalloc/build.sh
+
+################################################################################
 # Build Ldap
 ################################################################################
 OPENLDAP_VERSION=2.5.20 $SOURCE_DIR/source/openldap/build.sh

@@ -188,6 +188,9 @@ function setup_package_build() {
   elif [ -f $PKG_NAME-src-${PKG_VERSION}.tar.xz ]; then
     extract_archive $PKG_NAME-src-${PKG_VERSION}.tar.xz
     DIR=$PKG_NAME-src-${PKG_VERSION}
+  elif [ -f ${PKG_NAME}-${PKG_VERSION}.tar.bz2 ]; then
+    extract_archive ${PKG_NAME}-${PKG_VERSION}.tar.bz2
+    DIR=${PKG_NAME}-${PKG_VERSION}
   elif [ -f ${PKG_NAME}-${PKG_VERSION}.zip ]; then
     extract_archive ${PKG_NAME}-${PKG_VERSION}.zip
     DIR=${PKG_NAME}-${PKG_VERSION}
@@ -489,6 +492,9 @@ function extract_archive() {
   case "$ARCHIVE" in
     *.tar.gz | *.tgz | *.parcel)
       tar xzf "$ARCHIVE"
+      ;;
+    *.tar.bz2)
+      tar jxf "$ARCHIVE"
       ;;
     *.xz)
       tar xJf "$ARCHIVE"
