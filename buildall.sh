@@ -132,7 +132,7 @@ GPERFTOOLS_VERSION=2.15-p1 $SOURCE_DIR/source/gperftools/build.sh
 ################################################################################
 # Build glog
 ################################################################################
-GFLAGS_VERSION=2.2.0-p2 GLOG_VERSION=0.6.0-p1 $SOURCE_DIR/source/glog/build.sh
+GFLAGS_VERSION=2.2.0-p2 GLOG_VERSION=0.6.0-p2 $SOURCE_DIR/source/glog/build.sh
 
 ################################################################################
 # Build gtest
