@@ -30,7 +30,7 @@ ABSEIL_CPP_SOURCE_DIR=abseil-cpp-$PACKAGE_VERSION
 if [[ ! -d "${ABSEIL_CPP_SOURCE_DIR}" ]]; then
   git clone $ABSEIL_CPP_GITHUB_URL $ABSEIL_CPP_SOURCE_DIR
   pushd $ABSEIL_CPP_SOURCE_DIR
-  git checkout $PACKAGE_VERSION
+  git checkout $PACKAGE_VERSION -b "abseil${PACKAGE_VERSION}"
   popd
 fi
 
@@ -43,18 +43,14 @@ setup_package_build $PACKAGE $PACKAGE_VERSION
 rm -rf build_static
 mkdir build_static
 pushd build_static
-wrap cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
-     -DABSL_ENABLE_INSTALL=ON -DABSL_BUILD_TESTING=OFF ..
-wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
-wrap make install
-popd
 
-rm -rf build_shared
-mkdir build_shared
-pushd build_shared
-wrap cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RELEASE \
-     -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
-     -DABSL_ENABLE_INSTALL=ON -DABSL_BUILD_TESTING=OFF ..
+# Since everything we do uses c++17, this tells Abseil to use c++17.
+# ABSL_PROPAGATE_CXX_STD=OFF tell it not to specifically propagate the
+# standard library version via its CMake config files. We already set the
+# standard library version ourselves, so it's easier to keep it off.
+wrap cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
+     -DABSL_ENABLE_INSTALL=ON -DABSL_BUILD_TESTING=OFF \
+     -DABSL_PROPAGATE_CXX_STD=OFF -DCMAKE_CXX_STANDARD=17 ..
 wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
 wrap make install
 popd

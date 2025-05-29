@@ -158,7 +158,7 @@ ZSTD_VERSION=1.5.5 $SOURCE_DIR/source/zstd/build.sh
 ################################################################################
 # Build Abseil
 ################################################################################
-ABSEIL_CPP_VERSION=20240116.1 $SOURCE_DIR/source/abseil-cpp/build.sh
+ABSEIL_CPP_VERSION=20250512.2 $SOURCE_DIR/source/abseil-cpp/build.sh
 
 ################################################################################
 # Build re2
@@ -166,8 +166,8 @@ ABSEIL_CPP_VERSION=20240116.1 $SOURCE_DIR/source/abseil-cpp/build.sh
 RE2_VERSION=2023-03-01 $SOURCE_DIR/source/re2/build.sh
 
 # Newer versions of RE2 require Abseil
-export ABSEIL_CPP_VERSION=20240116.1
-RE2_VERSION=2024-03-01 $SOURCE_DIR/source/re2/build.sh
+export ABSEIL_CPP_VERSION=20250512.2
+RE2_VERSION=2025-11-05 $SOURCE_DIR/source/re2/build.sh
 unset ABSEIL_CPP_VERSION
 
 ################################################################################
