@@ -51,15 +51,19 @@ if needs_build_package ; then
       -Drequire.zstd -Dzstd.prefix=${ZSTD_HOME} \
       -projects :hadoop-common,:hadoop-hdfs-native-client,:hadoop-mapreduce-client-nativetask
 
+  # setup_package_build moves the UNPACK_DIR to add the patch level, so that is where
+  # the resulting artifacts will be.
+  PATCHED_DIR="${UNPACK_DIR}${PATCH_VERSION}"
+
   # Copy the libraries we currently use to minimize archive size. Omits libhdfspp, which
   # depends on libprotobuf.
   NATIVE_LIBS=$LOCAL_INSTALL/lib
   mkdir -p $NATIVE_LIBS
   BUILD_PATH=target/native/target/usr/local/lib
-  cp $THIS_DIR/$UNPACK_DIR/hadoop-hdfs-project/hadoop-hdfs-native-client/$BUILD_PATH/libhdfs.* $NATIVE_LIBS/
-  cp $THIS_DIR/$UNPACK_DIR/hadoop-common-project/hadoop-common/$BUILD_PATH/libhadoop.* $NATIVE_LIBS/
+  cp $THIS_DIR/$PATCHED_DIR/hadoop-hdfs-project/hadoop-hdfs-native-client/$BUILD_PATH/libhdfs.* $NATIVE_LIBS/
+  cp $THIS_DIR/$PATCHED_DIR/hadoop-common-project/hadoop-common/$BUILD_PATH/libhadoop.* $NATIVE_LIBS/
   NATIVETASK_PATH=hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-nativetask
-  cp $THIS_DIR/$UNPACK_DIR/$NATIVETASK_PATH/$BUILD_PATH/libnativetask.* $NATIVE_LIBS/
+  cp $THIS_DIR/$PATCHED_DIR/$NATIVETASK_PATH/$BUILD_PATH/libnativetask.* $NATIVE_LIBS/
   # Copy libraries used by hadoop libs. libsnappy is dynamically linked, while libzstd is
   # loaded at runtime. They're in lib/ on Ubuntu and lib64/ on RedHat.
   SNAPPY_LIB_DIR=$SNAPPY_HOME/lib

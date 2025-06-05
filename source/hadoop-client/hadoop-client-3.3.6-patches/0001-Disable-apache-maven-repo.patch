@@ -1,0 +1,26 @@
+diff -Naur hadoop-rel-release-3.3.6/pom.xml hadoop-rel-release-3.3.6-patched/pom.xml
+--- hadoop-rel-release-3.3.6/pom.xml	2023-06-18 01:12:48.000000000 -0700
++++ hadoop-rel-release-3.3.6-patched/pom.xml	2025-06-05 16:36:07.518884013 -0700
+@@ -56,6 +56,12 @@
+       <id>${distMgmtSnapshotsId}</id>
+       <name>${distMgmtSnapshotsName}</name>
+       <url>${distMgmtSnapshotsUrl}</url>
++      <snapshots>
++        <enabled>false</enabled>
++      </snapshots>
++      <releases>
++        <enabled>false</enabled>
++      </releases>
+     </repository>
+     <repository>
+       <id>repository.jboss.org</id>
+@@ -63,6 +69,9 @@
+       <snapshots>
+         <enabled>false</enabled>
+       </snapshots>
++      <releases>
++        <enabled>false</enabled>
++      </releases>
+     </repository>
+   </repositories>
+ 
