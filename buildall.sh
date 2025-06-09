@@ -54,7 +54,6 @@ BZIP2_VERSION=1.0.8-p2 $SOURCE_DIR/source/bzip2/build.sh
 export BZIP2_VERSION=1.0.8-p2
 # For now, provide both Python 2 and 3 until we can switch over to Python 3.
 PYTHON_VERSION=2.7.16 $SOURCE_DIR/source/python/build.sh
-PYTHON_VERSION=3.7.16 $SOURCE_DIR/source/python/build.sh
 PYTHON_VERSION=3.8.18 $SOURCE_DIR/source/python/build.sh
 
 export -n BZIP2_VERSION
@@ -92,14 +91,11 @@ CRCUTIL_VERSION=2903870057d2f1f109b245650be29e856dc8b646\
 ################################################################################
 # Build ZLib
 ################################################################################
-ZLIB_VERSION=1.2.13 $SOURCE_DIR/source/zlib/build.sh
 ZLIB_VERSION=1.3.1 $SOURCE_DIR/source/zlib/build.sh
 
 ################################################################################
 # Build Cloudflare ZLib
 ################################################################################
-# 9e601a3f37 is latest as of 03/27/2023
-CLOUDFLAREZLIB_VERSION=9e601a3f37 $SOURCE_DIR/source/cloudflarezlib/build.sh
 # 7aa510344e is latest as of 11/23/2023
 CLOUDFLAREZLIB_VERSION=7aa510344e $SOURCE_DIR/source/cloudflarezlib/build.sh
 
@@ -108,7 +104,7 @@ CLOUDFLAREZLIB_VERSION=7aa510344e $SOURCE_DIR/source/cloudflarezlib/build.sh
 #  * depends on boost, zlib and openssl
 ################################################################################
 export BOOST_VERSION=1.74.0-p1
-export ZLIB_VERSION=1.2.13
+export ZLIB_VERSION=1.3.1
 export PYTHON_VERSION=2.7.16
 
 THRIFT_VERSION=0.11.0-p5 $SOURCE_DIR/source/thrift/build.sh
@@ -135,11 +131,8 @@ GPERFTOOLS_VERSION=2.15-p1 $SOURCE_DIR/source/gperftools/build.sh
 GFLAGS_VERSION=2.2.0-p2 GLOG_VERSION=0.6.0-p2 $SOURCE_DIR/source/glog/build.sh
 
 ################################################################################
-# Build gtest
+# Build googletest
 ################################################################################
-GTEST_VERSION=1.6.0 $SOURCE_DIR/source/gtest/build.sh
-
-# New versions of gtest are named googletest
 GOOGLETEST_VERSION=1.14.0 $SOURCE_DIR/source/googletest/build.sh
 
 ################################################################################
@@ -167,7 +160,6 @@ ABSEIL_CPP_VERSION=20240116.1 $SOURCE_DIR/source/abseil-cpp/build.sh
 ################################################################################
 # Build re2
 ################################################################################
-RE2_VERSION=20190301 $SOURCE_DIR/source/re2/build.sh
 RE2_VERSION=2023-03-01 $SOURCE_DIR/source/re2/build.sh
 
 # Newer versions of RE2 require Abseil
@@ -240,7 +232,7 @@ TPC_DS_VERSION=2.1.0-p1 $SOURCE_DIR/source/tpc-ds/build.sh
   export LZ4_VERSION=1.9.3
   export PROTOBUF_VERSION=3.14.0
   export SNAPPY_VERSION=1.1.8
-  export ZLIB_VERSION=1.2.13
+  export ZLIB_VERSION=1.3.1
   export ZSTD_VERSION=1.5.2
   ORC_VERSION=1.7.9-p10 $SOURCE_DIR/source/orc/build.sh
 )
@@ -279,7 +271,7 @@ if [[ "$ARCH_NAME" == "aarch64" ]]; then
   (
     export PROTOBUF_VERSION=3.14.0
     export SNAPPY_VERSION=1.1.8
-    export ZLIB_VERSION=1.2.13
+    export ZLIB_VERSION=1.3.1
     export ZSTD_VERSION=1.5.2
     HADOOP_CLIENT_VERSION=3.3.6-p1 $SOURCE_DIR/source/hadoop-client/build.sh
   )
