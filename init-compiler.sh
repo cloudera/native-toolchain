@@ -46,7 +46,7 @@ fi
 # Build GDB against the system OS libraries. This is the same issue as binutils.
 # We only need the executables and it is hard to set the RPATH properly.
 # It is simpler to compile with the OS compiler/packages.
-GDB_VERSION=12.1 "$SOURCE_DIR"/source/gdb/build.sh
+GDB_VERSION=12.1-p1 "$SOURCE_DIR"/source/gdb/build.sh
 
 if [[ "$OSTYPE" =~ ^linux ]]; then
   # ARCH_FLAGS are used to convey architecture dependent flags that should

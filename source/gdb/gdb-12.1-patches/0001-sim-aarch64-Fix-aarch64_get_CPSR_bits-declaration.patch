@@ -1,0 +1,37 @@
+From 8b1a24e546fb68d3ea59e10939b32328947cdb99 Mon Sep 17 00:00:00 2001
+From: Jan-Benedict Glaw <jbglaw@lug-owl.de>
+Date: Thu, 25 Aug 2022 18:34:27 +0200
+Subject: [PATCH] sim/aarch64: Fix aarch64_get_CPSR_bits() declaration
+
+Noticed while doing mass builds with a very recent GCC:
+
+/usr/lib/gcc-snapshot/bin/gcc  -DHAVE_CONFIG_H   -DWITH_HW=1 -DHAVE_DV_SOCKSER -DDEFAULT_INLINE=0 -Wall -Wdeclaration-after-statement -Wpointer-arith -Wno-unused -Wunused-value -Wunused-function -Wno-switch -Wno-char-subscripts -Wempty-body -Wunused-but-set-parameter -Wno-error=maybe-uninitialized -Wmissing-declarations -Wmissing-prototypes -Wdeclaration-after-statement -Wmissing-parameter-type -Wpointer-sign -Wold-style-declaration -Werror  -I. -I/var/lib/laminar/run/gdb-aarch64-elf/1/binutils-gdb/sim/aarch64 -I../common -I/var/lib/laminar/run/gdb-aarch64-elf/1/binutils-gdb/sim/aarch64/../common -I../../include -I/var/lib/laminar/run/gdb-aarch64-elf/1/binutils-gdb/sim/aarch64/../../include -I../../bfd -I/var/lib/laminar/run/gdb-aarch64-elf/1/binutils-gdb/sim/aarch64/../../bfd -I../../opcodes -I/var/lib/laminar/run/gdb-aarch64-elf/1/binutils-gdb/sim/aarch64/../../opcodes -I../..  -I/var/lib/laminar/run/gdb-aarch64-elf/1/binutils-gdb/sim/aarch64/../../gnulib/import -I../../gnulib/import  -g -O2   -c -o cpustate.o -MT cpustate.o -MMD -MP -MF .deps/cpustate.Tpo cpustate.c
+cpustate.c:270:1: error: conflicting types for 'aarch64_get_CPSR_bits' due to enum/integer mismatch; have 'uint32_t(sim_cpu *, FlagMask)' {aka 'unsigned int(struct _sim_cpu *, FlagMask)'} [-Werror=enum-int-mismatch]
+  270 | aarch64_get_CPSR_bits (sim_cpu *cpu, FlagMask mask)
+      | ^~~~~~~~~~~~~~~~~~~~~
+In file included from sim-main.h:30,
+                 from cpustate.c:28:
+cpustate.h:310:20: note: previous declaration of 'aarch64_get_CPSR_bits' with type 'uint32_t(sim_cpu *, uint32_t)' {aka 'unsigned int(struct _sim_cpu *, unsigned int)'}
+  310 | extern uint32_t    aarch64_get_CPSR_bits  (sim_cpu *, uint32_t);
+      |                    ^~~~~~~~~~~~~~~~~~~~~
+cc1: all warnings being treated as errors
+---
+ sim/aarch64/cpustate.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sim/aarch64/cpustate.h b/sim/aarch64/cpustate.h
+index 1d25b3af15a..94e0bc80333 100644
+--- a/sim/aarch64/cpustate.h
++++ b/sim/aarch64/cpustate.h
+@@ -307,7 +307,7 @@ extern void        aarch64_save_LR (sim_cpu *);
+ /* Flag register accessors.  */
+ extern uint32_t    aarch64_get_CPSR       (sim_cpu *);
+ extern void        aarch64_set_CPSR       (sim_cpu *, uint32_t);
+-extern uint32_t    aarch64_get_CPSR_bits  (sim_cpu *, uint32_t);
++extern uint32_t    aarch64_get_CPSR_bits  (sim_cpu *, FlagMask);
+ extern void        aarch64_set_CPSR_bits  (sim_cpu *, uint32_t, uint32_t);
+ extern uint32_t    aarch64_test_CPSR_bit  (sim_cpu *, FlagMask);
+ extern void        aarch64_set_CPSR_bit   (sim_cpu *, FlagMask);
+-- 
+2.34.1
+

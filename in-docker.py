@@ -65,7 +65,8 @@ KNOWN_DOCKER_TAGS = {'impala-toolchain-redhat7': 'ec2-package-centos-7',
                      'impala-toolchain-ubuntu1604': 'ec2-package-ubuntu-16-04',
                      'impala-toolchain-ubuntu1804': 'ec2-package-ubuntu-18-04',
                      'impala-toolchain-ubuntu2004': 'ec2-package-ubuntu-20-04',
-                     'impala-toolchain-ubuntu2204': 'ec2-package-ubuntu-22-04'}
+                     'impala-toolchain-ubuntu2204': 'ec2-package-ubuntu-22-04',
+                     'impala-toolchain-ubuntu2404': 'ec2-package-ubuntu-24-04'}
 
 __SOURCE_DIR = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 TARGET_DIR = '/mnt'

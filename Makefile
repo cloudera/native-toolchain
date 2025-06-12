@@ -1,4 +1,4 @@
-# Copyright 2019 Cloudera Inc.
+# Copyright 2019-2025 Cloudera Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ DISTROS = redhat7 \
 	ubuntu1604 \
 	ubuntu1804 \
 	ubuntu2004 \
-	ubuntu2204
+	ubuntu2204 \
+	ubuntu2404
 
 export TOOLCHAIN_BUILD_ID := $(shell bash -ec 'source functions.sh && generate_build_id')
 UPLOAD_CCACHE ?= 0

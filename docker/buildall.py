@@ -26,7 +26,7 @@ LOG = logging.getLogger('buildall.py')
 
 # Used with --multi for multi-platform builds. Requires QEMU and a docker-container
 # builder, see README.md for setup.
-ARM_PLATFORMS = ['redhat8', 'redhat9', 'ubuntu2004', 'ubuntu2204']
+ARM_PLATFORMS = ['redhat8', 'redhat9', 'ubuntu2004', 'ubuntu2204', 'ubuntu2404']
 
 def main():
   logging.basicConfig(level=logging.INFO)
