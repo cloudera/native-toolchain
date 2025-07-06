@@ -170,7 +170,7 @@ function build {
     cp "$F" "$JAVA_INSTALL_DIR"
   done
   # Install kudu-client artifacts to the Local Maven Repository:
-  wrap ./gradlew -Dmaven.repo.local="${JAVA_INSTALL_DIR}/repository" :kudu-client:install
+  wrap ./gradlew -Dmaven.repo.local="${JAVA_INSTALL_DIR}/repository" :kudu-client:publishToMavenLocal
   popd
 
   cd $THIS_DIR

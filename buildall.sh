@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2015 Cloudera Inc.
+# Copyright 2015-2025 Cloudera Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -207,7 +207,8 @@ FLATBUFFERS_VERSION=1.9.0-p1 $SOURCE_DIR/source/flatbuffers/build.sh
 ################################################################################
 (
   export BOOST_VERSION=1.74.0-p1
-  export KUDU_VERSION=e742f86f6d
+  # branch-1.18.x on Aug 1, 2025 with Java dependency fixes
+  export KUDU_VERSION=6b68e77ee
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else
