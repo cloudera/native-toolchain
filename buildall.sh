@@ -236,7 +236,7 @@ TPC_DS_VERSION=2.1.0-p1 $SOURCE_DIR/source/tpc-ds/build.sh
   export SNAPPY_VERSION=1.1.8
   export ZLIB_VERSION=1.3.1
   export ZSTD_VERSION=1.5.2
-  ORC_VERSION=1.7.9-p10 $SOURCE_DIR/source/orc/build.sh
+  ORC_VERSION=1.7.9-p11 $SOURCE_DIR/source/orc/build.sh
 )
 
 ################################################################################

@@ -1,0 +1,57 @@
+From 7d502b7e5494d1e5355dd17eda3edc1d4c2e4c9d Mon Sep 17 00:00:00 2001
+From: ffacs <ffacs520@gmail.com>
+Date: Wed, 16 Apr 2025 21:33:34 +0800
+Subject: [PATCH] check overflow
+
+---
+ c++/src/LzoDecompressor.cc    |  2 +-
+ c++/test/TestDecompression.cc | 20 ++++++++++++++++++++
+ 2 files changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/c++/src/LzoDecompressor.cc b/c++/src/LzoDecompressor.cc
+index f494f4b65..68e25425c 100644
+--- a/c++/src/LzoDecompressor.cc
++++ b/c++/src/LzoDecompressor.cc
+@@ -342,7 +342,7 @@ namespace orc {
+         char* literalOutputLimit = output + literalLength;
+         if (literalOutputLimit > fastOutputLimit ||
+             input + literalLength > inputLimit - SIZE_OF_LONG) {
+-          if (literalOutputLimit > outputLimit) {
++          if (literalOutputLimit > outputLimit || input + literalLength > inputLimit) {
+             throw MalformedInputException(input - inputAddress);
+           }
+ 
+diff --git a/c++/test/TestDecompression.cc b/c++/test/TestDecompression.cc
+index dc9709403..125c5e85a 100644
+--- a/c++/test/TestDecompression.cc
++++ b/c++/test/TestDecompression.cc
+@@ -395,6 +395,26 @@ namespace orc {
+     ASSERT_TRUE(!result->Next(&ptr, &length));
+   }
+ 
++  TEST_F(TestDecompression, testLzoOverflow) {
++    const unsigned char bad_lzo_data[] = {// Header: compressedSize = 12, original = false
++                                          0x18, 0x00, 0x00,
++
++                                          // LZO body: token and literal length extension
++                                          0x00,  // token: extended literal length
++                                          0xFF,  // extension byte 1
++
++                                          // Literal data: only 10 bytes far less than 273
++                                          'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'};
++
++    std::unique_ptr<SeekableInputStream> result = createDecompressor(
++        CompressionKind_LZO,
++        std::make_unique<SeekableArrayInputStream>(bad_lzo_data, ARRAY_SIZE(bad_lzo_data)),
++        128 * 1024, *getDefaultPool(), getDefaultReaderMetrics());
++    const void* ptr;
++    int length;
++    EXPECT_THROW(result->Next(&ptr, &length), ParseError);
++  }
++
+   TEST_F(TestDecompression, testLz4Empty) {
+     const unsigned char buffer[] = {0};
+     std::unique_ptr<SeekableInputStream> result = createDecompressor(
+-- 
+2.17.1
+
