@@ -1,3 +1,7 @@
 build
 check
 build_docker/ccache
+*.tar.gz
+*.tar.xz
+*.zip
+*.tgz

@@ -41,8 +41,10 @@ if needs_build_package ; then
       -DWITH_OTLP_HTTP=ON \
       -DWITH_OTLP_HTTP_COMPRESSION=ON \
       -DWITH_THREAD_INSTRUMENTATION_PREVIEW=ON \
-      -DWITH_OTLP_FILE=ON
-  wrap make -j${BUILD_THREADS:-4}
+      -DWITH_OTLP_FILE=ON \
+      -DWITH_STL=CXX17 \
+      -DCMAKE_CXX_STANDARD=17
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
   wrap make install
 
   finalize_package_build $PACKAGE $PACKAGE_VERSION
