@@ -33,6 +33,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-inter
   pigz \
   readline-devel \
   rsync \
+  texinfo \
   unzip \
   vim \
   wget \

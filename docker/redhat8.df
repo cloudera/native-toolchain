@@ -3,6 +3,7 @@ FROM centos:8.2.2004
 COPY ./redhat/CentOS-8.2.2004-Base.repo /etc/yum.repos.d/CentOS-Base.repo
 COPY ./redhat/CentOS-8.2.2004-Extras.repo /etc/yum.repos.d/CentOS-Extras.repo
 COPY ./redhat/CentOS-8.2.2004-AppStream.repo /etc/yum.repos.d/CentOS-AppStream.repo
+COPY ./redhat/CentOS-8.2.2004-PowerTools.repo /etc/yum.repos.d/CentOS-PowerTools.repo
 
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 RUN dnf -y install autoconf \
@@ -17,6 +18,7 @@ RUN dnf -y install autoconf \
   cyrus-sasl-gssapi \
   cyrus-sasl-devel \
   cyrus-sasl-plain \
+  diffutils \
   flex \
   gcc \
   gcc-c++ \
@@ -42,6 +44,7 @@ RUN dnf -y install autoconf \
   readline-devel \
   redhat-lsb \
   rsync \
+  texinfo \
   unzip \
   vim-common \
   wget \

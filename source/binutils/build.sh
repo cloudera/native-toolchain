@@ -23,7 +23,7 @@ prepare $THIS_DIR
 # compiler, it doesn't get our custom CFLAGS/CXXFLAGS. By default, binutils
 # will build with -O2. To get a bit more optimization, force it to use -O3.
 export CFLAGS="-fPIC -O3"
-export CXXFLAGS="-fPIC -O3"
+export CXXFLAGS="-fPIC -O3 -std=gnu++11"
 
 if needs_build_package ; then
   # Download the dependency from S3

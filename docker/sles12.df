@@ -45,6 +45,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-inter
   python-devel \
   readline-devel \
   rsync \
+  texinfo \
   unzip \
   vim \
   wget \

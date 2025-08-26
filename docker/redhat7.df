@@ -46,6 +46,7 @@ RUN yum-install autoconf \
   readline-devel \
   redhat-lsb \
   rsync \
+  texinfo \
   unzip \
   vim-common \
   wget \

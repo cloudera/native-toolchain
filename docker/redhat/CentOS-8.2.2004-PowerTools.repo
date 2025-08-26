@@ -1,0 +1,13 @@
+# CentOS-PowerTools.repo
+#
+# This overwrites the default /etc/yum.repos.d/CentOS-PowerTools.repo
+# file with one that uses a static mirror to work after
+# Centos 8's EOL.
+#
+[PowerTools]
+name=CentOS-$releasever - PowerTools
+#mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=PowerTools&infra=$infra
+baseurl=http://mirror.nsc.liu.se/centos-store/8.2.2004/PowerTools/$basearch/os/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial

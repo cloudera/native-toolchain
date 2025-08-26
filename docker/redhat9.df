@@ -37,6 +37,7 @@ RUN dnf -y install autoconf \
   python3-devel \
   readline-devel \
   rsync \
+  texinfo \
   unzip \
   vim-common \
   wget \
