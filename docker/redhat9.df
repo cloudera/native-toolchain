@@ -1,5 +1,10 @@
 FROM rockylinux:9.2
 
+COPY ./redhat/rocky.repo /etc/yum.repos.d/rocky.repo
+COPY ./redhat/rocky-addons.repo /etc/yum.repos.d/rocky-addons.repo
+COPY ./redhat/rocky-extras.repo /etc/yum.repos.d/rocky-extras.repo
+COPY ./redhat/rocky-devel.repo /etc/yum.repos.d/rocky-devel.repo
+
 RUN dnf -y install dnf-plugins-core
 RUN dnf config-manager --set-enabled crb && dnf -y install epel-release
 RUN dnf -y install autoconf \
