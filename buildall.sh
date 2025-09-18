@@ -195,7 +195,7 @@ LIBUNWIND_VERSION=1.7.2-p1 $SOURCE_DIR/source/libunwind/build.sh
 ################################################################################
 # Build Breakpad
 ################################################################################
-BREAKPAD_VERSION=e09741c609dcd5f5274d40182c5e2cc9a002d5ba-p2 $SOURCE_DIR/source/breakpad/build.sh
+BREAKPAD_VERSION=e09741c609dcd5f5274d40182c5e2cc9a002d5ba-p3 $SOURCE_DIR/source/breakpad/build.sh
 
 ################################################################################
 # Build Flatbuffers
