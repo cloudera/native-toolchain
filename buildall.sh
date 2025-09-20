@@ -55,6 +55,9 @@ export BZIP2_VERSION=1.0.8-p2
 # For now, provide both Python 2 and 3 until we can switch over to Python 3.
 PYTHON_VERSION=2.7.16 $SOURCE_DIR/source/python/build.sh
 PYTHON_VERSION=3.8.18 $SOURCE_DIR/source/python/build.sh
+PYTHON_VERSION=3.11.14 $SOURCE_DIR/source/python/build.sh
+PYTHON_VERSION=3.12.12 $SOURCE_DIR/source/python/build.sh
+PYTHON_VERSION=3.13.12 $SOURCE_DIR/source/python/build.sh
 
 export -n BZIP2_VERSION
 ################################################################################
@@ -170,7 +173,7 @@ unset ABSEIL_CPP_VERSION
 ################################################################################
 # Build Ldap
 ################################################################################
-OPENLDAP_VERSION=2.4.47 $SOURCE_DIR/source/openldap/build.sh
+OPENLDAP_VERSION=2.5.20 $SOURCE_DIR/source/openldap/build.sh
 
 ################################################################################
 # Build Avro
