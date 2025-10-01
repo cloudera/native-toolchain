@@ -207,9 +207,9 @@ FLATBUFFERS_VERSION=1.9.0-p1 $SOURCE_DIR/source/flatbuffers/build.sh
 ################################################################################
 (
   export BOOST_VERSION=1.74.0-p1
-  # branch-1.18.x, version 1.18.1-RC0 on Sep 8, 2025 with Java dependency and
+  # branch master, on Oct 3, 2025 with Java dependency and
   # TLS 1.3, OpenSSL 3.x fixes and updates
-  export KUDU_VERSION=54f3bd31c
+  export KUDU_VERSION=16689973a
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else
