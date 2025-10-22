@@ -281,7 +281,7 @@ fi
 
 # MOLD linker
 ################################################################################
-MOLD_VERSION=2.4.1 $SOURCE_DIR/source/mold/build.sh
+MOLD_VERSION=2.40.4 $SOURCE_DIR/source/mold/build.sh
 
 # libpfm
 ################################################################################
