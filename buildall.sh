@@ -263,7 +263,7 @@ ARROW_VERSION=15.0.0 $SOURCE_DIR/source/arrow/build.sh
 
 # CURL
 ################################################################################
-CURL_VERSION=8.14.1 $SOURCE_DIR/source/curl/build.sh
+CURL_VERSION=8.17.0 $SOURCE_DIR/source/curl/build.sh
 
 # CALLONCEHACK
 ################################################################################
@@ -298,7 +298,7 @@ unset LIBPFM_VERSION
 
 # AWS-SDK-CPP
 ################################################################################
-export CURL_VERSION=8.14.1
+export CURL_VERSION=8.17.0
 export ZLIB_VERSION=1.3.1
 AWS_SDK_CPP_VERSION=1.11.485 $SOURCE_DIR/source/aws-sdk-cpp/build.sh
 unset CURL_VERSION
@@ -308,7 +308,7 @@ unset ZLIB_VERSION
 # OpenTelemetry C++
 ################################################################################
 {
-  export CURL_VERSION=8.14.1
+  export CURL_VERSION=8.17.0
   export PROTOBUF_VERSION=3.14.0
   export ZLIB_VERSION=1.3.1
   OPENTELEMETRY_CPP_VERSION=1.20.0 $SOURCE_DIR/source/opentelemetry-cpp/build.sh
