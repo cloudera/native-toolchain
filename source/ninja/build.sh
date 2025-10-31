@@ -37,6 +37,10 @@ if needs_build_package; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
+  # Disabled LTO because it triggers an internal compiler error with GCC 15.
+  export CFLAGS="${CFLAGS} -fno-lto"
+  export CXXFLAGS="${CXXFLAGS} -fno-lto"
+
   rm -rf build
   mkdir build
   pushd build

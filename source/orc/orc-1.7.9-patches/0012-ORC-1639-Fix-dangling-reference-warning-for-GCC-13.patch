@@ -1,0 +1,92 @@
+diff -Naur orc-1.7.9/c++/src/ColumnReader.cc orc-1.7.9-patched/c++/src/ColumnReader.cc
+--- orc-1.7.9/c++/src/ColumnReader.cc	2025-11-01 10:23:29.884260122 -0700
++++ orc-1.7.9-patched/c++/src/ColumnReader.cc	2025-11-01 10:30:03.942774371 -0700
+@@ -304,8 +304,8 @@
+   private:
+     std::unique_ptr<orc::RleDecoder> secondsRle;
+     std::unique_ptr<orc::RleDecoder> nanoRle;
+-    const Timezone& writerTimezone;
+-    const Timezone& readerTimezone;
++    const Timezone* writerTimezone;
++    const Timezone* readerTimezone;
+     const int64_t epochOffset;
+     const bool sameTimezone;
+ 
+@@ -331,13 +331,13 @@
+                                                bool isInstantType
+                                ): ColumnReader(type, stripe),
+                                   writerTimezone(isInstantType ?
+-                                                 getTimezoneByName("GMT") :
+-                                                 stripe.getWriterTimezone()),
++                                                 &getTimezoneByName("GMT") :
++                                                 &stripe.getWriterTimezone()),
+                                   readerTimezone(isInstantType ?
+-                                                 getTimezoneByName("GMT") :
+-                                                 stripe.getReaderTimezone()),
+-                                  epochOffset(writerTimezone.getEpoch()),
+-                                  sameTimezone(&writerTimezone == &readerTimezone){
++                                                 &getTimezoneByName("GMT") :
++                                                 &stripe.getReaderTimezone()),
++                                  epochOffset(writerTimezone->getEpoch()),
++                                  sameTimezone(writerTimezone == readerTimezone){
+     RleVersion vers = convertRleVersion(stripe.getEncoding(columnId).kind());
+     std::unique_ptr<SeekableInputStream> stream =
+         stripe.getStream(columnId, proto::Stream_Kind_DATA, true);
+@@ -387,13 +387,13 @@
+         if (!sameTimezone) {
+           // adjust timestamp value to same wall clock time if writer and reader
+           // time zones have different rules, which is required for Apache Orc.
+-          const auto& wv = writerTimezone.getVariant(writerTime);
+-          const auto& rv = readerTimezone.getVariant(writerTime);
++          const auto& wv = writerTimezone->getVariant(writerTime);
++          const auto& rv = readerTimezone->getVariant(writerTime);
+           if (!wv.hasSameTzRule(rv)) {
+             // If the timezone adjustment moves the millis across a DST boundary,
+             // we need to reevaluate the offsets.
+             int64_t adjustedTime = writerTime + wv.gmtOffset - rv.gmtOffset;
+-            const auto& adjustedReader = readerTimezone.getVariant(adjustedTime);
++            const auto& adjustedReader = readerTimezone->getVariant(adjustedTime);
+             writerTime = writerTime + wv.gmtOffset - adjustedReader.gmtOffset;
+           }
+         }
+diff -Naur orc-1.7.9/c++/src/ColumnWriter.cc orc-1.7.9-patched/c++/src/ColumnWriter.cc
+--- orc-1.7.9/c++/src/ColumnWriter.cc	2023-05-03 19:03:27.000000000 -0700
++++ orc-1.7.9-patched/c++/src/ColumnWriter.cc	2025-11-01 10:30:49.797403174 -0700
+@@ -1723,7 +1723,7 @@
+ 
+   private:
+     RleVersion rleVersion;
+-    const Timezone& timezone;
++    const Timezone* timezone;
+     const bool isUTC;
+   };
+ 
+@@ -1735,8 +1735,8 @@
+                                  ColumnWriter(type, factory, options),
+                                  rleVersion(options.getRleVersion()),
+                                  timezone(isInstantType ?
+-                                          getTimezoneByName("GMT") :
+-                                          options.getTimezone()),
++                                          &getTimezoneByName("GMT") :
++                                          &options.getTimezone()),
+                                  isUTC(isInstantType ||
+                                        options.getTimezoneName() == "GMT") {
+     std::unique_ptr<BufferedOutputStream> dataStream =
+@@ -1809,7 +1809,7 @@
+         // TimestampVectorBatch already stores data in UTC
+         int64_t millsUTC = secs[i] * 1000 + nanos[i] / 1000000;
+         if (!isUTC) {
+-          millsUTC = timezone.convertToUTC(secs[i]) * 1000 + nanos[i] / 1000000;
++          millsUTC = timezone->convertToUTC(secs[i]) * 1000 + nanos[i] / 1000000;
+         }
+         ++count;
+         if (enableBloomFilter) {
+@@ -1821,7 +1821,7 @@
+           secs[i] += 1;
+         }
+ 
+-        secs[i] -= timezone.getEpoch();
++        secs[i] -= timezone->getEpoch();
+         nanos[i] = formatNano(nanos[i]);
+       }
+     }

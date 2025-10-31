@@ -43,6 +43,9 @@ if needs_build_package ; then
   export ZLIB_HOME=$BUILD_DIR/zlib-${ZLIB_VERSION}
   export ZSTD_HOME=$BUILD_DIR/zstd-${ZSTD_VERSION}
 
+  CFLAGS="${CFLAGS} -Wno-error=implicit-function-declaration"
+  CXXFLAGS="${CXXFLAGS} -Wno-error=implicit-function-declaration"
+
   # Use a local maven repository to avoid issues building in a container.
   # Builds only subprojects that produce native libraries.
   wrap mvn --batch-mode -Dmaven.repo.local=$THIS_DIR/.m2/repository clean compile \

@@ -28,7 +28,11 @@ if [[  $GCC_MAJOR_VERSION == '10' ]]; then
   GMP_VERSION=6.1.0
   MPC_VERSION=1.0.3
   ISL_VERSION=0.18
-  CLOOG_VERSION=0.18.1
+elif [[ $GCC_MAJOR_VERSION == '14' || $GCC_MAJOR_VERSION == '15' ]]; then
+  MPFR_VERSION=4.1.0
+  GMP_VERSION=6.2.1
+  MPC_VERSION=1.2.1
+  ISL_VERSION=0.24
 else
   echo "Unknown gcc version $GCC_VERSION - don't know which dependencies to download"
   exit 1
@@ -49,10 +53,6 @@ function download_gcc_prerequisites() {
   download_dependency $PACKAGE "isl-${ISL_VERSION}.tar.bz2" .
   tar xjf "isl-${ISL_VERSION}.tar.bz2"
   ln -s isl-${ISL_VERSION} isl
-
-  download_dependency $PACKAGE "cloog-${CLOOG_VERSION}.tar.gz" .
-  tar xzf "cloog-${CLOOG_VERSION}.tar.gz"
-  ln -s cloog-${CLOOG_VERSION} cloog
 }
 
 if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then

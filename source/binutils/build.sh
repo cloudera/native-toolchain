@@ -29,9 +29,11 @@ export CXXFLAGS="-fPIC -O3 -std=gnu++11"
 
 if needs_build_package ; then
   # Download the dependency from S3
-  download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
+  TARBALL_BASE_NAME="binutils-with-gold-${PACKAGE_VERSION}"
+  download_dependency $PACKAGE "${TARBALL_BASE_NAME}.tar.gz" $THIS_DIR
 
-  setup_package_build $PACKAGE $PACKAGE_VERSION
+  setup_package_build $PACKAGE $PACKAGE_VERSION "${TARBALL_BASE_NAME}.tar.gz" \
+      "$TARBALL_BASE_NAME" $PACKAGE_STRING
   # --disable-x86-relax-relocations: prevent assembler from emitting relocations like
   #   R_X86_64_GOTPCRELX, which are not supported by pre-2.26 binutils (e.g. system
   #   linkers and utilities on various Linux distributions). This can be reenabled with

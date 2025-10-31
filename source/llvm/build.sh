@@ -130,6 +130,9 @@ if needs_build_package ; then
   # difference to the peak memory usage for a project as large as LLVM.
   PATH="${PATH}:${BUILD_DIR}/ninja-${NINJA_VERSION}/bin"
 
+  # GCC 14 turned this warning into an error. Disable the error to keep this building.
+  GCC_CFLAGS=" -Wno-error=implicit-function-declaration"
+
   if [[ "${PACKAGE_VERSION}" =~ "-pgo" ]]; then
     # Profile Guided Optimization only makes sense for a release build without asserts.
     # It performs three builds:
@@ -165,6 +168,12 @@ if needs_build_package ; then
       PROFILE_GEN_CFLAGS="-fprofile-generate"
       PROFILE_GEN_LDFLAGS="-fprofile-generate"
 
+      if [[ "$(uname -m)" == "aarch64" ]]; then
+        # ARM uses moutline-atomics and the profile generation requires the atomics
+        # library to be linked in. Manually add the atomic library.
+        PROFILE_GEN_LDFLAGS+=" -latomic"
+      fi
+
       # The profile data is written as .gcda files. By default, these are put in
       # the same directory as the .o files. For these builds, the .o files are in
       # the build directory. It's easiest to wipe out the build directory when we
@@ -173,9 +182,12 @@ if needs_build_package ; then
       # -fprofile-dir option.
       PROFILE_GEN_CFLAGS+=" -fprofile-dir=${PROFILE_OUT_DIR}"
 
+      # This is using GCC, so add the GCC flags
+      PROFILE_GEN_CFLAGS+="${GCC_CFLAGS}"
+
       # Turn off debug symbols for the regular release build. These symbols add 300+MB to
       # Impala's binary size. Oddly enough, the -asserts build doesn't have a similar
-      # problem.
+      # problem. This only builds clang and lld (skipping compiler-rt and clang-tools-extra).
       wrap ${THIS_DIR}/build-helper.sh ${HELPER_ARGS} \
         -build_dir "${LLVM_BUILD_DIR}" \
         -install_dir "${PROFILE_GEN_INSTALL_DIR}" \
@@ -183,7 +195,8 @@ if needs_build_package ; then
         -g0 \
         -add_cflags "${PROFILE_GEN_CFLAGS}" \
         -add_cxxflags "${PROFILE_GEN_CFLAGS}" \
-        -add_ldflags "${PROFILE_GEN_LDFLAGS}"
+        -add_ldflags "${PROFILE_GEN_LDFLAGS}" \
+        -llvm_enable_projects "clang;lld"
 
       wrap echo "######################## End PGO Build #1 ########################"
     )
@@ -257,6 +270,9 @@ if needs_build_package ; then
       # regular compilation.
       PROFILE_USE_EXTRA_CMAKE_ARGS='-DCMAKE_REQUIRED_FLAGS="-Wno-missing-profile"'
 
+      # This is using GCC, so add the GCC flags
+      PROFILE_GEN_CFLAGS+="${GCC_CFLAGS}"
+
       # Turn off debug symbols for the regular release build. These symbols add 300+MB to
       # Impala's binary size. Oddly enough, the -asserts build doesn't have a similar
       # problem.
@@ -277,6 +293,7 @@ if needs_build_package ; then
     rm -rf "${THIS_DIR}/build-$PACKAGE_STRING"
     HELPER_ARGS+=" -build_dir ${THIS_DIR}/build-$PACKAGE_STRING"
     HELPER_ARGS+=" -install_dir ${LOCAL_INSTALL}"
+    HELPER_ARGS+=" -add_cflags ${GCC_CFLAGS} -add_cxxflags ${GCC_CFLAGS}"
     if [[ "${PACKAGE_VERSION}" =~ "-asserts" ]]; then
       # Always have minimal debug info for the asserts build
       HELPER_ARGS+=" -asserts"

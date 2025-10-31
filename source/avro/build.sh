@@ -28,6 +28,8 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
+  CFLAGS="${CFLAGS} -std=c17"
+
   cd lang/c
 
   mkdir -p build

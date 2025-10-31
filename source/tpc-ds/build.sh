@@ -26,6 +26,9 @@ if needs_build_package; then
       v${PACKAGE_VERSION} v${PACKAGE_VERSION}
   cd tools
 
+  # GCC 14 made this warning an error, so disable it to keep the build working.
+  CFLAGS="${CFLAGS} -Wno-implicit-int"
+
   # The value of CC will be picked up through the environment, just delete the makefile
   # line.
   sed -i -r '/^CC\s*=/d' makefile

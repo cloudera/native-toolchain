@@ -1,0 +1,30 @@
+diff -Naur flatbuffers-1.9.0/CMakeLists.txt flatbuffers-1.9.0-patched/CMakeLists.txt
+--- flatbuffers-1.9.0/CMakeLists.txt	2018-04-05 15:11:52.000000000 -0700
++++ flatbuffers-1.9.0-patched/CMakeLists.txt	2025-11-01 10:03:05.250560901 -0700
+@@ -109,7 +109,7 @@
+   # is being configured externally
+ elseif(APPLE)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
+-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Werror -Wextra -Wno-unused-parameter")
++  set(CMAKE_CXX_FLAGS "-Wall -pedantic -Werror -Wextra -Wno-unused-parameter ${CMAKE_CXX_FLAGS}")
+ elseif(CMAKE_COMPILER_IS_GNUCXX)
+   if(CYGWIN)
+     set(CMAKE_CXX_FLAGS
+@@ -119,7 +119,7 @@
+       "${CMAKE_CXX_FLAGS} -std=c++0x")
+   endif(CYGWIN)
+   set(CMAKE_CXX_FLAGS
+-    "${CMAKE_CXX_FLAGS} -Wall -pedantic -Werror -Wextra -Werror=shadow")
++    "-Wall -pedantic -Werror -Wextra -Werror=shadow ${CMAKE_CXX_FLAGS}")
+   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.4)
+     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.0)
+       set(CMAKE_CXX_FLAGS
+@@ -136,7 +136,7 @@
+ 
+ elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+   set(CMAKE_CXX_FLAGS
+-      "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -pedantic -Werror -Wextra -Wno-unused-parameter")
++      "-std=c++0x -Wall -pedantic -Werror -Wextra -Wno-unused-parameter ${CMAKE_CXX_FLAGS}")
+   if(NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+     set(CMAKE_CXX_FLAGS
+         "${CMAKE_CXX_FLAGS} -stdlib=libc++")

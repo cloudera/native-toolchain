@@ -75,14 +75,14 @@ export CLEAN
 : ${CLEAN_TMP_AFTER_BUILD=0}
 export CLEAN_TMP_AFTER_BUILD
 
-: ${BINUTILS_VERSION=2.42-p24}
+: ${BINUTILS_VERSION=2.46.1}
 export BINUTILS_VERSION
 
 # Flag to determine the system compiler is used
 : ${SYSTEM_GCC=0}
 export SYSTEM_GCC
 
-: ${GCC_VERSION=10.4.0}
+: ${GCC_VERSION=15.3.0}
 export GCC_VERSION
 
 : ${SYSTEM_CMAKE=0}

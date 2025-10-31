@@ -26,6 +26,8 @@ if needs_build_package; then
       tpch_${PACKAGE_VERSION//./_} tpch_${PACKAGE_VERSION//./_}
   cd dbgen
 
+  CFLAGS="${CFLAGS} -std=c17 -Wno-implicit-function-declaration -Wno-int-conversion"
+
   # TCP provides a "makefile.suite" which is a sort of template. They expect people to
   # make a copy of it as "makefile" and modify it to as needed. The steps below could
   # be done using the toolchain's patch system but the expectation is that this needs to

@@ -1,0 +1,78 @@
+diff -Naur hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/block_location.h hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/block_location.h
+--- hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/block_location.h	2023-06-18 01:12:48.000000000 -0700
++++ hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/block_location.h	2026-08-25 19:55:55.347167600 -0700
+@@ -19,6 +19,8 @@
+ #ifndef HDFSPP_BLOCK_LOCATION_H
+ #define HDFSPP_BLOCK_LOCATION_H
+ 
++#include <cstdint>
++
+ namespace hdfs {
+ 
+ class DNInfo {
+diff -Naur hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/content_summary.h hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/content_summary.h
+--- hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/content_summary.h	2023-06-18 01:12:48.000000000 -0700
++++ hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/content_summary.h	2026-08-25 19:56:14.871734821 -0700
+@@ -18,6 +18,7 @@
+ #ifndef HDFSPP_CONTENT_SUMMARY_H_
+ #define HDFSPP_CONTENT_SUMMARY_H_
+ 
++#include <cstdint>
+ #include <string>
+ 
+ namespace hdfs {
+diff -Naur hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/events.h hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/events.h
+--- hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/events.h	2023-06-18 01:12:48.000000000 -0700
++++ hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/events.h	2026-08-25 19:56:44.886607148 -0700
+@@ -21,6 +21,7 @@
+ 
+ #include "hdfspp/status.h"
+ 
++#include <cstdint>
+ #include <functional>
+ 
+ namespace hdfs {
+diff -Naur hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/fsinfo.h hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/fsinfo.h
+--- hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/fsinfo.h	2023-06-18 01:12:48.000000000 -0700
++++ hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/fsinfo.h	2026-08-25 20:03:02.487540606 -0700
+@@ -18,6 +18,7 @@
+ #ifndef HDFSPP_FSINFO_H_
+ #define HDFSPP_FSINFO_H_
+ 
++#include <cstdint>
+ #include <string>
+ 
+ namespace hdfs {
+diff -Naur hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/hdfspp.h hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/hdfspp.h
+--- hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/hdfspp.h	2023-06-18 01:12:48.000000000 -0700
++++ hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/hdfspp.h	2026-08-25 19:54:37.310902448 -0700
+@@ -30,6 +30,7 @@
+ #include "hdfspp/config_parser.h"
+ #include "hdfspp/locks.h"
+ 
++#include <cstdint>
+ #include <functional>
+ #include <memory>
+ 
+diff -Naur hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/statinfo.h hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/statinfo.h
+--- hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/statinfo.h	2023-06-18 01:12:48.000000000 -0700
++++ hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/statinfo.h	2026-08-25 19:54:23.431499922 -0700
+@@ -18,6 +18,7 @@
+ #ifndef HDFSPP_STATINFO_H_
+ #define HDFSPP_STATINFO_H_
+ 
++#include <cstdint>
+ #include <string>
+ 
+ namespace hdfs {
+diff -Naur hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/uri.h hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/uri.h
+--- hadoop-rel-release-3.3.6/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/uri.h	2023-06-18 01:12:48.000000000 -0700
++++ hadoop-rel-release-3.3.6-patched/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfspp/include/hdfspp/uri.h	2026-08-25 19:53:14.316497191 -0700
+@@ -19,6 +19,7 @@
+ #ifndef COMMON_HDFS_URI_H_
+ #define COMMON_HDFS_URI_H_
+ 
++#include <cstdint>
+ #include <iostream>
+ #include <string>
+ #include <vector>

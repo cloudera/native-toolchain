@@ -35,6 +35,10 @@ if needs_build_package ; then
     # Prevent implicit fallthrough warning in GCC7+ from failing build.
     CXXFLAGS+=" -Wno-error=implicit-fallthrough"
   fi
+  if (( GCC_MAJOR_VERSION >= 11)); then
+    # Flatbuffers disables this warning in more recent versions as they can't fix it
+    CXXFLAGS+=" -Wno-error=stringop-overread"
+  fi
   # flatbuffers build occasionally fails when using -j${BUILD_THREADS} with an error similar to:
   # /mnt/source/flatbuffers/flatbuffers-1.6.0/samples/sample_binary.cpp:19:17: error: 'MyGame' has not been declared
   # /mnt/source/flatbuffers/flatbuffers-1.6.0/samples/sample_binary.cpp:19:25: error: 'Sample' is not a namespace-name

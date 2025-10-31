@@ -24,11 +24,34 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
-if needs_build_package ; then
-  # Download the dependency from S3
-  download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
+cd $THIS_DIR
+BREAKPAD_GITHUB_URL=https://github.com/google/breakpad.git
+BREAKPAD_SOURCE_DIR=breakpad-$PACKAGE_VERSION
+LSS_REPO=https://chromium.googlesource.com/linux-syscall-support
 
-  setup_package_build $PACKAGE $PACKAGE_VERSION
+if [[ ! -d "${BREAKPAD_SOURCE_DIR}" ]]; then
+  git clone $BREAKPAD_GITHUB_URL $BREAKPAD_SOURCE_DIR
+  pushd $BREAKPAD_SOURCE_DIR
+  git checkout $PACKAGE_VERSION -b $PACKAGE_VERSION
+
+  # Detect LSS_VERSION. The DEPS file follows Python syntax, so we can append a python
+  # print statement to print out the LSS commit hash.
+  # There are other dependencies, but they are not needed for what we are building.
+  cp DEPS print_lss_version.py
+  echo 'print(deps["src/src/third_party/lss"].split("@")[1])' >> print_lss_version.py
+  LSS_VERSION="$(python3 print_lss_version.py)"
+  rm print_lss_version.py
+
+  # Checkout LSS under src/third_party
+  git clone $LSS_REPO src/third_party/lss
+  pushd src/third_party/lss
+  git checkout $LSS_VERSION -b $LSS_VERSION
+  popd
+  popd
+fi
+
+if needs_build_package ; then
+  setup_extracted_package_build $PACKAGE $PACKAGE_VERSION $BREAKPAD_SOURCE_DIR
 
   wrap ./configure --prefix=$LOCAL_INSTALL
   wrap make VERBOSE=1 -j${BUILD_THREADS:-4}

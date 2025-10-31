@@ -85,6 +85,8 @@ function build {
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
   add_gcc_to_ld_library_path
+  # Add mold to PATH
+  PATH="$BUILD_DIR/mold-$MOLD_VERSION/bin:$PATH"
 
   # Modify the version.txt file to use a commit hash rather than a SNAPSHOT version
   # Verify version.txt exists, then overwrite it.

@@ -30,6 +30,10 @@ if needs_build_package ; then
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
 
+  # GCC 14 added a new error for C code about incompatible pointer types. This trips
+  # up the ARM build, so avoid turning that into an error.
+  CFLAGS="${CFLAGS} -Wno-error=incompatible-pointer-types"
+
   # Disable minidebuginfo, which depends on liblzma, until/unless we decide to
   # add liblzma to thirdparty.
   # --disable-silent-rules enables verbose output including the compilation command

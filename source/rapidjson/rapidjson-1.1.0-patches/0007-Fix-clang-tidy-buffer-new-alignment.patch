@@ -1,0 +1,27 @@
+From 1dff2abff78ddb0105c7bc0629816ad779f921e2 Mon Sep 17 00:00:00 2001
+From: Adam Calhoon <adam.calhoon@ready-robotics.com>
+Date: Tue, 8 Feb 2022 22:29:15 -0500
+Subject: [PATCH] Fix the alignment of placement new buffer for GenericValue.
+
+When using operator[] on a GenericValue type clang-tidy complains,
+appropriately, about the alignment of the buffer used for placement-new
+of the "dummy" GenericValue.
+---
+ include/rapidjson/document.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/include/rapidjson/document.h b/include/rapidjson/document.h
+index e2cc60006..1cdc29c08 100644
+--- a/include/rapidjson/document.h
++++ b/include/rapidjson/document.h
+@@ -1235,8 +1235,8 @@ class GenericValue {
+             // return NullValue;
+ 
+             // Use static buffer and placement-new to prevent destruction
+-            static char buffer[sizeof(GenericValue)];
+-            return *new (buffer) GenericValue();
++            static GenericValue buffer;
++            return *new (reinterpret_cast<char *>(&buffer)) GenericValue();
+         }
+     }
+     template <typename SourceAllocator>

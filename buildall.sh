@@ -39,6 +39,16 @@ source ./init-compiler.sh
 #     should be removed.
 ################################################################################
 ################################################################################
+# Build Ninja
+################################################################################
+NINJA_VERSION=1.13.2 $SOURCE_DIR/source/ninja/build.sh
+
+################################################################################
+# MOLD linker
+################################################################################
+MOLD_VERSION=2.42.1 $SOURCE_DIR/source/mold/build.sh
+
+################################################################################
 # Boost
 ################################################################################
 BOOST_VERSION=1.92.0-p1 $SOURCE_DIR/source/boost/build.sh
@@ -53,30 +63,18 @@ BZIP2_VERSION=1.0.8-p2 $SOURCE_DIR/source/bzip2/build.sh
 ################################################################################
 (
   export BZIP2_VERSION=1.0.8-p2
-  PYTHON_VERSION=3.8.18 $SOURCE_DIR/source/python/build.sh
   PYTHON_VERSION=3.11.14 $SOURCE_DIR/source/python/build.sh
-  PYTHON_VERSION=3.12.12 $SOURCE_DIR/source/python/build.sh
-  PYTHON_VERSION=3.13.12 $SOURCE_DIR/source/python/build.sh
 )
-
-################################################################################
-# Build Ninja
-################################################################################
-NINJA_VERSION=1.13.2 $SOURCE_DIR/source/ninja/build.sh
 
 ################################################################################
 # LLVM
 ################################################################################
-# Build LLVM 3.7+ with and without assertions. For LLVM 3.7+, the default is a
-# release build with no assertions.
+# Build LLVM with and without assertions.
 (
   export NINJA_VERSION=1.13.2
-  LLVM_VERSION=5.0.1-p8 $SOURCE_DIR/source/llvm/build.sh
-  LLVM_VERSION=5.0.1-asserts-p8 $SOURCE_DIR/source/llvm/build.sh
   export PYTHON3_VERSION=3.11.14
-  # This version is for compiling Impala, so it doesn't need to be compiled with
-  # asserts. If we start using it for codegen, then we will need to add that.
-  LLVM_VERSION=12.0.1 $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=22.1.8-pgo $SOURCE_DIR/source/llvm/build.sh
+  LLVM_VERSION=22.1.8-asserts $SOURCE_DIR/source/llvm/build.sh
 )
 
 ################################################################################
@@ -119,7 +117,7 @@ CLOUDFLAREZLIB_VERSION=7aa510344e $SOURCE_DIR/source/cloudflarezlib/build.sh
   export BOOST_VERSION=1.92.0-p1
   export ZLIB_VERSION=1.3.1
   THRIFT_VERSION=0.11.0-p5 $SOURCE_DIR/source/thrift/build.sh
-  THRIFT_VERSION=0.16.0-p7 $SOURCE_DIR/source/thrift/build.sh
+  THRIFT_VERSION=0.16.0-p8 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.24.0-p3 $SOURCE_DIR/source/thrift/build.sh
 )
 
@@ -205,7 +203,7 @@ AVRO_VERSION=1.12.2-p1 $SOURCE_DIR/source/avro/build-cpp.sh
 ################################################################################
 # Build Rapidjson
 ################################################################################
-RAPIDJSON_VERSION=1.1.0-p1 $SOURCE_DIR/source/rapidjson/build.sh
+RAPIDJSON_VERSION=1.1.0-p7 $SOURCE_DIR/source/rapidjson/build.sh
 
 ################################################################################
 # Build Libunwind
@@ -215,20 +213,22 @@ LIBUNWIND_VERSION=1.7.2-p1 $SOURCE_DIR/source/libunwind/build.sh
 ################################################################################
 # Build Breakpad
 ################################################################################
-BREAKPAD_VERSION=e09741c609dcd5f5274d40182c5e2cc9a002d5ba-p3 $SOURCE_DIR/source/breakpad/build.sh
+# Latest as of 02/25/2025
+BREAKPAD_VERSION=2c736308b5a4c7a8371fa3a3e434f551eddd17c9-p2 $SOURCE_DIR/source/breakpad/build.sh
 
 ################################################################################
 # Build Flatbuffers
 ################################################################################
-FLATBUFFERS_VERSION=1.9.0-p1 $SOURCE_DIR/source/flatbuffers/build.sh
+FLATBUFFERS_VERSION=1.9.0-p2 $SOURCE_DIR/source/flatbuffers/build.sh
 
 ################################################################################
 # Build Kudu
 ################################################################################
 (
   export BOOST_VERSION=1.92.0-p1
-  # branch master, 16 Sept 2026
-  export KUDU_VERSION=d66c90796
+  export MOLD_VERSION=2.42.1
+  # branch master, 22 Sept 2026
+  export KUDU_VERSION=faa920b83
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else
@@ -255,27 +255,24 @@ TPC_DS_VERSION=2.1.0-p1 $SOURCE_DIR/source/tpc-ds/build.sh
   export SNAPPY_VERSION=1.1.8
   export ZLIB_VERSION=1.3.1
   export ZSTD_VERSION=1.5.2
-  ORC_VERSION=1.7.9-p11 $SOURCE_DIR/source/orc/build.sh
+  ORC_VERSION=1.7.9-p12 $SOURCE_DIR/source/orc/build.sh
 )
 
 ################################################################################
 # CCTZ
 ################################################################################
 CCTZ_VERSION=2.2 $SOURCE_DIR/source/cctz/build.sh
-CCTZ_VERSION=2.3 $SOURCE_DIR/source/cctz/build.sh
 CCTZ_VERSION=2.4 $SOURCE_DIR/source/cctz/build.sh
 
 ################################################################################
 # JWT-CPP
 ################################################################################
 JWT_CPP_VERSION=0.5.0 $SOURCE_DIR/source/jwt-cpp/build.sh
-JWT_CPP_VERSION=0.6.0 $SOURCE_DIR/source/jwt-cpp/build.sh
 JWT_CPP_VERSION=0.7.0 $SOURCE_DIR/source/jwt-cpp/build.sh
 
 ################################################################################
 # ARROW
 ################################################################################
-ARROW_VERSION=13.0.0 $SOURCE_DIR/source/arrow/build.sh
 ARROW_VERSION=15.0.0 $SOURCE_DIR/source/arrow/build.sh
 
 # CURL
@@ -295,13 +292,9 @@ if [[ "$ARCH_NAME" == "aarch64" ]]; then
     export SNAPPY_VERSION=1.1.8
     export ZLIB_VERSION=1.3.1
     export ZSTD_VERSION=1.5.2
-    HADOOP_CLIENT_VERSION=3.3.6-p2 $SOURCE_DIR/source/hadoop-client/build.sh
+    HADOOP_CLIENT_VERSION=3.3.6-p3 $SOURCE_DIR/source/hadoop-client/build.sh
   )
 fi
-
-# MOLD linker
-################################################################################
-MOLD_VERSION=2.42.1 $SOURCE_DIR/source/mold/build.sh
 
 # libpfm
 ################################################################################
