@@ -64,6 +64,7 @@ if needs_build_package ; then
     --with-pic \
     --prefix="${LOCAL_INSTALL}" \
     --enable-tutorial=no \
+    --enable-tests=no \
     --with-c_glib=no \
     --with-php=no \
     --with-java=no \
