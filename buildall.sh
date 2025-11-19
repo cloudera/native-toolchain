@@ -207,8 +207,8 @@ FLATBUFFERS_VERSION=1.9.0-p1 $SOURCE_DIR/source/flatbuffers/build.sh
 ################################################################################
 (
   export BOOST_VERSION=1.74.0-p1
-  # branch master
-  export KUDU_VERSION=60f5e5267
+  # branch master, nov 19, with KUDU-3971
+  export KUDU_VERSION=879a8f9e2
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else
