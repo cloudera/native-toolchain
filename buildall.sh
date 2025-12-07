@@ -256,6 +256,7 @@ JWT_CPP_VERSION=0.7.0 $SOURCE_DIR/source/jwt-cpp/build.sh
 # ARROW
 ################################################################################
 ARROW_VERSION=13.0.0 $SOURCE_DIR/source/arrow/build.sh
+ARROW_VERSION=15.0.0 $SOURCE_DIR/source/arrow/build.sh
 
 # CURL
 ################################################################################
