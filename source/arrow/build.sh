@@ -31,5 +31,9 @@ if needs_build_package ; then
   wrap cmake -DARROW_JSON=ON -DARROW_OPTIONAL_INSTALL=ON -DARROW_JEMALLOC=OFF \
       -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE
   wrap make VERBOSE=1 -j${BUILD_THREADS:-4} all install
+
+  strip --strip-debug $LOCAL_INSTALL/lib64/libarrow.{a,so} \
+  || strip --strip-debug $LOCAL_INSTALL/lib/libarrow.{a,so} \
+  || true
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
