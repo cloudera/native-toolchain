@@ -313,3 +313,7 @@ unset ZLIB_VERSION
   export ZLIB_VERSION=1.3.1
   OPENTELEMETRY_CPP_VERSION=1.20.0 $SOURCE_DIR/source/opentelemetry-cpp/build.sh
 }
+
+# Pytorch CPUINFO
+################################################################################
+CPUINFO_VERSION=84818a41e0 $SOURCE_DIR/source/cpuinfo/build.sh
