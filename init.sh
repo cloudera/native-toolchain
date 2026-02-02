@@ -88,7 +88,7 @@ export GCC_VERSION
 : ${SYSTEM_CMAKE=0}
 export SYSTEM_CMAKE
 
-: ${CMAKE_VERSION=3.22.2}
+: ${CMAKE_VERSION=3.31.11}
 export CMAKE_VERSION
 
 set -x
