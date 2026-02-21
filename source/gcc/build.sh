@@ -66,7 +66,7 @@ if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
   # some components (boost) fail to compile with a modified gcc version.
   if [[ $GCC_VERSION = '10.4.0' ]]; then
     PATCH_DIR=${THIS_DIR}/gcc-${PACKAGE_VERSION}-patches
-    apply_patches 1 $PATCH_DIR
+    apply_patches 2 $PATCH_DIR
   fi
 
   download_gcc_prerequisites

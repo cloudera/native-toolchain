@@ -1,0 +1,15 @@
+diff -Naur gcc-10.4.0/libstdc++-v3/include/std/variant gcc-10.4.0-patched/libstdc++-v3/include/std/variant
+--- gcc-10.4.0/libstdc++-v3/include/std/variant	2022-06-28 01:54:31.000000000 -0700
++++ gcc-10.4.0-patched/libstdc++-v3/include/std/variant	2026-02-21 13:03:11.732276294 -0800
+@@ -1294,7 +1294,11 @@
+ 
+   template<typename... _Types>
+     class variant
++#if defined(__clang__) && __clang_major__ <= 7
++    : public __detail::__variant::_Variant_base<_Types...>,
++#else
+     : private __detail::__variant::_Variant_base<_Types...>,
++#endif
+       private _Enable_default_constructor<
+ 	__detail::__variant::_Traits<_Types...>::_S_default_ctor,
+ 	  variant<_Types...>>,
