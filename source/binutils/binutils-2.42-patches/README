@@ -1,0 +1,124 @@
+These patches are from Ubuntu 24's source repositories.
+Specifically, the patch files are from binutils_2.42-4ubuntu2.8.debian.tar.xz
+and are applied in the order described by debian/patches/series. Here is
+the relevant piece of the changelog to describe these patches:
+
+binutils (2.42-4ubuntu2.8) noble-security; urgency=medium
+
+  * SECURITY UPDATE: Out-of-Bounds Read
+    - debian/patches/CVE-2025-11412.patch: PR 33452 SEGV in
+      bfd_elf_gc_record_vtentry
+    - CVE-2025-11412
+  * SECURITY UPDATE: Out-of-Bounds Read
+    - debian/patches/CVE-2025-11413.patch: Re: elf: Disallow the empty
+      global symbol name
+    - CVE-2025-11413
+  * SECURITY UPDATE: Out-of-Bounds Read
+    - debian/patches/CVE-2025-11414.patch: elf: Return error on unsorted
+      symbol table if not allowed
+    - CVE-2025-11414
+  * SECURITY UPDATE: Out-of-Bounds Read
+    - debian/patches/CVE-2025-11494.patch: x86: Keep
+      _GLOBAL_OFFSET_TABLE_ for .eh_frame
+    - CVE-2025-11494
+
+ -- John Breton <john.breton@canonical.com>  Wed, 03 Dec 2025 10:01:20 -0500
+
+binutils (2.42-4ubuntu2.7) noble-security; urgency=medium
+
+  * SECURITY UPDATE: Unchecked Return Value
+    - debian/patches/CVE-2025-11839.patch: Remove call to abort in the
+      DGB debug format printing code, thus allowing the display of a
+      fuzzed input file to complete without triggering an abort.
+    - CVE-2025-11839
+  * SECURITY UPDATE: Out-of-Bounds Read
+    - debian/patches/CVE-2025-11840.patch: PR 33455 SEGV in vfinfo at
+      ldmisc.c:527
+    - CVE-2025-11840
+
+ -- John Breton <john.breton@canonical.com>  Thu, 20 Nov 2025 10:47:27 -0500
+
+binutils (2.42-4ubuntu2.6) noble-security; urgency=medium
+
+  * SECURITY UPDATE: Heap based buffer overflow
+    - debian/patches/CVE-2025-11082.patch: avoid reads of beyond
+      .eh_frame section in bfd/elf-eh-frame.c.
+    - CVE-2025-11082
+  * SECURITY UPDATE: Heap based buffer overflow
+    - debian/patches/CVE-2025-11083.patch: fix in bfd/elfcode.h.
+    - CVE-2025-11083
+  * SECURITY UPDATE: Buffer overflow
+    - debian/patches/CVE-2025-1147.patch: fix treating an ifunc symbol
+      as a stab in binutils/nm.c, binutils/testsuite/binutils-all/nm.exp.
+    - CVE-2025-1147
+  * SECURITY UPDATE: Memory leak
+    - debian/patches/CVE-2025-1148.patch: replace xmalloc with stat_alloc
+      in ld parser in multiple files.
+    - CVE-2025-1148
+  * SECURITY UPDATE: Memory leak
+    - debian/patches/CVE-2025-3198.patch: fix memory leak
+      inbinutils/bucomm.c.
+    - CVE-2025-3198
+  * SECURITY UPDATE: Memory corruption
+    - debian/patches/CVE-2025-5244.patch: fix segfault
+      in bfd/elflink.c
+    - CVE-2025-5244
+  * SECURITY UPDATE: Memory corruption
+    - debian/patches/CVE-2025-5245.patch: fix segfault
+      in binutils/debug.c
+    - CVE-2025-5245
+  * SECURITY UPDATE: Heap-based buffer overflow
+    - debian/patches/CVE-2025-7545.patch: check size
+      of copy_section in binutils/objcopy.c
+    - CVE-2025-7545
+  * SECURITY UPDATE: Out-of-bounds write
+    - debian/patches/CVE-2025-7546.patch: fix in bfd/elf.c.
+    - CVE-2025-7546
+  * SECURITY UPDATE: Memory leak
+    - debian/patches/CVE-2025-8225.patch: fix in binutils/dwarf.c.
+    - CVE-2025-8225
+
+ -- Leonidas Da Silva Barbosa <leo.barbosa@canonical.com>  Tue, 21 Oct 2025 14:07:05 -0300
+
+binutils (2.42-4ubuntu2.5) noble-security; urgency=medium
+
+  * SECURITY UPDATE: Memory corruption
+    - debian/patches/CVE-2025-1153.patch: introduces new variant of einfo
+      called 'fatal' that always exits in ld/*.
+    - CVE-2025-1153
+  * SECURITY UPDATE: Heap based buffer overflow
+    - debian/patches/CVE-2025-1176.patch: prevent illegal memory access
+      when indexing into the sym_hashes array in bfd/elflink.c.
+    - CVE-2025-1176
+  * SECURITY UPDATE: Memory corruption
+    - debian/patches/CVE-2025-1178.patch: prevent an abort in the bfd linkder
+      when attempting to generate dynamic relocs for a corrupt input file
+      in bfd/elf64-x86-64.c.
+    - CVE-2025-1178
+  * SECURITY UPDATE: Memory corruption
+    - debian/patches/CVE-2025-1181-pre.patch: prevent illegal memory access
+      when checking relocs in a corrupt ELF binary in bfd/elf-bfd.h,
+      bfd/elf64-x86-64.c, bfd/elflink.c, bfd/elfxx-x86.c.
+    - debian/patches/CVE-2025-1181.patch: add even more checks for corrupt
+      input when processing relocations for ELF files in bdf/elflink.c.
+    - CVE-2025-1181
+   * SECURITY UPDATE: Memory corruption
+     - debian/patches/CVE-2025-1182.patch: fix illegal memory access
+       triggered by corrupt ELF input files in bfd/elflink.c.
+     - CVE-2025-1182
+
+ -- Leonidas Da Silva Barbosa <leo.barbosa@canonical.com>  Mon, 10 Mar 2025 10:52:52 -0300
+
+binutils (2.42-4ubuntu2.4) noble-security; urgency=medium
+
+  * SECURITY UPDATE: Incorrect access control
+    - debian/patches/CVE-2024-57360.patch: avoid potential
+      segmentation fault when displaying symbols without version
+      info in binutils/nm.c.
+    - CVE-2024-57360
+  * SECURITY UPDATE: Stack-based overflow
+    - debian/patches/CVE-2025-0840.patch: fixing boundaries
+      checking in binutils/objdump.c.
+    - CVE-2025-0840
+
+ -- Leonidas Da Silva Barbosa <leo.barbosa@canonical.com>  Wed, 05 Feb 2025 10:55:29 -0300
