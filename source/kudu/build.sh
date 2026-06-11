@@ -100,6 +100,19 @@ function build {
 
   export GRADLE_USER_HOME="$(pwd)"
 
+  # Kudu's JAVA_HOME detection doesn't work for some locations of JDK 17. In particular,
+  # it currently misses Temurin on Redhat 10 and JDK 17 on SLES 16. To avoid that issue,
+  # manually set JAVA_HOME when using JDK 17 until those locations can be updated.
+  if [[ $(java -version 2>&1 | grep -c "build 17.0") != 0 ]]; then
+    # Ex: /usr/bin/javac
+    JAVAC_SYMLINK=$(which javac)
+    # Follow symlinks to get the real path of javac
+    # Ex: /usr/lib/jvm/java-17-temurin-jdk/bin/javac
+    JAVAC_REAL_LOCATION=$(realpath $JAVAC_SYMLINK)
+    # Trim off /bin/javac
+    export JAVA_HOME=$(echo $JAVAC_REAL_LOCATION | sed 's#/bin/javac##')
+  fi
+
   # Kudu's dependencies are not in the toolchain. They could be added later.
   cd thirdparty
 

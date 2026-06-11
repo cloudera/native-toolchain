@@ -1,0 +1,56 @@
+FROM rockylinux/rockylinux:10.1
+
+COPY ./redhat/adoptium.repo /etc/yum.repos.d/adoptium.repo
+
+RUN dnf -y install dnf-plugins-core
+RUN dnf config-manager --set-enabled crb && dnf -y install epel-release
+RUN dnf -y install autoconf \
+  automake \
+  annobin-plugin-gcc \
+  bison \
+  byacc \
+  bzip2 \
+  cyrus-sasl \
+  cyrus-sasl-gssapi \
+  cyrus-sasl-devel \
+  cyrus-sasl-plain \
+  diffutils \
+  file \
+  flex \
+  gcc \
+  gcc-c++ \
+  git \
+  glibc-devel \
+  gpg \
+  temurin-17-jdk \
+  krb5-devel \
+  libevent-devel \
+  libffi-devel \
+  libtool \
+  lzo-devel \
+  make \
+  ncurses-devel \
+  chrony \
+  openssl-devel \
+  patch \
+  'perl(FindBin)' \
+  pigz \
+  postgresql \
+  postgresql-server \
+  python3-devel \
+  readline-devel \
+  rsync \
+  texinfo \
+  unzip \
+  vim-common \
+  wget \
+  which \
+  xz \
+  zlib-devel
+
+COPY ./all/postinstall.sh /usr/local/bin
+RUN postinstall.sh
+
+COPY ./all/assert-dependencies-present.py /usr/local/bin
+# Asserts that the packages listed above were correctly installed
+RUN assert-dependencies-present.py --no-lsb-release

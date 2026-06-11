@@ -17,6 +17,7 @@ STAMP_DIR=$(BUILD_DIR)/stamp
 SHELL=/bin/bash -o pipefail
 DISTROS = redhat8 \
 	redhat9 \
+	redhat10 \
 	sles15 \
 	ubuntu2004 \
 	ubuntu2204 \

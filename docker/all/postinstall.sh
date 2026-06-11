@@ -60,7 +60,7 @@ set_default_python() {
 }
 
 install_awscliv2() {
-  local ARCH_NAME=$(uname -p)
+  local ARCH_NAME=$(uname -m)
   if [[ $ARCH_NAME != 'aarch64' && $ARCH_NAME != 'x86_64' ]]; then
     echo 'This script works only for x86_64 and aarch64 architectures; this is "${ARCH_NAME}"'
     return 1

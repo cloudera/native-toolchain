@@ -1,0 +1,12 @@
+diff -Naur opentelemetry-cpp-1.20.0/CMakeLists.txt opentelemetry-cpp-1.20.0.patched/CMakeLists.txt
+--- opentelemetry-cpp-1.20.0/CMakeLists.txt	2025-04-01 15:21:41.000000000 -0700
++++ opentelemetry-cpp-1.20.0.patched/CMakeLists.txt	2026-06-11 23:23:13.546338382 -0700
+@@ -502,7 +502,7 @@
+    AND WITH_HTTP_CLIENT_CURL
+    AND WITH_OTLP_HTTP_COMPRESSION)
+   # No specific version required.
+-  find_package(ZLIB REQUIRED)
++  find_package(ZLIB MODULE REQUIRED)
+   message(STATUS "Found ZLIB: ${ZLIB_LIBRARIES}, version ${ZLIB_VERSION}")
+ endif()
+ 

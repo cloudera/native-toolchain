@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright 2019-2025 Cloudera Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,6 @@
 # this script must be python2.6 .
 
 import argparse
-import distutils.core  # noqa: F401
-import distutils.spawn
 import sysconfig
 import subprocess
 import logging
@@ -96,15 +94,15 @@ def check_path(require_lsb_release):
            'yacc']
   if require_lsb_release:
     progs.append('lsb_release')
-  which = distutils.spawn.find_executable
+
   for p in progs:
     if isinstance(p, tuple):
       LOG.info('Checking for any program of: %s' % ', '.join(p))
-      if not any(map(which, p)):
+      if not any(map(shutil.which, p)):
         raise Exception('Unable to find any of \'%s\' in PATH' % ', '.join(p))
       continue
     LOG.info('Checking program: %s' % p)
-    if not which(p):
+    if not shutil.which(p):
       raise Exception('Unable to find %s in PATH' % p)
 
 
@@ -132,13 +130,19 @@ def check_ccache_works():
 
 
 def check_java_version():
-  # Building Kudu requires Java 8.
-  want = '1.8.0'
+  # Building Kudu works with Java 8 or Java 17, allow either
+  want_versions = ['1.8.0', '17.0']
   LOG.info('Checking that java is correctly installed.')
   # java -version has multiline output, so combine it into a single string
   out = "".join(check_output(['java', '-version']))
-  if want not in out:
-    raise Exception('Unexpected java version. Was: %s, expected: %s' % (out, want))
+  found_ok_version = False
+  for want in want_versions:
+    if want in out:
+      found_ok_version = True
+      break
+  if not found_ok_version:
+    raise Exception('Unexpected java version. Was: %s, expected one of: %s'
+        % (out, want_versions))
 
 
 def get_arguments():

@@ -321,7 +321,7 @@ LIBPFM_VERSION=4.13.0 $SOURCE_DIR/source/libpfm/build.sh
   export CURL_VERSION=8.17.0
   export PROTOBUF_VERSION=3.14.0
   export ZLIB_VERSION=1.3.1
-  OPENTELEMETRY_CPP_VERSION=1.20.0 $SOURCE_DIR/source/opentelemetry-cpp/build.sh
+  OPENTELEMETRY_CPP_VERSION=1.20.0-p1 $SOURCE_DIR/source/opentelemetry-cpp/build.sh
 )
 
 # Pytorch CPUINFO
