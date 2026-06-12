@@ -31,6 +31,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-inter
   ncurses-devel \
   patch \
   pigz \
+  python3 \
+  python3-devel \
   readline-devel \
   rsync \
   texinfo \
@@ -43,11 +45,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-inter
 
 # Install select packages from openSUSE Leap 15.4 distribution
 RUN zypper --non-interactive ar -G -c https://download.opensuse.org/distribution/leap/15.4/repo/oss/ opensuse-oss
-RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-interactive install autoconf \
-  java-1_8_0-openjdk-devel \
-  python \
-  python-devel \
-  python-xml
+RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-interactive install \
+  java-1_8_0-openjdk-devel
 
 # Earlier packages pull in a Java 17 JRE and set it as the default JRE, breaking our
 # assert-dependency checks. Set it back to Java 8 here.
