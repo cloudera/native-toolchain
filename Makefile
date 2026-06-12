@@ -19,6 +19,7 @@ DISTROS = redhat8 \
 	redhat9 \
 	redhat10 \
 	sles15 \
+	sles16 \
 	ubuntu2004 \
 	ubuntu2204 \
 	ubuntu2404

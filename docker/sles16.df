@@ -1,0 +1,54 @@
+FROM registry.suse.com/bci/bci-base:16.0
+
+RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-interactive install --allow-downgrade autoconf \
+  automake \
+  bison \
+  bzip2 \
+  ccache\
+  curl \
+  cyrus-sasl \
+  cyrus-sasl-gssapi \
+  cyrus-sasl-devel \
+  cyrus-sasl-plain \
+  diffutils \
+  flex \
+  gawk \
+  gcc \
+  gcc-c++ \
+  git \
+  glibc-devel \
+  groff \
+  gzip \
+  hostname \
+  java-17-openjdk-devel \
+  krb5-devel \
+  libdb-4_8-devel \
+  libevent-devel \
+  libffi-devel \
+  libopenssl-devel \
+  libtool \
+  lsb-release \
+  lzo-devel \
+  make \
+  makeinfo \
+  ncurses-devel \
+  patch \
+  pigz \
+  python3 \
+  python3-devel \
+  readline-devel \
+  rsync \
+  texi2html \
+  unzip \
+  vim \
+  wget \
+  which \
+  xz \
+  zlib-devel
+
+COPY ./all/postinstall.sh /usr/local/bin
+RUN postinstall.sh
+
+COPY ./all/assert-dependencies-present.py /usr/local/bin
+# Asserts that the packages listed above were correctly installed
+RUN assert-dependencies-present.py

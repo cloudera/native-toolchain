@@ -24,6 +24,11 @@ source $SOURCE_DIR/functions.sh
 THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
+# This uses the system compiler. Newer OS compilers can use a newer
+# C standard, so manually set this to a standard that works for our
+# version of GDB.
+export CFLAGS="-std=gnu11"
+
 if needs_build_package ; then
   # Download the dependency from S3
   download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
