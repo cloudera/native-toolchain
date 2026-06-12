@@ -36,7 +36,6 @@ if needs_build_package ; then
 
   BOOST_ROOT="${BUILD_DIR}"/boost-"${BOOST_VERSION}"
   ZLIB_ROOT="${BUILD_DIR}"/zlib-"${ZLIB_VERSION}"
-  PYTHON_ROOT="${BUILD_DIR}"/python-"${PYTHON_VERSION}"
 
   if [[ -d "${PIC_LIB_PATH:-}" ]]; then
     PIC_LIB_OPTIONS="--with-zlib=${PIC_LIB_PATH}"
@@ -54,11 +53,7 @@ if needs_build_package ; then
 
 
   # LEXLIB= is a Workaround /usr/lib64/libfl.so: undefined reference to `yylex'
-  PYTHON="${PYTHON_ROOT}"/bin/python
-  PY_PREFIX="${LOCAL_INSTALL}"/python
   PATH="${PATH}" \
-    PYTHON="${PYTHON}" \
-    PY_PREFIX="${PY_PREFIX}" \
     wrap ./configure \
     LEXLIB= \
     --with-pic \
@@ -85,38 +80,23 @@ if needs_build_package ; then
     --with-rs=no \
     --with-dotnetcore=no \
     --with-netstd=no \
+    --with-python=no \
+    --with-py3=no \
     ${PIC_LIB_OPTIONS:-} \
     ${CONFIGURE_FLAG_BUILD_SYS}
-  # The error code is zero if one or more libraries can be built. To ensure that C++
-  # and python libraries are built the output should be checked.
+  # The error code is zero if one or more libraries can be built. Check the output
+  # to ensure that C++ is built.
   if ! grep -q "Building C++ Library \.* : yes" "${BUILD_LOG}"; then
     echo "Thrift cpp lib configuration failed."
     exit 1
   fi
-  if ! grep -q "Building Python Library \.* : yes" "${BUILD_LOG}"; then
-    echo "Thrift python lib configuration failed."
-    exit 1
-  fi
   add_gcc_to_ld_library_path
   wrap make VERBOSE=1 -j"${BUILD_THREADS:-4}" install
-  cd contrib/fb303
-  rm -f config.cache
-  chmod 755 ./bootstrap.sh
-  wrap ./bootstrap.sh --with-boost="${BOOST_ROOT}"
-  wrap chmod 755 configure
-  CPPFLAGS="-I${LOCAL_INSTALL}/include" PY_PREFIX="${PY_PREFIX}" PYTHON="${PYTHON}" wrap ./configure \
-    --with-boost="${BOOST_ROOT}" \
-    --with-java=no --with-php=no --with-cpp=no --prefix="${LOCAL_INSTALL}" \
-    --with-thriftpath="${LOCAL_INSTALL}"
-  wrap make VERBOSE=1 -j"${BUILD_THREADS}" install
 
-  # Fake the share/fb303/if
+  # We need the fb303.thrift in share/fb303/if (but we can skip building fb303
+  # itself).
   mkdir -p ${LOCAL_INSTALL}/share/fb303/if
-  cp if/fb303.thrift ${LOCAL_INSTALL}/share/fb303/if
+  cp contrib/fb303/if/fb303.thrift ${LOCAL_INSTALL}/share/fb303/if
 
-  # Ensure that we've compiled the fastbinary shared object
-  # Some distros place site-packages on lib and others do so in lib64
-  PYTHONPATH=$(find "${PY_PREFIX}" -type d -name 'site-packages' -type d|tr '\n' ':') \
-    wrap "${PYTHON}" -c 'import thrift.protocol.fastbinary'
   finalize_package_build "${PACKAGE}" "${PACKAGE_VERSION}"
 fi
