@@ -123,12 +123,10 @@ function build {
     PATH="$PATH:/usr/lib/mit/bin"
   fi
   LOAD_AVERAGE_ARGS="--load-average=${BUILD_THREADS}"
-  # Kudu uses ninja if ninja is available. Ninja doesn't support --load-average,
-  # so don't use --load-average if ninja is installed. The build docker images
-  # don't install ninja, so this is uncommon.
+  # Kudu uses ninja if ninja is available. Ninja's equivalent of --load-average=X
+  # is -l X.
   if command -v ninja-build || command -v ninja ; then
-    echo "Ninja is installed, disabling --load-average"
-    LOAD_AVERAGE_ARGS=""
+    LOAD_AVERAGE_ARGS="-l${BUILD_THREADS}"
   fi
   # When building Kudu's toolchain, debug symbols are not particularly useful
   # for Impala development and they add substantial size to the Kudu binary.
