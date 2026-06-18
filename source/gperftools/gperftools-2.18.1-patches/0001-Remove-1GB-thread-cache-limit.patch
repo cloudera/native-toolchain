@@ -1,0 +1,11 @@
+diff -Naur gperftools-2.18.1/src/thread_cache.cc gperftools-2.18.1.mod/src/thread_cache.cc
+--- gperftools-2.18.1/src/thread_cache.cc	2026-03-06 12:33:03.000000000 -0800
++++ gperftools-2.18.1.mod/src/thread_cache.cc	2026-06-17 17:20:33.966198898 -0700
+@@ -386,7 +386,6 @@
+   if (new_size < min_size) {
+     new_size = min_size;
+   }
+-  if (new_size > (1<<30)) new_size = (1<<30);     // Limit to 1GB
+   overall_thread_cache_size_ = new_size;
+ 
+   RecomputePerThreadCacheSize();

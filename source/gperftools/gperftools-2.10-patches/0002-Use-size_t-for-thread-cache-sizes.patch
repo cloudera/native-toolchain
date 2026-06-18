@@ -1,0 +1,32 @@
+diff -Naur gperftools-2.10.mod/src/thread_cache.h gperftools-2.10.mod2/src/thread_cache.h
+--- gperftools-2.10.mod/src/thread_cache.h	2025-04-25 11:04:53.854608582 -0700
++++ gperftools-2.10.mod2/src/thread_cache.h	2026-06-17 17:13:01.501190057 -0700
+@@ -256,7 +256,7 @@
+   // Releases N items from this thread cache.
+   void ReleaseToCentralCache(FreeList* src, uint32 cl, int N);
+ 
+-  void SetMaxSize(int32 new_max_size);
++  void SetMaxSize(size_t new_max_size);
+ 
+   // Increase max_size_ by reducing unclaimed_cache_space_ or by
+   // reducing the max_size_ of some other thread.  In both cases,
+@@ -324,8 +324,8 @@
+ 
+   FreeList      list_[kClassSizesMax];     // Array indexed by size-class
+ 
+-  int32         size_;                     // Combined size of data
+-  int32         max_size_;                 // size_ > max_size_ --> Scavenge()
++  size_t        size_;                     // Combined size of data
++  size_t        max_size_;                 // size_ > max_size_ --> Scavenge()
+ 
+   // We sample allocations, biased by the size of the allocation
+   Sampler       sampler_;               // A sampler
+@@ -479,7 +479,7 @@
+ #endif
+ }
+ 
+-inline void ThreadCache::SetMaxSize(int32 new_max_size) {
++inline void ThreadCache::SetMaxSize(size_t new_max_size) {
+   max_size_ = new_max_size;
+ }
+ 

@@ -125,8 +125,8 @@ GFLAGS_VERSION=2.2.0-p2 $SOURCE_DIR/source/gflags/build.sh
 ################################################################################
 # Build gperftools
 ################################################################################
-GPERFTOOLS_VERSION=2.10-p1 $SOURCE_DIR/source/gperftools/build.sh
-GPERFTOOLS_VERSION=2.15-p1 $SOURCE_DIR/source/gperftools/build.sh
+GPERFTOOLS_VERSION=2.10-p2 $SOURCE_DIR/source/gperftools/build.sh
+GPERFTOOLS_VERSION=2.18.1-p2 $SOURCE_DIR/source/gperftools/build.sh
 
 ################################################################################
 # Build glog
