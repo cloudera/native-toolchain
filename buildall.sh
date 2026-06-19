@@ -292,7 +292,7 @@ if [[ "$ARCH_NAME" == "aarch64" ]]; then
     export SNAPPY_VERSION=1.1.8
     export ZLIB_VERSION=1.3.1
     export ZSTD_VERSION=1.5.2
-    HADOOP_CLIENT_VERSION=3.3.6-p1 $SOURCE_DIR/source/hadoop-client/build.sh
+    HADOOP_CLIENT_VERSION=3.3.6-p2 $SOURCE_DIR/source/hadoop-client/build.sh
   )
 fi
 

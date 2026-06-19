@@ -57,7 +57,10 @@ if needs_build_package ; then
 
   # Copy the libraries we currently use to minimize archive size. Omits libhdfspp, which
   # depends on libprotobuf.
-  NATIVE_LIBS=$LOCAL_INSTALL/lib
+  INCLUDE_DIR=$LOCAL_INSTALL/include
+  mkdir -p $INCLUDE_DIR
+  cp $THIS_DIR/$PATCHED_DIR/hadoop-hdfs-project/hadoop-hdfs-native-client/src/main/native/libhdfs/include/hdfs/hdfs.h $INCLUDE_DIR
+  NATIVE_LIBS=$LOCAL_INSTALL/lib/native
   mkdir -p $NATIVE_LIBS
   BUILD_PATH=target/native/target/usr/local/lib
   cp $THIS_DIR/$PATCHED_DIR/hadoop-hdfs-project/hadoop-hdfs-native-client/$BUILD_PATH/libhdfs.* $NATIVE_LIBS/
