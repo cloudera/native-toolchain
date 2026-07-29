@@ -327,3 +327,7 @@ LIBPFM_VERSION=4.13.0 $SOURCE_DIR/source/libpfm/build.sh
 # Pytorch CPUINFO
 ################################################################################
 CPUINFO_VERSION=84818a41e0 $SOURCE_DIR/source/cpuinfo/build.sh
+
+# simdutf
+################################################################################
+SIMDUTF_VERSION=9.0.0 $SOURCE_DIR/source/simdutf/build.sh
