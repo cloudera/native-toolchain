@@ -33,7 +33,8 @@ if needs_build_package ; then
   GFLAGS_CMAKE_CONF_DIR=$BUILD_DIR/gflags-$GFLAGS_VERSION/lib/cmake/gflags
 
   COMMON_GLOG_CMAKE_FLAGS="-Dgflags_DIR=$GFLAGS_CMAKE_CONF_DIR \
-    -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE -DWITH_TLS=OFF"
+    -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE -DWITH_TLS=OFF \
+    -DWITH_UNWIND=OFF"
 
   # glog's CMake builds either a shared or a static library but not both. Build each one
   # separately.
