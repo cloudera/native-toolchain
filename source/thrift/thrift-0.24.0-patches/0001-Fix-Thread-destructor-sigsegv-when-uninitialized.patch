@@ -1,0 +1,12 @@
+diff -Naur thrift-0.16.0/lib/cpp/src/thrift/concurrency/Thread.h thrift-0.16.0-mod/lib/cpp/src/thrift/concurrency/Thread.h
+--- thrift-0.16.0/lib/cpp/src/thrift/concurrency/Thread.h	2021-06-17 15:45:42.000000000 -0700
++++ thrift-0.16.0-mod/lib/cpp/src/thrift/concurrency/Thread.h	2022-06-16 21:18:00.224002746 -0700
+@@ -86,7 +86,7 @@
+   }
+ 
+   virtual ~Thread() {
+-    if (!detached_ && thread_->joinable()) {
++    if (!detached_ && state_ != uninitialized && thread_->joinable()) {
+       try {
+         join();
+       } catch (...) {
