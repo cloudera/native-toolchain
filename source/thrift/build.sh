@@ -82,6 +82,7 @@ if needs_build_package ; then
     --with-netstd=no \
     --with-python=no \
     --with-py3=no \
+    --with-kotlin=no \
     ${PIC_LIB_OPTIONS:-} \
     ${CONFIGURE_FLAG_BUILD_SYS}
   # The error code is zero if one or more libraries can be built. Check the output
