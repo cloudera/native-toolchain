@@ -25,28 +25,30 @@ THIS_DIR="$( cd "$( dirname "$0" )" && pwd )"
 prepare $THIS_DIR
 
 if needs_build_package ; then
-  if [[ $PACKAGE_STRING =~ "-clangcompat" ]]; then
-    # Get SOURCE_STRING from PACKAGE_STRING by eliminating "-clangcompat", then
-    # download the dependency from S3
-    SOURCE_STRING=${PACKAGE_STRING%-clangcompat}
-    download_dependency $PACKAGE "${SOURCE_STRING}.tar.gz" $THIS_DIR
-
-    # Patches are based on source version. Pass to setup_package_build function with
-    # variable PATCH_DIR.
-    SOURCE_VERSION=${PACKAGE_VERSION%-clangcompat}
-    PATCH_DIR=${THIS_DIR}/${PACKAGE}-${SOURCE_VERSION}-patches
-
-    setup_package_build $PACKAGE $PACKAGE_VERSION "${SOURCE_STRING}.tar.gz" \
-        $SOURCE_STRING $PACKAGE_STRING
-  else
-    # Download the dependency from S3
-    download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
-
-    setup_package_build $PACKAGE $PACKAGE_VERSION
-  fi
+  # Download the dependency from S3
+  download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
+  setup_package_build $PACKAGE $PACKAGE_VERSION
   add_gcc_to_ld_library_path
-  # --disable-silent-rules enables verbose output including the compilation command
-  wrap ./configure --disable-silent-rules --with-pic --prefix=$LOCAL_INSTALL
-  wrap make -j${BUILD_THREADS:-4} install
+
+  # Build with CMake (rather than autotools) so that a CMake package config
+  # (protobuf-config.cmake) is installed. Consumers such as gRPC resolve
+  # protobuf via find_package(Protobuf CONFIG), which requires this file.
+  rm -rf build_static
+  mkdir build_static
+  pushd build_static
+  # Protobuf 3.21+ moved its CMake project to the repository root and made
+  # abseil a mandatory dependency; point it at our own build instead of
+  # letting it fetch one from the network.
+  ABSL_CONFIG_LOCATION=$(find $BUILD_DIR/abseil-cpp-${ABSEIL_CPP_VERSION} -name 'abslConfig.cmake')
+  [[ -f $ABSL_CONFIG_LOCATION ]]
+  ABSL_CONFIG_DIR=$(dirname ${ABSL_CONFIG_LOCATION})
+  wrap cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_CXX_STANDARD=17 \
+        -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF \
+        -Dabsl_DIR=$ABSL_CONFIG_DIR -Dprotobuf_LOCAL_DEPENDENCIES_ONLY=ON
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
+  wrap make install
+  popd
+
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi

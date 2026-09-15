@@ -78,14 +78,18 @@ BZIP2_VERSION=1.0.8-p2 $SOURCE_DIR/source/bzip2/build.sh
 )
 
 ################################################################################
+# Build Abseil
+################################################################################
+ABSEIL_CPP_VERSION=20250512.2 $SOURCE_DIR/source/abseil-cpp/build.sh
+
+
+################################################################################
 # Build protobuf
 ################################################################################
-PROTOBUF_VERSION=3.14.0 $SOURCE_DIR/source/protobuf/build.sh
-# Impala Clang builds hit a micro redefinition compiling error and symbol related
-# issue in linking with protobuf 3.14.0. Two patches were created to fix these
-# Clang compatibility issues.
-# 3.14.0-clangcompat-p2 should be used for Impala Clang builds.
-PROTOBUF_VERSION=3.14.0-clangcompat-p2 $SOURCE_DIR/source/protobuf/build.sh
+(
+  export ABSEIL_CPP_VERSION=20250512.2
+  PROTOBUF_VERSION=3.21.9 $SOURCE_DIR/source/protobuf/build.sh
+)
 
 ################################################################################
 # Build libev
@@ -158,11 +162,6 @@ LZ4_VERSION=1.9.4 $SOURCE_DIR/source/lz4/build.sh
 ################################################################################
 ZSTD_VERSION=1.5.2 $SOURCE_DIR/source/zstd/build.sh
 ZSTD_VERSION=1.5.5 $SOURCE_DIR/source/zstd/build.sh
-
-################################################################################
-# Build Abseil
-################################################################################
-ABSEIL_CPP_VERSION=20250512.2 $SOURCE_DIR/source/abseil-cpp/build.sh
 
 ################################################################################
 # Build re2
@@ -251,7 +250,7 @@ TPC_DS_VERSION=2.1.0-p1 $SOURCE_DIR/source/tpc-ds/build.sh
 ################################################################################
 (
   export LZ4_VERSION=1.9.3
-  export PROTOBUF_VERSION=3.14.0
+  export PROTOBUF_VERSION=3.21.9
   export SNAPPY_VERSION=1.1.8
   export ZLIB_VERSION=1.3.1
   export ZSTD_VERSION=1.5.2
@@ -288,7 +287,7 @@ CALLONCEHACK_VERSION=1.0.0 $SOURCE_DIR/source/calloncehack/build.sh
 ################################################################################
 if [[ "$ARCH_NAME" == "aarch64" ]]; then
   (
-    export PROTOBUF_VERSION=3.14.0
+    export PROTOBUF_VERSION=3.21.9
     export SNAPPY_VERSION=1.1.8
     export ZLIB_VERSION=1.3.1
     export ZSTD_VERSION=1.5.2
@@ -320,7 +319,7 @@ LIBPFM_VERSION=4.13.0 $SOURCE_DIR/source/libpfm/build.sh
 ################################################################################
 (
   export CURL_VERSION=8.17.0
-  export PROTOBUF_VERSION=3.14.0
+  export PROTOBUF_VERSION=3.21.9
   export ZLIB_VERSION=1.3.1
   OPENTELEMETRY_CPP_VERSION=1.20.0-p1 $SOURCE_DIR/source/opentelemetry-cpp/build.sh
 )

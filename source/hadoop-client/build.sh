@@ -36,6 +36,8 @@ if needs_build_package ; then
   UNPACK_DIR="hadoop-rel-release-${PACKAGE_VERSION}"
   download_dependency $PACKAGE $SOURCE_TARBALL $THIS_DIR
   setup_package_build $PACKAGE $PACKAGE_VERSION $SOURCE_TARBALL $UNPACK_DIR
+  # Build tools like protoc-gen-hrpc are linked against our libstdc++ and run during the build.
+  add_gcc_to_ld_library_path
 
   # Hadoop uses *_HOME environment variables to find dependencies.
   export PROTOBUF_HOME=$BUILD_DIR/protobuf-${PROTOBUF_VERSION}
