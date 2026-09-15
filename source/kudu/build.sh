@@ -142,7 +142,8 @@ function build {
   STORE_CXXFLAGS=${CXXFLAGS}
   CFLAGS="${CFLAGS} -g0"
   CXXFLAGS="${CXXFLAGS} -g0"
-  EXTRA_MAKEFLAGS="${LOAD_AVERAGE_ARGS}" wrap ./build-if-necessary.sh
+  EXTRA_MAKEFLAGS="${LOAD_AVERAGE_ARGS}" USE_PREBUILT_THIRDPARTY=0 \
+      wrap ./build-if-necessary.sh
   CFLAGS=$STORE_CFLAGS
   CXXFLAGS=$STORE_CXXFLAGS
   cd ..
