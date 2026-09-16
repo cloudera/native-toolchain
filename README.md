@@ -2,16 +2,13 @@
 
 We currently support building on the following platforms:
 
-* x86-64 Ubuntu 16.04, 18.04
-* x86-64 & AArch64 Ubuntu 20.04, 22.04
-* x86-64 Ubuntu 24.04
-* x86-64 CentOS 7.x
-* x86-64 & AArch64 CentOS 8.x; Rocky 9.x
-* x86-86 SLES 12, 15
+* x86-64 & AArch64 Ubuntu 20.04, 22.04, 24.04
+* x86-64 & AArch64 Rocky 8.x, 9.x, 10.x
+* x86-86 SLES 15, 16
 
 Other platforms might also work but are not well tested. To set up the
 build environment from scratch, refer to the specific docker files, e.g.
-docker/ubuntu1804.df.
+docker/ubuntu2404.df.
 
 # Building Dependencies
 
@@ -38,11 +35,11 @@ To build a specific package run:
 
  for example:
 
-    ./build.sh python 2.7.15
+    ./build.sh python 3.11.14
 
  Its possible as well to build several packages at once.
 
-    ./build.sh python 2.7.15 llvm 3.3-p5
+    ./build.sh python 3.11.14 llvm 5.0.1-p8
 
 Here, the arguments are package version pairs.
 

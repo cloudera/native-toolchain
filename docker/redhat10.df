@@ -1,5 +1,9 @@
 FROM rockylinux/rockylinux:10.1
 
+COPY ./redhat/rocky10.repo /etc/yum.repos.d/rocky.repo
+COPY ./redhat/rocky10-addons.repo /etc/yum.repos.d/rocky-addons.repo
+COPY ./redhat/rocky10-extras.repo /etc/yum.repos.d/rocky-extras.repo
+COPY ./redhat/rocky10-devel.repo /etc/yum.repos.d/rocky-devel.repo
 COPY ./redhat/adoptium.repo /etc/yum.repos.d/adoptium.repo
 
 RUN dnf -y install dnf-plugins-core

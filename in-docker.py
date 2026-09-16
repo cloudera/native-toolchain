@@ -34,12 +34,12 @@ build, check, and source directories can be found.
 
 --docker-args arguments are passed in verbatim to docker. So for example:
 
-in-docker.py --docker-args="-u root --env FOO=BAR" impala-toolchain-centos6 -- bash -c 'whoami; echo $FOO'
+in-docker.py --docker-args="-u root --env FOO=BAR" impala-toolchain-redhat9 -- bash -c 'whoami; echo $FOO'
 root
 BAR
 
 To get an interactive terminal:
-in-docker.py --docker-args="-t" impala-toolchain-centos6 -- bash
+in-docker.py --docker-args="-t" impala-toolchain-redhat9 -- bash
 """
 
 import argparse
@@ -57,7 +57,7 @@ LOG = logging.getLogger()
 # Maps docker images to BUILD_TARGET_LABELs which is ultimately included
 # in the path for each built package. The mapping that follows is also present
 # in bin/bootstrap_toolchain.py, which depends on these strings.
-KNOWN_DOCKER_TAGS = {'impala-toolchain-redhat8': 'ec2-package-centos-8',
+KNOWN_DOCKER_TAGS = {'impala-toolchain-redhat8': 'ec2-package-rocky-8',
                      'impala-toolchain-redhat9': 'ec2-package-rocky-9',
                      'impala-toolchain-redhat10': 'ec2-package-rocky-10',
                      'impala-toolchain-sles15': 'ec2-package-sles-15',

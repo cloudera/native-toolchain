@@ -109,6 +109,12 @@ function build {
     # Follow symlinks to get the real path of javac
     # Ex: /usr/lib/jvm/java-17-temurin-jdk/bin/javac
     JAVAC_REAL_LOCATION=$(realpath $JAVAC_SYMLINK)
+    # SLES uses an alternatives implementation that passes through /usr/bin/alts,
+    # which determines which executable to call. If we're on that system, ask
+    # /usr/bin/alts to tell us the location.
+    if [[ "${JAVAC_REAL_LOCATION}" == "/usr/bin/alts" ]]; then
+      JAVAC_REAL_LOCATION=$(/usr/bin/alts -t javac)
+    fi
     # Trim off /bin/javac
     export JAVA_HOME=$(echo $JAVAC_REAL_LOCATION | sed 's#/bin/javac##')
   fi

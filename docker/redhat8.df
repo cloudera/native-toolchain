@@ -1,11 +1,7 @@
-FROM centos:8.2.2004
+FROM rockylinux/rockylinux:8.10
 
-COPY ./redhat/CentOS-8.2.2004-Base.repo /etc/yum.repos.d/CentOS-Base.repo
-COPY ./redhat/CentOS-8.2.2004-Extras.repo /etc/yum.repos.d/CentOS-Extras.repo
-COPY ./redhat/CentOS-8.2.2004-AppStream.repo /etc/yum.repos.d/CentOS-AppStream.repo
-COPY ./redhat/CentOS-8.2.2004-PowerTools.repo /etc/yum.repos.d/CentOS-PowerTools.repo
-
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+RUN dnf -y install dnf-plugins-core
+RUN dnf config-manager --set-enabled powertools && dnf -y install epel-release
 RUN dnf -y install autoconf \
   automake \
   annobin \
@@ -24,7 +20,7 @@ RUN dnf -y install autoconf \
   gcc-c++ \
   git \
   glibc-devel \
-  java-1.8.0-openjdk-devel \
+  java-17-openjdk-devel \
   krb5-devel \
   libevent-devel \
   libdb-devel \

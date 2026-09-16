@@ -18,7 +18,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf
       libssl-dev \
       libtool-bin \
       libz-dev \
-      openjdk-8-jdk \
+      openjdk-17-jdk \
       pigz \
       pkg-config \
       python3 \

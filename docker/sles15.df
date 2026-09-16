@@ -19,6 +19,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-inter
   groff \
   gzip \
   hostname \
+  java-17-openjdk-devel \
   krb5-devel \
   libdb-4_8-devel \
   libevent-devel \
@@ -42,15 +43,6 @@ RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-inter
   which \
   xz \
   zlib-devel
-
-# Install select packages from openSUSE Leap 15.4 distribution
-RUN zypper --non-interactive ar -G -c https://download.opensuse.org/distribution/leap/15.4/repo/oss/ opensuse-oss
-RUN zypper --non-interactive --gpg-auto-import-keys ref -s && zypper --non-interactive install \
-  java-1_8_0-openjdk-devel
-
-# Earlier packages pull in a Java 17 JRE and set it as the default JRE, breaking our
-# assert-dependency checks. Set it back to Java 8 here.
-RUN update-alternatives --set java /usr/lib64/jvm/jre-1.8.0-openjdk/bin/java
 
 COPY ./all/postinstall.sh /usr/local/bin
 RUN postinstall.sh
