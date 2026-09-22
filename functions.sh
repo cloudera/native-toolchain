@@ -561,8 +561,8 @@ function setup_ccache() {
   fi
 
   mkdir -p $CCACHE_DIR
-  local TEMPDIR=$(mktemp -d --suffix="-impala-toolchain")
-  local RET=$TEMPDIR/$(basename $ORIG_COMPILER)
+  mkdir -p $SOURCE_DIR/ccache-bin
+  local RET=$SOURCE_DIR/ccache-bin/$(basename $ORIG_COMPILER)
   # Setting CC='ccache gcc' causes some programs to try to execute `ccache gcc`,
   # which fails. Since we set our CC variable, we can't rely on PATH ordering
   # to tell ccache about our compiler, so we create our own CC wrapper which is

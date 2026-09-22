@@ -1,7 +1,13 @@
-build
-check
-build_docker/ccache
+build/
+build_docker/
+ccache/
+ccache-bin/
+check/
 *.tar.gz
 *.tar.xz
 *.zip
 *.tgz
+
+# Ignore all directories except *-patches.
+source/*/*/
+!source/*/*-patches/
