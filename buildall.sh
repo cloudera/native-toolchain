@@ -41,7 +41,7 @@ source ./init-compiler.sh
 ################################################################################
 # Boost
 ################################################################################
-BOOST_VERSION=1.91.0-p1 $SOURCE_DIR/source/boost/build.sh
+BOOST_VERSION=1.92.0-p1 $SOURCE_DIR/source/boost/build.sh
 
 ################################################################################
 # Build BZip2
@@ -116,7 +116,7 @@ CLOUDFLAREZLIB_VERSION=7aa510344e $SOURCE_DIR/source/cloudflarezlib/build.sh
 #  * depends on boost, zlib and openssl
 ################################################################################
 (
-  export BOOST_VERSION=1.91.0-p1
+  export BOOST_VERSION=1.92.0-p1
   export ZLIB_VERSION=1.3.1
   THRIFT_VERSION=0.11.0-p5 $SOURCE_DIR/source/thrift/build.sh
   THRIFT_VERSION=0.16.0-p7 $SOURCE_DIR/source/thrift/build.sh
@@ -226,7 +226,7 @@ FLATBUFFERS_VERSION=1.9.0-p1 $SOURCE_DIR/source/flatbuffers/build.sh
 # Build Kudu
 ################################################################################
 (
-  export BOOST_VERSION=1.91.0-p1
+  export BOOST_VERSION=1.92.0-p1
   # branch master, 16 Sept 2026
   export KUDU_VERSION=d66c90796
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
