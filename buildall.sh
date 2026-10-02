@@ -332,3 +332,7 @@ CPUINFO_VERSION=84818a41e0 $SOURCE_DIR/source/cpuinfo/build.sh
 # simdutf
 ################################################################################
 SIMDUTF_VERSION=9.0.0 $SOURCE_DIR/source/simdutf/build.sh
+
+# CRoaring
+################################################################################
+CROARING_VERSION=5.2.2 $SOURCE_DIR/source/croaring/build.sh
