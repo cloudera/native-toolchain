@@ -3,6 +3,7 @@ build_docker/
 ccache/
 ccache-bin/
 check/
+*.tar.bz2
 *.tar.gz
 *.tar.xz
 *.zip
