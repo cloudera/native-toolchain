@@ -45,7 +45,8 @@ if needs_build_package ; then
   wrap cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_CXX_STANDARD=17 \
         -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF \
-        -Dabsl_DIR=$ABSL_CONFIG_DIR -Dprotobuf_LOCAL_DEPENDENCIES_ONLY=ON
+        -Dabsl_DIR=$ABSL_CONFIG_DIR -Dprotobuf_LOCAL_DEPENDENCIES_ONLY=ON \
+        -DZLIB_ROOT=$BUILD_DIR/zlib-${ZLIB_VERSION}
   wrap make VERBOSE=1 -j${BUILD_THREADS:-4}
   wrap make install
   popd
