@@ -80,7 +80,7 @@ BZIP2_VERSION=1.0.8-p2 $SOURCE_DIR/source/bzip2/build.sh
 ################################################################################
 # Build Abseil
 ################################################################################
-ABSEIL_CPP_VERSION=20250512.2 $SOURCE_DIR/source/abseil-cpp/build.sh
+ABSEIL_CPP_VERSION=20260526.0 $SOURCE_DIR/source/abseil-cpp/build.sh
 
 ################################################################################
 # Build ZLib
@@ -91,7 +91,7 @@ ZLIB_VERSION=1.3.1 $SOURCE_DIR/source/zlib/build.sh
 # Build protobuf
 ################################################################################
 (
-  export ABSEIL_CPP_VERSION=20250512.2
+  export ABSEIL_CPP_VERSION=20260526.0
   export ZLIB_VERSION=1.3.1
   PROTOBUF_VERSION=3.21.9 $SOURCE_DIR/source/protobuf/build.sh
 )
@@ -170,7 +170,7 @@ RE2_VERSION=2023-03-01 $SOURCE_DIR/source/re2/build.sh
 
 # Newer versions of RE2 require Abseil
 (
-  export ABSEIL_CPP_VERSION=20250512.2
+  export ABSEIL_CPP_VERSION=20260526.0
   RE2_VERSION=2025-11-05 $SOURCE_DIR/source/re2/build.sh
 )
 
@@ -178,8 +178,8 @@ RE2_VERSION=2023-03-01 $SOURCE_DIR/source/re2/build.sh
 # Build Google tcmalloc
 ################################################################################
 (
-  export ABSEIL_CPP_VERSION=20250512.2
-  TCMALLOC_VERSION=5aa90af663 $SOURCE_DIR/source/tcmalloc/build.sh
+  export ABSEIL_CPP_VERSION=20260526.0
+  TCMALLOC_VERSION=98db8b1113 $SOURCE_DIR/source/tcmalloc/build.sh
 )
 
 ################################################################################

@@ -46,6 +46,11 @@ ABSL_CONFIG_LOCATION=$(find $BUILD_DIR/abseil-cpp-${ABSEIL_CPP_VERSION} -name 'a
 [[ -f $ABSL_CONFIG_LOCATION ]]
 ABSL_CONFIG_DIR=$(dirname ${ABSL_CONFIG_LOCATION})
 
+# tcmalloc's built-in sanitizers like GWP ASAN print a stack trace for errors. That
+# stack trace is only useful with frame pointers.
+CXXFLAGS="${CXXFLAGS} -fno-omit-frame-pointer"
+CFLAGS="${CFLAGS} -fno-omit-frame-pointer"
+
 rm -rf build_static
 mkdir build_static
 pushd build_static
