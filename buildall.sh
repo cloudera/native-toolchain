@@ -93,7 +93,7 @@ ZLIB_VERSION=1.3.1 $SOURCE_DIR/source/zlib/build.sh
 (
   export ABSEIL_CPP_VERSION=20260526.0
   export ZLIB_VERSION=1.3.1
-  PROTOBUF_VERSION=3.21.9 $SOURCE_DIR/source/protobuf/build.sh
+  PROTOBUF_VERSION=3.21.9-p1 $SOURCE_DIR/source/protobuf/build.sh
 )
 
 ################################################################################
@@ -250,7 +250,7 @@ TPC_DS_VERSION=2.1.0-p1 $SOURCE_DIR/source/tpc-ds/build.sh
 ################################################################################
 (
   export LZ4_VERSION=1.9.3
-  export PROTOBUF_VERSION=3.21.9
+  export PROTOBUF_VERSION=3.21.9-p1
   export SNAPPY_VERSION=1.1.8
   export ZLIB_VERSION=1.3.1
   export ZSTD_VERSION=1.5.2
@@ -287,7 +287,7 @@ CALLONCEHACK_VERSION=1.0.0 $SOURCE_DIR/source/calloncehack/build.sh
 ################################################################################
 if [[ "$ARCH_NAME" == "aarch64" ]]; then
   (
-    export PROTOBUF_VERSION=3.21.9
+    export PROTOBUF_VERSION=3.21.9-p1
     export SNAPPY_VERSION=1.1.8
     export ZLIB_VERSION=1.3.1
     export ZSTD_VERSION=1.5.2
@@ -319,7 +319,7 @@ LIBPFM_VERSION=4.13.0 $SOURCE_DIR/source/libpfm/build.sh
 ################################################################################
 (
   export CURL_VERSION=8.17.0
-  export PROTOBUF_VERSION=3.21.9
+  export PROTOBUF_VERSION=3.21.9-p1
   export ZLIB_VERSION=1.3.1
   OPENTELEMETRY_CPP_VERSION=1.20.0-p1 $SOURCE_DIR/source/opentelemetry-cpp/build.sh
 )
