@@ -1,0 +1,27 @@
+diff -Naur breakpad-2c736308b5a4c7a8371fa3a3e434f551eddd17c9/src/client/linux/minidump_writer/linux_dumper.cc breakpad-2c736308b5a4c7a8371fa3a3e434f551eddd17c9_patched/src/client/linux/minidump_writer/linux_dumper.cc
+--- breakpad-2c736308b5a4c7a8371fa3a3e434f551eddd17c9/src/client/linux/minidump_writer/linux_dumper.cc	2026-11-12 14:51:58.775141867 -0800
++++ breakpad-2c736308b5a4c7a8371fa3a3e434f551eddd17c9_patched/src/client/linux/minidump_writer/linux_dumper.cc	2026-11-12 14:51:58.778141866 -0800
+@@ -593,9 +593,22 @@
+           // matches and either they have the same +x protection flag, or if the
+           // previous mapping is not executable and the new one is, to handle
+           // lld's output (see crbug.com/716484).
++          //
++          // The mappings do not need to be exactly adjacent. Linkers align each
++          // PT_LOAD segment to the max page size, which is 64KB on aarch64 (even
++          // when the kernel uses 4KB pages), so consecutive segments can be
++          // separated by an unmapped hole of up to (max page size - 4KB). For
++          // example, mold on aarch64 emits separate r--p and r-xp segments with
++          // a 0xf000 byte hole between them. Treating those as separate modules
++          // breaks symbolization, because dump_syms produces a single module.
++          // /proc/<pid>/maps is sorted by address, so nothing else is mapped in
++          // the hole. This tolerates a gap of up to 2MB.
++          static const uintptr_t kMaxSegmentGap = 2 * 1024 * 1024;
+           if (name && !mappings_.empty()) {
+             MappingInfo* module = mappings_.back();
+-            if ((start_addr == module->start_addr + module->size) &&
++            const uintptr_t module_end = module->start_addr + module->size;
++            if ((start_addr >= module_end) &&
++                (start_addr - module_end <= kMaxSegmentGap) &&
+                 (my_strlen(name) == my_strlen(module->name)) &&
+                 (my_strncmp(name, module->name, my_strlen(name)) == 0) &&
+                 ((exec == module->exec) || (!module->exec && exec))) {
