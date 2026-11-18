@@ -1,0 +1,59 @@
+From a1f234e9dd100a3280d0fd32dceeb21667cd7039 Mon Sep 17 00:00:00 2001
+From: Joe McDonnell <joemcdonnell@cloudera.com>
+Date: Tue, 17 Nov 2026 16:58:00 -0800
+Subject: [PATCH] Avoid pointer subtraction in AArch64 unwinder frame size
+ check
+
+ComputeStackFrameSize() subtracted the frame pointers as pointers. A
+frame pointer read from a corrupt or foreign frame (for example a JIT
+frame) can be an arbitrary value, so the difference may not fit in
+ptrdiff_t, which makes the subtraction undefined behavior. GCC uses
+this to assume the result is non-negative and compiles the
+"frame_size > max_size" check in NextStackFrame() as a signed compare.
+A huge difference then wraps negative and passes the check.
+
+This was seen as a crash on AArch64 Linux with GCC 15.3: tcmalloc
+sampling called GetStackTrace() during a HotSpot deoptimization, whose
+frame had a saved frame pointer of 0xfffffffffffdb610. The frame size
+check passed it (b.gt on the reject path), the stack bounds check
+accepted it without AddressIsReadable(), and the next iteration
+faulted dereferencing it.
+
+Do the comparison and subtraction on uintptr_t, which is well defined
+for any pair of addresses and gives an unsigned compare.
+---
+ .../debugging/internal/stacktrace_aarch64-inl.inc | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/absl/debugging/internal/stacktrace_aarch64-inl.inc b/absl/debugging/internal/stacktrace_aarch64-inl.inc
+index 0010644f..5e357c07 100644
+--- a/absl/debugging/internal/stacktrace_aarch64-inl.inc
++++ b/absl/debugging/internal/stacktrace_aarch64-inl.inc
+@@ -72,13 +72,20 @@ static const unsigned char* GetKernelRtSigreturnAddress() {
+ 
+ // Compute the size of a stack frame in [low..high).  We assume that
+ // low < high.  Return size of kUnknownFrameSize.
++//
++// The arithmetic is done on uintptr_t rather than on pointers. A frame pointer
++// read from a corrupt or foreign frame (e.g. a JIT frame) can be arbitrary, so
++// the difference may not fit in ptrdiff_t. Pointer subtraction would then be
++// undefined behavior, and compilers use it to assume the result is
++// non-negative, comparing it against the max frame size as a signed value.
++// A huge difference then wraps negative and passes the check.
+ template<typename T>
+ static size_t ComputeStackFrameSize(const T* low,
+                                            const T* high) {
+-  const char* low_char_ptr = reinterpret_cast<const char *>(low);
+-  const char* high_char_ptr = reinterpret_cast<const char *>(high);
+-  return low < high ? static_cast<size_t>(high_char_ptr - low_char_ptr)
+-                    : kUnknownFrameSize;
++  const uintptr_t low_addr = reinterpret_cast<uintptr_t>(low);
++  const uintptr_t high_addr = reinterpret_cast<uintptr_t>(high);
++  return low_addr < high_addr ? static_cast<size_t>(high_addr - low_addr)
++                              : kUnknownFrameSize;
+ }
+ 
+ // Saves stack info that is expensive to calculate to avoid recalculating per frame.
+-- 
+2.34.1
+
